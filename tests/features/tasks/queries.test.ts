@@ -85,4 +85,44 @@ describe("task queries", () => {
       assignees,
     });
   });
+
+  it("loads one task with its comments for the detail page", async () => {
+    const currentUser = {
+      id: "user_admin",
+      role: "admin" as const,
+      name: "Admin",
+      imageUrl: null,
+    };
+    const comment = {
+      id: "22222222-2222-4222-8222-222222222222",
+      taskId: task.id,
+      authorId: currentUser.id,
+      body: "请补一张图片",
+      createdAt: "2026-08-28T02:00:00.000Z",
+      authorName: "Admin",
+      authorImageUrl: null,
+    };
+    const assignees = [
+      {
+        id: "user_employee",
+        role: "employee" as const,
+        name: "Employee",
+        imageUrl: null,
+      },
+    ];
+    const queries = makeTaskQueries({
+      getVerifiedUser: async () => currentUser,
+      list: async () => [task],
+      getTask: async () => task,
+      listComments: async () => [comment],
+      listAssignees: async () => assignees,
+    });
+
+    await expect(queries.getTaskDetailData(task.id)).resolves.toEqual({
+      currentUser,
+      task,
+      comments: [comment],
+      assignees,
+    });
+  });
 });

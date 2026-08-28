@@ -35,3 +35,16 @@ export type TaskFilters = {
   priority?: TaskPriority;
   assigneeId?: string;
 };
+
+export type TaskCommentRecord = {
+  id: string;
+  taskId: string;
+  authorId: string;
+  body: string;
+  createdAt: string;
+};
+
+export type TaskCommentView = TaskCommentRecord & {
+  authorName: string;
+  authorImageUrl: string | null;
+};

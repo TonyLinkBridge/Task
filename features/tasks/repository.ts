@@ -7,28 +7,24 @@ import type {
 import type { TaskInput } from "@/features/tasks/schema";
 import {
   mapAssignableUserRow,
+  mapTaskCommentRow,
   mapTaskRow,
 } from "@/features/tasks/task-mapper";
-import type { TaskRow } from "@/features/tasks/task-mapper";
+import type { TaskCommentRow, TaskRow } from "@/features/tasks/task-mapper";
 import type {
   AssignableUser,
   TaskFilters,
+  TaskCommentView,
   TaskRecord,
   TaskStatus,
 } from "@/features/tasks/types";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
-type TaskCommentRow = {
-  id: string;
-  task_id: string;
-  author_id: string;
-  body: string;
-  created_at: string;
-};
-
 export type TaskRepository = TaskActionRepository & {
   list(filters?: TaskFilters): Promise<TaskRecord[]>;
   listAssignees(): Promise<AssignableUser[]>;
+  get(id: string): Promise<TaskRecord | null>;
+  listComments(taskId: string): Promise<TaskCommentView[]>;
 };
 
 function taskWrite(input: TaskInput) {
@@ -84,6 +80,31 @@ export function createTaskRepository(
       );
     },
 
+    async get(id) {
+      const { data, error } = await client()
+        .from("tasks")
+        .select("*")
+        .eq("id", id)
+        .is("archived_at", null)
+        .maybeSingle();
+      if (error) throw new Error(`TASK_DATABASE_ERROR:${error.message}`);
+      return data ? mapTaskRow(data as TaskRow) : null;
+    },
+
+    async listComments(taskId) {
+      const { data, error } = await client()
+        .from("task_comments")
+        .select(
+          "id, task_id, author_id, body, created_at, author:profiles!task_comments_author_id_fkey(display_name, avatar_url)"
+        )
+        .eq("task_id", taskId)
+        .order("created_at");
+      if (error) throw new Error(`TASK_DATABASE_ERROR:${error.message}`);
+      return (data ?? []).map((row) =>
+        mapTaskCommentRow(row as unknown as TaskCommentRow)
+      );
+    },
+
     async create(input, creatorId) {
       const { data, error } = await client()
         .from("tasks")
@@ -116,6 +137,19 @@ export function createTaskRepository(
     },
 
     async archive(id, archivedAt) {
+      const { data: existing, error: readError } = await client()
+        .from("tasks")
+        .select("kind")
+        .eq("id", id)
+        .is("archived_at", null)
+        .single();
+      if (readError) {
+        throw new Error(`TASK_DATABASE_ERROR:${readError.message}`);
+      }
+      if (existing?.kind === "content_publish") {
+        throw new Error("CONTENT_PUBLISH_TASK_CANNOT_ARCHIVE");
+      }
+
       const { data, error } = await client()
         .from("tasks")
         .update({ archived_at: archivedAt, updated_at: archivedAt })

@@ -130,7 +130,7 @@ export function TaskForm({
           render={
             <Button>
               <HugeiconsIcon icon={Add01Icon} />
-              新增任务
+              {initialTask ? "修改任务" : "新增任务"}
             </Button>
           }
         />

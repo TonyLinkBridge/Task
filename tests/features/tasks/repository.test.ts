@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   mapAssignableUserRow,
+  mapTaskCommentRow,
   mapTaskRow,
 } from "@/features/tasks/task-mapper";
 
@@ -39,6 +40,29 @@ describe("mapTaskRow", () => {
       archivedAt: null,
       createdAt: "2026-08-28T02:00:00.000Z",
       updatedAt: "2026-08-28T03:00:00.000Z",
+    });
+  });
+});
+
+describe("mapTaskCommentRow", () => {
+  it("includes the comment author's profile", () => {
+    expect(
+      mapTaskCommentRow({
+        id: "22222222-2222-4222-8222-222222222222",
+        task_id: "11111111-1111-4111-8111-111111111111",
+        author_id: "user_admin",
+        body: "请补一张图片",
+        created_at: "2026-08-28T02:00:00.000Z",
+        author: { display_name: "Admin", avatar_url: null },
+      })
+    ).toEqual({
+      id: "22222222-2222-4222-8222-222222222222",
+      taskId: "11111111-1111-4111-8111-111111111111",
+      authorId: "user_admin",
+      body: "请补一张图片",
+      createdAt: "2026-08-28T02:00:00.000Z",
+      authorName: "Admin",
+      authorImageUrl: null,
     });
   });
 });

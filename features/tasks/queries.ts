@@ -7,6 +7,8 @@ const taskQueries = makeTaskQueries({
   getVerifiedUser,
   list: (filters) => taskRepository.list(filters),
   listAssignees: () => taskRepository.listAssignees(),
+  getTask: (id) => taskRepository.get(id),
+  listComments: (taskId) => taskRepository.listComments(taskId),
 });
 
 export async function listTasks(filters: TaskFilters = {}) {
@@ -15,4 +17,8 @@ export async function listTasks(filters: TaskFilters = {}) {
 
 export async function getTaskBoardData(filters: TaskFilters = {}) {
   return taskQueries.getTaskBoardData(filters);
+}
+
+export async function getTaskDetailData(taskId: string) {
+  return taskQueries.getTaskDetailData(taskId);
 }

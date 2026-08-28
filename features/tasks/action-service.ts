@@ -2,16 +2,14 @@ import type { VerifiedUser } from "@/lib/auth/types";
 import type { TaskInput } from "@/features/tasks/schema";
 import { taskInputSchema } from "@/features/tasks/schema";
 import { TASK_STATUSES } from "@/features/tasks/types";
-import type { TaskRecord, TaskStatus } from "@/features/tasks/types";
+import type {
+  TaskCommentRecord,
+  TaskRecord,
+  TaskStatus,
+} from "@/features/tasks/types";
 import { z } from "zod";
 
-export type TaskCommentRecord = {
-  id: string;
-  taskId: string;
-  authorId: string;
-  body: string;
-  createdAt: string;
-};
+export type { TaskCommentRecord } from "@/features/tasks/types";
 
 export type TaskActionRepository = {
   create(input: TaskInput, creatorId: string): Promise<TaskRecord>;
@@ -53,7 +51,16 @@ export function makeTaskActions(dependencies: Dependencies) {
       const data = await operation();
       dependencies.revalidatePath("/tasks");
       return { ok: true, data };
-    } catch {
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "CONTENT_PUBLISH_TASK_CANNOT_ARCHIVE"
+      ) {
+        return {
+          ok: false,
+          message: "发布任务要从内容排期里处理，不能在这里收起。",
+        };
+      }
       return { ok: false, message: "暂时无法保存，请稍后再试。" };
     }
   }

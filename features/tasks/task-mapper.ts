@@ -1,4 +1,8 @@
-import type { AssignableUser, TaskRecord } from "@/features/tasks/types";
+import type {
+  AssignableUser,
+  TaskCommentView,
+  TaskRecord,
+} from "@/features/tasks/types";
 
 export type TaskRow = {
   id: string;
@@ -49,5 +53,26 @@ export function mapAssignableUserRow(row: AssignableUserRow): AssignableUser {
     role: row.role,
     name: row.display_name,
     imageUrl: row.avatar_url,
+  };
+}
+
+export type TaskCommentRow = {
+  id: string;
+  task_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+  author: { display_name: string; avatar_url: string | null };
+};
+
+export function mapTaskCommentRow(row: TaskCommentRow): TaskCommentView {
+  return {
+    id: row.id,
+    taskId: row.task_id,
+    authorId: row.author_id,
+    body: row.body,
+    createdAt: row.created_at,
+    authorName: row.author.display_name,
+    authorImageUrl: row.author.avatar_url,
   };
 }

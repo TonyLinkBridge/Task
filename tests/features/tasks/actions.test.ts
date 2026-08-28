@@ -50,6 +50,9 @@ function createHarness(options?: { authenticated?: boolean }) {
     },
     async archive(id, archivedAt) {
       const index = tasks.findIndex((task) => task.id === id);
+      if (tasks[index]?.kind === "content_publish") {
+        throw new Error("CONTENT_PUBLISH_TASK_CANNOT_ARCHIVE");
+      }
       tasks[index] = { ...tasks[index], archivedAt };
       return tasks[index];
     },
@@ -136,5 +139,19 @@ describe("task actions", () => {
 
     expect(result).toEqual({ ok: false, message: "留言不能为空。" });
     expect(comments).toEqual([]);
+  });
+
+  it("does not archive a task linked to scheduled content", async () => {
+    const { actions, tasks } = createHarness();
+    await actions.createTask(validInput);
+    tasks[0] = { ...tasks[0], kind: "content_publish" };
+
+    const result = await actions.archiveTask(tasks[0].id);
+
+    expect(result).toEqual({
+      ok: false,
+      message: "发布任务要从内容排期里处理，不能在这里收起。",
+    });
+    expect(tasks[0].archivedAt).toBeNull();
   });
 });

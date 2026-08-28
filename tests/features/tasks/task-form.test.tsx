@@ -64,4 +64,30 @@ describe("TaskForm", () => {
     });
     expect(receivedInput?.dueAt).toBe("2026-08-29T02:00:00.000Z");
   });
+
+  it("labels the trigger as edit when a task is provided", () => {
+    render(
+      <TaskForm
+        assignees={[employee]}
+        initialTask={{
+          id: "11111111-1111-4111-8111-111111111111",
+          title: "准备周报",
+          description: "",
+          status: "todo",
+          priority: "medium",
+          kind: "general",
+          assigneeId: employee.id,
+          creatorId: "user_admin",
+          dueAt: "2026-08-29T02:00:00.000Z",
+          position: 1000,
+          linkedContentId: null,
+          archivedAt: null,
+          createdAt: "2026-08-28T02:00:00.000Z",
+          updatedAt: "2026-08-28T02:00:00.000Z",
+        }}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: "修改任务" })).toBeInTheDocument();
+  });
 });
