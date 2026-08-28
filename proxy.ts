@@ -3,7 +3,12 @@ import { NextResponse } from "next/server";
 
 import { buildLoginUrl } from "@/lib/auth/redirect";
 
-const publicRoutePrefixes = ["/login", "/sso-callback", "/access-denied"];
+const publicRoutePrefixes = [
+  "/login",
+  "/sso-callback",
+  "/access-denied",
+  "/api/liveblocks-webhook",
+];
 
 function isPublicPath(pathname: string) {
   return publicRoutePrefixes.some(
