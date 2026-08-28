@@ -52,9 +52,11 @@ describe("mapContentRow", () => {
 
 describe("createContentRepository", () => {
   it("creates a content with a stable private room id", async () => {
+    const rpcNames: string[] = [];
     const client = {
-      rpc: async () => ({
-        data: {
+      rpc: async (name: string) => {
+        rpcNames.push(name);
+        return { data: {
           id: contentId,
           title: "新品贴文",
           status: "draft",
@@ -72,8 +74,8 @@ describe("createContentRepository", () => {
           created_at: "2026-08-28T02:00:00.000Z",
           updated_at: "2026-08-28T02:00:00.000Z",
         },
-        error: null,
-      }),
+        error: null };
+      },
     };
     const repository = createContentRepository(
       client as never,
@@ -91,6 +93,7 @@ describe("createContentRepository", () => {
     );
 
     expect(content.liveblocksRoomId).toBe(`content:${contentId}`);
+    expect(rpcNames).toEqual(["create_scheduled_content"]);
   });
 });
 

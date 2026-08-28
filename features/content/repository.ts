@@ -89,7 +89,7 @@ export function createContentRepository(
   return {
     async create(input: ContentInput, authorId: string): Promise<ContentRecord> {
       const contentId = createId();
-      const { data, error } = await client().rpc("create_content", {
+      const { data, error } = await client().rpc("create_scheduled_content", {
         p_id: contentId,
         p_title: input.title,
         p_author_id: authorId,
