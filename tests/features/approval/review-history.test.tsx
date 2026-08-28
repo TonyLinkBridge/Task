@@ -27,4 +27,27 @@ describe("ReviewHistory", () => {
     expect(screen.getByText("请修改开头")).toBeInTheDocument();
     expect(screen.getByText("内容版本 1")).toBeInTheDocument();
   });
+
+  it("shows when old approvals are cancelled during resubmission", () => {
+    render(
+      <ReviewHistory
+        events={[
+          {
+            id: "66666666-6666-4666-8666-666666666666",
+            contentId: "22222222-2222-4222-8222-222222222222",
+            version: 1,
+            eventType: "approval_invalidated",
+            actorId: "user_employee",
+            actorName: "员工",
+            actorImageUrl: null,
+            message: null,
+            createdAt: "2026-08-28T05:00:00.000Z",
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByText("员工 · 旧批准已经取消")).toBeInTheDocument();
+    expect(screen.getByText("内容版本 1")).toBeInTheDocument();
+  });
 });

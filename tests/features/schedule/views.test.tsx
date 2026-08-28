@@ -29,6 +29,16 @@ describe("schedule views", () => {
     expect(screen.getByText("已批准 1/2")).toBeInTheDocument();
   });
 
+  it("shows zero approvals after old approvals are removed from the current version", () => {
+    render(
+      <ContentList
+        contents={[{ ...scheduled, approvalAdminIds: [], status: "in_review" }]}
+      />
+    );
+
+    expect(screen.getByText("已批准 0/2")).toBeInTheDocument();
+  });
+
   it("always shows all six board columns", () => {
     render(<ContentBoard initialContents={[scheduled]} />);
 

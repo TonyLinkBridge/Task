@@ -45,6 +45,26 @@ describe("ApprovalProgress", () => {
 
     expect(screen.getByText("已批准 1/2")).toBeInTheDocument();
   });
+
+  it("resets to zero when earlier approvals were invalidated", () => {
+    render(
+      <ApprovalProgress
+        required={2}
+        approvals={[
+          { ...approval, invalidatedAt: "2026-08-28T05:00:00.000Z" },
+          {
+            ...approval,
+            id: "55555555-5555-4555-8555-555555555555",
+            adminId: "admin-b",
+            invalidatedAt: "2026-08-28T05:00:00.000Z",
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByText("已批准 0/2")).toBeInTheDocument();
+    expect(screen.queryByText("审核完成")).not.toBeInTheDocument();
+  });
 });
 
 describe("ReviewActions", () => {

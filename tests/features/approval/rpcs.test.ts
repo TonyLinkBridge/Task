@@ -179,10 +179,18 @@ describe("approval workflow RPCs", () => {
       status: string;
       active_approvals: number;
       invalid_approvals: number;
+      invalidation_events: number;
+      invalidated_by: string;
     }>(`
       select c.current_version, c.status::text,
         count(a.id) filter (where a.invalidated_at is null)::integer as active_approvals,
-        count(a.id) filter (where a.invalidated_at is not null)::integer as invalid_approvals
+        count(a.id) filter (where a.invalidated_at is not null)::integer as invalid_approvals,
+        (select count(*)::integer from content_review_events e
+         where e.content_id = c.id and e.event_type = 'approval_invalidated')
+          as invalidation_events,
+        (select e.actor_id from content_review_events e
+         where e.content_id = c.id and e.event_type = 'approval_invalidated'
+         order by e.created_at desc limit 1) as invalidated_by
       from contents c
       left join content_approvals a on a.content_id = c.id
       where c.id = '${employeeContentId}'
@@ -193,6 +201,8 @@ describe("approval workflow RPCs", () => {
       status: "in_review",
       active_approvals: 0,
       invalid_approvals: 2,
+      invalidation_events: 1,
+      invalidated_by: "employee",
     });
   });
 
