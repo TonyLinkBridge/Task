@@ -95,7 +95,7 @@ Clerk Development 实例固定建立三个测试账号：
 - 选择 `E2E 测试平台`、负责人和已到达的发布时间；
 - 确认系统同时建立不能手动拖动的发布任务；
 - 在 BlockNote 正文输入测试文字并确认同步完成；
-- 上传一个很小的 `.txt` 测试文件；
+- 上传一个很小的 PDF 测试文件；
 - 下载文件并确认内容与上传前相同。
 
 ### 4. 两位管理员审核
@@ -123,7 +123,7 @@ Clerk Development 实例固定建立三个测试账号：
 
 ## 测试文件
 
-仓库增加一个固定的小型文字文件，内容只包含本次测试说明。测试下载后比较字节内容，不依赖浏览器预览。
+仓库增加一个固定的单页小型 PDF，页面只包含本次测试说明。测试下载后比较文件摘要，不依赖浏览器预览。
 
 ## 清理方式
 
@@ -142,6 +142,7 @@ Clerk Development 实例固定建立三个测试账号：
 仓库只提供没有真实值的 `.env.e2e.example`。需要的值包括：
 
 - Clerk Development Publishable Key 和 Secret Key；
+- Clerk Development 三个测试账号共用的测试密码；
 - 三个测试账号邮箱；
 - Supabase 测试项目 URL、Publishable Key、Service Role Key 和数据库连接地址；
 - Liveblocks 测试项目 Public Key 和 Secret Key；
