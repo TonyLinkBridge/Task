@@ -28,6 +28,12 @@ describe("SlackLoginCard", () => {
     expect(screen.getByRole("button", { name: "正在打开 Slack…" })).toBeDisabled();
   });
 
+  it("provides Clerk a CAPTCHA mount point for first-time Slack sign-up", () => {
+    render(<SlackLoginCard isLoading={false} onContinue={() => undefined} />);
+
+    expect(document.getElementById("clerk-captcha")).toBeInTheDocument();
+  });
+
   it("explains when Slack login could not open", () => {
     render(
       <SlackLoginCard

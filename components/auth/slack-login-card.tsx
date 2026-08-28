@@ -40,6 +40,7 @@ export function SlackLoginCard({
         <HugeiconsIcon icon={SlackIcon} />
         {isLoading ? "正在打开 Slack…" : "使用 JUYU Slack 继续"}
       </Button>
+      <div id="clerk-captcha" className="mt-4 flex justify-center" />
       {errorMessage ? (
         <p role="alert" className="mt-3 text-center text-sm text-destructive">
           {errorMessage}
