@@ -41,12 +41,19 @@ export function EditorSyncStatus({
 }
 
 export function BlockNoteEditor({
+  canClearResolved = false,
   editable,
+  onClearResolved,
   onDocumentChange,
   onSyncChange,
 }: {
+  canClearResolved?: boolean;
   contentId: string;
   editable: boolean;
+  onClearResolved?: () => Promise<
+    | { ok: true; deleted: number }
+    | { ok: false; message: string }
+  >;
   onDocumentChange?: (document: unknown) => void;
   onSyncChange?: (synchronized: boolean) => void;
 }) {
@@ -84,7 +91,12 @@ export function BlockNoteEditor({
           />
           <FloatingComposer editor={editor} className="w-[22rem]" />
         </div>
-        <InlineThreads editor={editor} threads={threads} />
+        <InlineThreads
+          canClearResolved={canClearResolved}
+          editor={editor}
+          onClearResolved={onClearResolved}
+          threads={threads}
+        />
       </div>
       <EditorSyncStatus ready status={status} />
     </section>

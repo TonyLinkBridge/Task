@@ -30,12 +30,21 @@ function scrollToThreadText(threadId: string) {
 }
 
 export function InlineThreads({
+  canClearResolved = false,
+  onClearResolved,
   threads,
 }: {
+  canClearResolved?: boolean;
   editor: BlockNoteEditor;
+  onClearResolved?: () => Promise<
+    | { ok: true; deleted: number }
+    | { ok: false; message: string }
+  >;
   threads: ThreadData[];
 }) {
   const [view, setView] = useState<"open" | "resolved">("open");
+  const [clearing, setClearing] = useState(false);
+  const [clearMessage, setClearMessage] = useState<string | null>(null);
   const markThreadAsUnresolved = useMarkThreadAsUnresolved();
   const isDesktop = useSyncExternalStore(
     subscribeToViewport,
@@ -91,6 +100,46 @@ export function InlineThreads({
     emptyState
   );
 
+  async function handleClearResolved() {
+    if (
+      !window.confirm(
+        `确定要永久删除 ${resolvedThreads.length} 条已解决留言吗？删除后不能恢复。`
+      )
+    ) {
+      return;
+    }
+    if (!onClearResolved) return;
+
+    setClearing(true);
+    setClearMessage(null);
+    const result = await onClearResolved();
+    setClearing(false);
+    setClearMessage(
+      result.ok
+        ? `已经清空 ${result.deleted} 条已解决留言。`
+        : result.message
+    );
+  }
+
+  const clearResolvedButton =
+    view === "resolved" && canClearResolved && resolvedThreads.length > 0 ? (
+      <div className="mb-3 space-y-2">
+        <button
+          className="w-full rounded-md border border-destructive/40 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
+          disabled={clearing}
+          onClick={handleClearResolved}
+          type="button"
+        >
+          {clearing ? "正在清空…" : "清空已解决"}
+        </button>
+        {clearMessage ? (
+          <p aria-live="polite" className="text-xs text-muted-foreground">
+            {clearMessage}
+          </p>
+        ) : null}
+      </div>
+    ) : null;
+
   const filters = (
     <div
       aria-label="指定文字留言"
@@ -119,11 +168,13 @@ export function InlineThreads({
   return isDesktop ? (
     <div data-testid="anchored-threads" className="w-80 shrink-0">
       {filters}
+      {clearResolvedButton}
       {view === "resolved" ? resolvedThreadList : openThreadList}
     </div>
   ) : (
     <div data-testid="floating-threads">
       {filters}
+      {clearResolvedButton}
       {view === "resolved" ? resolvedThreadList : openThreadList}
     </div>
   );

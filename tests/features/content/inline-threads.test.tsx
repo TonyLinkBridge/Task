@@ -144,4 +144,44 @@ describe("InlineThreads", () => {
 
     originalText.remove();
   });
+
+  it("only lets an admin clear resolved threads after confirming", async () => {
+    const user = userEvent.setup();
+    const onClearResolved = vi.fn().mockResolvedValue({
+      ok: true,
+      deleted: 1,
+    });
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    setDesktopViewport(true);
+    const { rerender } = render(
+      <InlineThreads
+        canClearResolved={false}
+        editor={{} as never}
+        onClearResolved={onClearResolved}
+        threads={[{ id: "resolved", resolved: true }] as never}
+      />
+    );
+
+    await user.click(screen.getByRole("button", { name: "已解决 1" }));
+    expect(
+      screen.queryByRole("button", { name: "清空已解决" })
+    ).not.toBeInTheDocument();
+
+    rerender(
+      <InlineThreads
+        canClearResolved
+        editor={{} as never}
+        onClearResolved={onClearResolved}
+        threads={[{ id: "resolved", resolved: true }] as never}
+      />
+    );
+    await user.click(screen.getByRole("button", { name: "清空已解决" }));
+    expect(onClearResolved).not.toHaveBeenCalled();
+
+    confirm.mockReturnValue(true);
+    await user.click(screen.getByRole("button", { name: "清空已解决" }));
+    expect(onClearResolved).toHaveBeenCalledOnce();
+
+    confirm.mockRestore();
+  });
 });
