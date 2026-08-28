@@ -9,9 +9,15 @@ import {
   restorePlatform,
   updatePlatform,
 } from "@/features/admin/actions/platforms";
+import { saveNotificationSettings } from "@/features/admin/actions/notification-settings";
+import { MemberList } from "@/features/admin/components/member-list";
 import { PlatformSettings } from "@/features/admin/components/platform-settings";
+import { SlackSettingsForm } from "@/features/admin/components/slack-settings-form";
+import { adminRepository } from "@/features/admin/repository";
 import { contentRepository } from "@/features/content/repository";
 import { getVerifiedUser } from "@/lib/auth/get-verified-user";
+import { getServerEnv } from "@/lib/env/server";
+import { makeSlackClient } from "@/lib/slack/client";
 
 export default async function AdminSettingsPage() {
   const currentUser = await getVerifiedUser();
@@ -19,7 +25,15 @@ export default async function AdminSettingsPage() {
     redirect("/access-denied");
   }
 
-  const platforms = await contentRepository.listAllPlatforms();
+  const token = getServerEnv().SLACK_BOT_TOKEN;
+  const [platforms, settings, members, channels] = await Promise.all([
+    contentRepository.listAllPlatforms(),
+    adminRepository.getNotificationSettings(),
+    adminRepository.listMembers(),
+    token
+      ? makeSlackClient({ token }).listAllowedChannels().catch(() => [])
+      : Promise.resolve([]),
+  ]);
 
   return (
     <SidebarProvider>
@@ -35,7 +49,7 @@ export default async function AdminSettingsPage() {
             <div>
               <h2 className="text-2xl font-semibold">系统设置</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                先管理发布平台；Slack 通知和成员设置会在同一个页面继续加入。
+                管理发布平台、Slack 频道提醒和系统成员。
               </p>
             </div>
             <PlatformSettings
@@ -45,6 +59,13 @@ export default async function AdminSettingsPage() {
               archivePlatformAction={archivePlatform}
               restorePlatformAction={restorePlatform}
             />
+            <SlackSettingsForm
+              configured={Boolean(token)}
+              channels={channels}
+              initialSettings={settings}
+              saveSettingsAction={saveNotificationSettings}
+            />
+            <MemberList members={members} />
           </div>
         </main>
       </div>
