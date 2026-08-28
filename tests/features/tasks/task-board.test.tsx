@@ -58,6 +58,9 @@ describe("TaskBoard", () => {
 
     expect(screen.queryByRole("button", { name: /拖动/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "编辑" })).not.toBeInTheDocument();
+    expect(
+      screen.getByText("由内容排期控制，不能手动拖动")
+    ).toBeInTheDocument();
   });
 });
 

@@ -80,6 +80,11 @@ export function TaskCard({
           {task.description}
         </p>
       ) : null}
+      {task.kind === "content_publish" ? (
+        <p className="mt-2 rounded-md bg-muted px-2.5 py-2 text-xs leading-5 text-muted-foreground">
+          由内容排期控制，不能手动拖动
+        </p>
+      ) : null}
 
       <div className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground">
         <HugeiconsIcon icon={Calendar03Icon} className="size-4" />
