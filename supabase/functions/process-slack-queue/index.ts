@@ -123,7 +123,7 @@ async function run() {
 
 Deno.serve(
   makeQueueHttpHandler({
-    secret: requiredEnv("SUPABASE_EDGE_FUNCTION_SECRET"),
+    secret: requiredEnv("EDGE_FUNCTION_SECRET"),
     run,
   })
 );

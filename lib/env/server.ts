@@ -13,7 +13,7 @@ const serverEnvSchema = z.object({
   SLACK_BOT_TOKEN: z.string().regex(/^xoxb-/).optional(),
   SLACK_SIGNING_SECRET: z.string().min(1).optional(),
   NEXT_PUBLIC_APP_URL: z.url().optional(),
-  SUPABASE_EDGE_FUNCTION_SECRET: z.string().min(1).optional(),
+  EDGE_FUNCTION_SECRET: z.string().min(1).optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
