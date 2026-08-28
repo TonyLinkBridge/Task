@@ -77,4 +77,72 @@ describe("POST /api/liveblocks-auth", () => {
     expect(response.status).toBe(200);
     expect(editable).toBe(false);
   });
+
+  it("rechecks database state so a delayed auth request cannot restore stale access", async () => {
+    const room = "content:22222222-2222-4222-8222-222222222222";
+    const states = ["draft", "in_review", "in_review"] as const;
+    const permissions: boolean[] = [];
+    let read = 0;
+    const handler = makeLiveblocksAuthHandler({
+      getVerifiedUser: async () => user,
+      findContentByRoomId: async () => ({
+        id: room.slice(8),
+        status: states[Math.min(read++, states.length - 1)],
+      }),
+      authorizeRoom: async (_user, _room, editable) => {
+        permissions.push(editable);
+        return { token: editable ? "stale-write-token" : "current-read-token" };
+      },
+    });
+
+    const response = await handler(requestWithRoom(room));
+
+    await expect(response.json()).resolves.toEqual({
+      token: "current-read-token",
+    });
+    expect(permissions).toEqual([true, false]);
+  });
+
+  it("forces read-only access when content is archived during authentication", async () => {
+    const room = "content:22222222-2222-4222-8222-222222222222";
+    const permissions: boolean[] = [];
+    let read = 0;
+    const handler = makeLiveblocksAuthHandler({
+      getVerifiedUser: async () => user,
+      findContentByRoomId: async () =>
+        read++ === 0 ? { id: room.slice(8), status: "draft" as const } : null,
+      authorizeRoom: async (_user, _room, editable) => {
+        permissions.push(editable);
+        return { token: "unused" };
+      },
+    });
+
+    const response = await handler(requestWithRoom(room));
+
+    expect(response.status).toBe(403);
+    expect(permissions).toEqual([true, false]);
+  });
+
+  it("fails closed when room status cannot stabilize", async () => {
+    const room = "content:22222222-2222-4222-8222-222222222222";
+    const states = ["draft", "in_review", "changes_requested", "approved"] as const;
+    const permissions: boolean[] = [];
+    let read = 0;
+    const handler = makeLiveblocksAuthHandler({
+      getVerifiedUser: async () => user,
+      findContentByRoomId: async () => ({
+        id: room.slice(8),
+        status: states[Math.min(read++, states.length - 1)],
+      }),
+      authorizeRoom: async (_user, _room, editable) => {
+        permissions.push(editable);
+        return { token: "unused" };
+      },
+    });
+
+    const response = await handler(requestWithRoom(room));
+
+    expect(response.status).toBe(403);
+    expect(permissions).toEqual([true, false, true, false]);
+  });
 });

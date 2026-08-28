@@ -33,6 +33,7 @@ function content(overrides: Partial<ContentRecord> = {}): ContentRecord {
 function createHarness(options?: {
   role?: "employee" | "admin";
   record?: ContentRecord;
+  failRoomAccess?: boolean;
 }) {
   let record = options?.record ?? content();
   const calls: string[] = [];
@@ -90,6 +91,7 @@ function createHarness(options?: {
     repository,
     setRoomEditable: async (roomId, editable) => {
       roomCalls.push(`${roomId}:${editable ? "write" : "read"}`);
+      if (options?.failRoomAccess) throw new Error("LIVEBLOCKS_UNAVAILABLE");
     },
     revalidatePath: (path) => revalidatedPaths.push(path),
   });
@@ -176,5 +178,18 @@ describe("content approval actions", () => {
       ok: true,
     });
     expect(roomCalls).toEqual([`content:${contentId}:read`]);
+  });
+
+  it("does not archive editable content unless its room is locked first", async () => {
+    const { actions, calls } = createHarness({
+      record: content({ status: "draft" }),
+      failRoomAccess: true,
+    });
+
+    await expect(actions.archiveContent(contentId)).resolves.toEqual({
+      ok: false,
+      message: "暂时无法锁定内容，请稍后再试。",
+    });
+    expect(calls).toEqual([]);
   });
 });

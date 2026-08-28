@@ -29,17 +29,40 @@ export function makeLiveblocksAuthHandler(dependencies: Dependencies) {
       }
 
       const user = await dependencies.getVerifiedUser();
-      const content = await dependencies.findContentByRoomId(body.room);
+      let content = await dependencies.findContentByRoomId(body.room);
       if (!content) {
         return Response.json({ error: "forbidden" }, { status: 403 });
       }
 
-      const token = await dependencies.authorizeRoom(
-        user,
-        body.room,
-        canEditBody(content.status)
-      );
-      return Response.json(token);
+      async function denyWithReadOnlyRoom() {
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          try {
+            await dependencies.authorizeRoom(user, body.room as string, false);
+            break;
+          } catch {
+            // Retry before failing closed.
+          }
+        }
+        return Response.json({ error: "forbidden" }, { status: 403 });
+      }
+
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const editable = canEditBody(content.status);
+        const token = await dependencies.authorizeRoom(
+          user,
+          body.room,
+          editable
+        );
+        const latest = await dependencies.findContentByRoomId(body.room);
+        if (!latest) {
+          return denyWithReadOnlyRoom();
+        }
+        if (canEditBody(latest.status) === editable) {
+          return Response.json(token);
+        }
+        content = latest;
+      }
+      return denyWithReadOnlyRoom();
     } catch {
       return Response.json({ error: "forbidden" }, { status: 403 });
     }

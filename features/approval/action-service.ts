@@ -264,21 +264,18 @@ export function makeApprovalActions(dependencies: Dependencies) {
       }
       const parsedId = contentIdSchema.safeParse(contentId);
       if (!parsedId.success) return { ok: false, message: "找不到这份内容。" };
+      const current = await dependencies.repository.find(parsedId.data);
+      if (!current) return { ok: false, message: "找不到这份内容。" };
+      try {
+        await dependencies.setRoomEditable(current.liveblocksRoomId, false);
+      } catch {
+        return { ok: false, message: "暂时无法锁定内容，请稍后再试。" };
+      }
       const result = await save(parsedId.data, () =>
         dependencies.repository.archive(parsedId.data, user.id)
       );
-      if (result.ok) {
-        try {
-          await dependencies.setRoomEditable(
-            result.data.liveblocksRoomId,
-            false
-          );
-        } catch {
-          return {
-            ok: false,
-            message: "内容已经收起，但权限同步失败，请刷新页面确认。",
-          };
-        }
+      if (!result.ok) {
+        await reconcileRoomAccess(parsedId.data).catch(() => false);
       }
       return result;
     },
