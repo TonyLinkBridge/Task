@@ -1,9 +1,22 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@liveblocks/react-blocknote", () => ({
-  AnchoredThreads: () => <div>电脑留言</div>,
-  FloatingThreads: () => <div>手机留言</div>,
+  AnchoredThreads: ({ threads }: { threads: Array<{ resolved: boolean }> }) => (
+    <div>
+      {threads.map((thread, index) => (
+        <span key={index}>{thread.resolved ? "已解决留言" : "未解决留言"}</span>
+      ))}
+    </div>
+  ),
+  FloatingThreads: ({ threads }: { threads: Array<{ resolved: boolean }> }) => (
+    <div>
+      {threads.map((thread, index) => (
+        <span key={index}>{thread.resolved ? "手机已解决留言" : "手机未解决留言"}</span>
+      ))}
+    </div>
+  ),
 }));
 
 import { InlineThreads } from "@/features/content/components/inline-threads";
@@ -49,5 +62,35 @@ describe("InlineThreads", () => {
 
     expect(screen.queryByTestId("anchored-threads")).not.toBeInTheDocument();
     expect(screen.getByTestId("floating-threads")).toBeInTheDocument();
+  });
+
+  it("lets a user switch from open threads to resolved threads", async () => {
+    const user = userEvent.setup();
+    setDesktopViewport(true);
+    render(
+      <InlineThreads
+        editor={{} as never}
+        threads={[
+          { id: "open", resolved: false },
+          { id: "resolved", resolved: true },
+        ] as never}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: "未解决 1" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    expect(screen.getByText("未解决留言")).toBeInTheDocument();
+    expect(screen.queryByText("已解决留言")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "已解决 1" }));
+
+    expect(screen.getByRole("button", { name: "已解决 1" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    expect(screen.getByText("已解决留言")).toBeInTheDocument();
+    expect(screen.queryByText("未解决留言")).not.toBeInTheDocument();
   });
 });

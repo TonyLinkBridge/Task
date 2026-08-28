@@ -57,7 +57,7 @@ export function BlockNoteEditor({
   const ready = useIsEditorReady();
   const status = useStatus();
   const syncStatus = useSyncStatus();
-  const { threads } = useThreads({ query: { resolved: false } });
+  const { threads } = useThreads();
   const { resolvedTheme } = useTheme();
   const blockNoteTheme = resolvedTheme === "dark" ? "dark" : "light";
 
