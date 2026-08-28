@@ -6,6 +6,7 @@ import {
   AnchoredThreads,
   FloatingThreads,
 } from "@liveblocks/react-blocknote";
+import { useMarkThreadAsUnresolved } from "@liveblocks/react/suspense";
 import { Thread } from "@liveblocks/react-ui";
 import { useState, useSyncExternalStore } from "react";
 
@@ -33,6 +34,7 @@ export function InlineThreads({
   threads: ThreadData[];
 }) {
   const [view, setView] = useState<"open" | "resolved">("open");
+  const markThreadAsUnresolved = useMarkThreadAsUnresolved();
   const isDesktop = useSyncExternalStore(
     subscribeToViewport,
     getDesktopSnapshot,
@@ -51,12 +53,20 @@ export function InlineThreads({
   const resolvedThreadList = resolvedThreads.length > 0 ? (
     <div className="space-y-3">
       {resolvedThreads.map((thread) => (
-        <Thread
-          key={thread.id}
-          thread={thread}
-          showComposer={false}
-          showResolveAction
-        />
+        <div key={thread.id} className="space-y-2">
+          <Thread
+            thread={thread}
+            showComposer={false}
+            showResolveAction={false}
+          />
+          <button
+            className="w-full rounded-md border bg-background px-3 py-2 text-sm font-medium hover:bg-muted"
+            onClick={() => markThreadAsUnresolved(thread.id)}
+            type="button"
+          >
+            重新打开
+          </button>
+        </div>
       ))}
     </div>
   ) : (

@@ -2,6 +2,12 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+const markThreadAsUnresolved = vi.hoisted(() => vi.fn());
+
+vi.mock("@liveblocks/react/suspense", () => ({
+  useMarkThreadAsUnresolved: () => markThreadAsUnresolved,
+}));
+
 vi.mock("@liveblocks/react-blocknote", () => ({
   AnchoredThreads: ({ threads }: { threads: Array<{ resolved: boolean }> }) => (
     <div>
@@ -23,7 +29,6 @@ vi.mock("@liveblocks/react-ui", () => ({
   Thread: ({ thread }: { thread: { resolved: boolean } }) => (
     <article>
       <span>{thread.resolved ? "已解决留言卡片" : "未解决留言卡片"}</span>
-      {thread.resolved ? <button>Re-open thread</button> : null}
     </article>
   ),
 }));
@@ -75,6 +80,7 @@ describe("InlineThreads", () => {
 
   it("lets a user switch from open threads to resolved threads", async () => {
     const user = userEvent.setup();
+    markThreadAsUnresolved.mockClear();
     setDesktopViewport(true);
     render(
       <InlineThreads
@@ -101,8 +107,8 @@ describe("InlineThreads", () => {
     );
     expect(screen.getByText("已解决留言卡片")).toBeInTheDocument();
     expect(screen.queryByText("未解决留言")).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Re-open thread" })
-    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "重新打开" }));
+
+    expect(markThreadAsUnresolved).toHaveBeenCalledWith("resolved");
   });
 });
