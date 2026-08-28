@@ -74,8 +74,8 @@ export function BlockNoteEditor({
 
   return (
     <section className="space-y-2" data-testid="content-editor">
-      <div className="flex items-start gap-4">
-        <div className="min-h-72 min-w-0 flex-1 overflow-hidden rounded-xl border bg-background py-4">
+      <div className="relative w-full">
+        <div className="min-h-72 w-full min-w-0 overflow-hidden rounded-xl border bg-background py-4">
           <BlockNoteView
             editor={editor}
             editable={editable}
