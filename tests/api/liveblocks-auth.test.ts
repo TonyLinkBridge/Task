@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { makeLiveblocksAuthHandler } from "@/app/api/liveblocks-auth/route";
+import { makeLiveblocksAuthHandler } from "@/features/content/api/liveblocks-auth-handler";
 
 function requestWithRoom(room: unknown) {
   return new Request("http://localhost/api/liveblocks-auth", {

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   makeLiveblocksWebhookHandler,
   mapInlineCommentEvent,
-} from "@/app/api/liveblocks-webhook/route";
+} from "@/features/content/api/liveblocks-webhook-handler";
 
 const commentEvent = {
   type: "commentCreated" as const,

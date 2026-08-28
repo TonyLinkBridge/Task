@@ -7,6 +7,7 @@ const validEnvironment = {
   CLERK_SECRET_KEY: "sk_test_example",
   ALLOWED_SLACK_TEAM_ID: "T094DTFCVA8",
   NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_example",
   SUPABASE_SERVICE_ROLE_KEY: "service-role-example",
   NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY: "pk_dev_example",
   LIVEBLOCKS_SECRET_KEY: "sk_dev_example",

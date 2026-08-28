@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { makeLiveblocksUsersHandler } from "@/app/api/liveblocks-users/route";
+import { makeLiveblocksUsersHandler } from "@/features/content/api/liveblocks-users-handler";
 
 describe("POST /api/liveblocks-users", () => {
   it("returns member names in the same order requested by comments", async () => {
