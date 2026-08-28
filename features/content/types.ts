@@ -19,6 +19,11 @@ export type ContentRecord = {
   publishAt: string;
   liveblocksRoomId: string;
   currentVersion: number;
+  requiredApprovals: 1 | 2;
+  requestedReviewerId: string | null;
+  publishedBy: string | null;
+  publishedAt: string | null;
+  linkedTaskId: string | null;
   archivedAt: string | null;
   createdAt: string;
   updatedAt: string;

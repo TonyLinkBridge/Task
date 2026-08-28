@@ -19,6 +19,11 @@ export type ContentRow = {
   publish_at: string;
   liveblocks_room_id: string;
   current_version: number;
+  required_approvals?: 1 | 2;
+  requested_reviewer_id?: string | null;
+  published_by?: string | null;
+  published_at?: string | null;
+  linked_task_id?: string | null;
   archived_at: string | null;
   created_at: string;
   updated_at: string;
@@ -57,6 +62,11 @@ export function mapContentRow(row: ContentRow): ContentRecord {
     publishAt: row.publish_at,
     liveblocksRoomId: row.liveblocks_room_id,
     currentVersion: row.current_version,
+    requiredApprovals: row.required_approvals ?? 2,
+    requestedReviewerId: row.requested_reviewer_id ?? null,
+    publishedBy: row.published_by ?? null,
+    publishedAt: row.published_at ?? null,
+    linkedTaskId: row.linked_task_id ?? null,
     archivedAt: row.archived_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
