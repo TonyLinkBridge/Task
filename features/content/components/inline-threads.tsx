@@ -6,6 +6,7 @@ import {
   AnchoredThreads,
   FloatingThreads,
 } from "@liveblocks/react-blocknote";
+import { Thread } from "@liveblocks/react-ui";
 import { useState, useSyncExternalStore } from "react";
 
 const desktopQuery = "(min-width: 1024px)";
@@ -41,6 +42,27 @@ export function InlineThreads({
   const resolvedThreads = threads.filter((thread) => thread.resolved);
   const visibleThreads = view === "open" ? openThreads : resolvedThreads;
 
+  const emptyState = (
+    <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
+      这个分类还没有留言
+    </p>
+  );
+
+  const resolvedThreadList = resolvedThreads.length > 0 ? (
+    <div className="space-y-3">
+      {resolvedThreads.map((thread) => (
+        <Thread
+          key={thread.id}
+          thread={thread}
+          showComposer={false}
+          showResolveAction
+        />
+      ))}
+    </div>
+  ) : (
+    emptyState
+  );
+
   const filters = (
     <div
       aria-label="指定文字留言"
@@ -69,31 +91,31 @@ export function InlineThreads({
   return isDesktop ? (
     <div data-testid="anchored-threads" className="w-80 shrink-0">
       {filters}
-      {visibleThreads.length > 0 ? (
+      {view === "resolved" ? (
+        resolvedThreadList
+      ) : visibleThreads.length > 0 ? (
         <AnchoredThreads
           editor={editor}
           threads={visibleThreads}
           className="w-full"
         />
       ) : (
-        <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
-          这个分类还没有留言
-        </p>
+        emptyState
       )}
     </div>
   ) : (
     <div data-testid="floating-threads">
       {filters}
-      {visibleThreads.length > 0 ? (
+      {view === "resolved" ? (
+        resolvedThreadList
+      ) : visibleThreads.length > 0 ? (
         <FloatingThreads
           editor={editor}
           threads={visibleThreads}
           className="w-[min(22rem,calc(100vw-2rem))]"
         />
       ) : (
-        <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
-          这个分类还没有留言
-        </p>
+        emptyState
       )}
     </div>
   );

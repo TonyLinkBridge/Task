@@ -19,6 +19,15 @@ vi.mock("@liveblocks/react-blocknote", () => ({
   ),
 }));
 
+vi.mock("@liveblocks/react-ui", () => ({
+  Thread: ({ thread }: { thread: { resolved: boolean } }) => (
+    <article>
+      <span>{thread.resolved ? "已解决留言卡片" : "未解决留言卡片"}</span>
+      {thread.resolved ? <button>Re-open thread</button> : null}
+    </article>
+  ),
+}));
+
 import { InlineThreads } from "@/features/content/components/inline-threads";
 
 function setDesktopViewport(matches: boolean) {
@@ -90,7 +99,10 @@ describe("InlineThreads", () => {
       "aria-pressed",
       "true"
     );
-    expect(screen.getByText("已解决留言")).toBeInTheDocument();
+    expect(screen.getByText("已解决留言卡片")).toBeInTheDocument();
     expect(screen.queryByText("未解决留言")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Re-open thread" })
+    ).toBeInTheDocument();
   });
 });
