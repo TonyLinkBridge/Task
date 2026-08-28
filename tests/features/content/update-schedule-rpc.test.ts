@@ -14,6 +14,7 @@ const migrationNames = [
   "202608280008_notifications_audit.sql",
   "202608280009_notification_workflow.sql",
   "202608280010_update_content_schedule.sql",
+  "202608280011_reschedule_content_reminders.sql",
 ];
 
 const contentId = "22222222-2222-4222-8222-222222222222";
@@ -128,6 +129,86 @@ describe("update_scheduled_content", () => {
     `);
     expect(permissions.rows[0].proacl).toContain("service_role=X");
     expect(permissions.rows[0].proacl).not.toMatch(/anon=X|authenticated=X/);
+  });
+
+  it("cancels unsent reminders and schedules a new advance reminder when publish time changes", async () => {
+    await database.exec(`
+      update notification_settings
+      set slack_channel_id = 'G001',
+        slack_channel_name = '业务赋能',
+        reminder_minutes = 60;
+
+      select enqueue_content_notification(
+        'publish_advance', '${contentId}', null,
+        '2026-08-29T01:00:00.000Z', 'old-advance'
+      );
+      select enqueue_content_notification(
+        'publish_due_unapproved', '${contentId}', null,
+        '2026-08-29T02:00:00.000Z', 'old-due'
+      );
+      select enqueue_content_notification(
+        'publish_advance', '${contentId}', null,
+        '2026-08-28T01:00:00.000Z', 'sent-history'
+      );
+
+      update slack_deliveries
+      set status = 'failed'
+      where delivery_key like '%old-due';
+      update slack_deliveries
+      set status = 'sent', sent_at = '2026-08-28T01:00:00.000Z'
+      where delivery_key like '%sent-history';
+
+      select update_scheduled_content(
+        '${contentId}', 'author', '新标题', 'new-assignee',
+        '2026-09-02T02:00:00.000Z',
+        array['${platformA}', '${platformB}']::uuid[]
+      );
+    `);
+
+    const deliveries = await database.query<{
+      event_type: string;
+      status: string;
+      is_new_time: boolean;
+      payload_publish_at: string;
+    }>(`
+      select event_type, status,
+        scheduled_for = '2026-09-02T01:00:00.000Z'::timestamptz as is_new_time,
+        payload #>> '{content,publishAt}' as payload_publish_at
+      from slack_deliveries
+      order by case status
+        when 'cancelled' then 1
+        when 'pending' then 2
+        when 'sent' then 3
+        else 4
+      end, event_type
+    `);
+
+    expect(deliveries.rows).toEqual([
+      {
+        event_type: "publish_advance",
+        status: "cancelled",
+        is_new_time: false,
+        payload_publish_at: "2026-08-29T10:00:00+08:00",
+      },
+      {
+        event_type: "publish_due_unapproved",
+        status: "cancelled",
+        is_new_time: false,
+        payload_publish_at: "2026-08-29T10:00:00+08:00",
+      },
+      {
+        event_type: "publish_advance",
+        status: "pending",
+        is_new_time: true,
+        payload_publish_at: "2026-09-02T10:00:00+08:00",
+      },
+      {
+        event_type: "publish_advance",
+        status: "sent",
+        is_new_time: false,
+        payload_publish_at: "2026-08-29T10:00:00+08:00",
+      },
+    ]);
   });
 
   it("rejects an unrelated employee and content under review", async () => {
