@@ -8,6 +8,9 @@ const validEnvironment = {
   ALLOWED_SLACK_TEAM_ID: "T094DTFCVA8",
   NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
   SUPABASE_SERVICE_ROLE_KEY: "service-role-example",
+  NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY: "pk_dev_example",
+  LIVEBLOCKS_SECRET_KEY: "sk_dev_example",
+  LIVEBLOCKS_WEBHOOK_SECRET: "whsec_example",
 };
 
 describe("parseServerEnv", () => {

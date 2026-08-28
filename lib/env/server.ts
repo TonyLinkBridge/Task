@@ -6,6 +6,9 @@ const serverEnvSchema = z.object({
   ALLOWED_SLACK_TEAM_ID: z.string().regex(/^T[A-Z0-9]+$/),
   NEXT_PUBLIC_SUPABASE_URL: z.url(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY: z.string().regex(/^pk_/),
+  LIVEBLOCKS_SECRET_KEY: z.string().regex(/^sk_/),
+  LIVEBLOCKS_WEBHOOK_SECRET: z.string().min(1),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
