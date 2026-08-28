@@ -14,6 +14,7 @@ export type SlackChannel = {
 type SlackResponse = {
   ok: boolean;
   error?: string;
+  ts?: string;
   channels?: SlackChannelRow[];
   channel?: SlackChannelRow;
   response_metadata?: { next_cursor?: string };
@@ -33,6 +34,22 @@ export function makeSlackClient({
     }
     const response = await fetcher(url, {
       headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = (await response.json()) as SlackResponse;
+    if (!response.ok || !data.ok) {
+      throw new Error(`SLACK_API_ERROR:${data.error ?? response.status}`);
+    }
+    return data;
+  }
+
+  async function post(path: string, body: unknown) {
+    const response = await fetcher(`https://slack.com/api/${path}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json; charset=utf-8",
+      },
+      body: JSON.stringify(body),
     });
     const data = (await response.json()) as SlackResponse;
     if (!response.ok || !data.ok) {
@@ -76,6 +93,16 @@ export function makeSlackClient({
         throw new Error("SLACK_APP_NOT_IN_CHANNEL");
       }
       return { id: channel.id, name: channel.name, isPrivate };
+    },
+
+    async postMessage(input: {
+      channel: string;
+      text: string;
+      blocks?: unknown[];
+    }): Promise<{ timestamp: string }> {
+      const data = await post("chat.postMessage", input);
+      if (!data.ts) throw new Error("SLACK_API_ERROR:MISSING_TIMESTAMP");
+      return { timestamp: data.ts };
     },
   };
 }

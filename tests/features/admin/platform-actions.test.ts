@@ -35,6 +35,9 @@ function setup(role: "employee" | "admin" = "admin") {
         archivedAt: archived ? "2026-08-28T03:00:00.000Z" : null,
       };
     },
+    recordAudit: async (actorId, action, platform) => {
+      calls.push(`audit:${action}:${platform.id}:${actorId}`);
+    },
     revalidatePath: (path) => calls.push(`revalidate:${path}`),
   });
   return { actions, calls };
@@ -67,6 +70,7 @@ describe("platform admin actions", () => {
     });
     expect(calls).toEqual([
       "create:LinkedIn:#2563eb",
+      `audit:platform_created:${activePlatform.id}:admin-a`,
       "revalidate:/admin/settings",
       "revalidate:/content/new",
       "revalidate:/content",
@@ -97,5 +101,8 @@ describe("platform admin actions", () => {
     );
     expect(calls).toContain(`archive:${activePlatform.id}`);
     expect(calls).toContain(`restore:${activePlatform.id}`);
+    expect(calls).toContain(`audit:platform_updated:${activePlatform.id}:admin-a`);
+    expect(calls).toContain(`audit:platform_archived:${activePlatform.id}:admin-a`);
+    expect(calls).toContain(`audit:platform_restored:${activePlatform.id}:admin-a`);
   });
 });

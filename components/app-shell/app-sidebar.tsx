@@ -34,7 +34,12 @@ export function AppSidebar({ currentUser }: { currentUser: VerifiedUser }) {
         <AdminOnly role={currentUser.role}>
           <SidebarGroup>
             <SidebarGroupLabel>管理员</SidebarGroupLabel>
-            <SidebarGroupContent><SidebarMenu><SidebarMenuItem><SidebarMenuButton isActive={pathname.startsWith("/admin")} render={<Link href="/admin/settings" />}><HugeiconsIcon icon={Settings02Icon} /><span>管理员设置</span></SidebarMenuButton></SidebarMenuItem></SidebarMenu></SidebarGroupContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem><SidebarMenuButton isActive={pathname.startsWith("/admin/settings")} render={<Link href="/admin/settings" />}><HugeiconsIcon icon={Settings02Icon} /><span>管理员设置</span></SidebarMenuButton></SidebarMenuItem>
+                <SidebarMenuItem><SidebarMenuButton isActive={pathname.startsWith("/admin/history")} render={<Link href="/admin/history" />}><HugeiconsIcon icon={Note01Icon} /><span>历史记录</span></SidebarMenuButton></SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
           </SidebarGroup>
         </AdminOnly>
       </SidebarContent>

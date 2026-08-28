@@ -15,6 +15,11 @@ type Dependencies = {
   create: (input: PlatformInput) => Promise<ContentPlatform>;
   update: (id: string, input: PlatformInput) => Promise<ContentPlatform>;
   setArchived: (id: string, archived: boolean) => Promise<ContentPlatform>;
+  recordAudit: (
+    actorId: string,
+    action: "platform_created" | "platform_updated" | "platform_archived" | "platform_restored",
+    platform: ContentPlatform
+  ) => Promise<void>;
   revalidatePath: (path: string) => void;
 };
 
@@ -33,14 +38,17 @@ function refreshPlatformPages(revalidatePath: (path: string) => void) {
 export function makePlatformActions(dependencies: Dependencies) {
   async function authorize() {
     const user = await dependencies.getVerifiedUser();
-    return user.role === "admin";
+    return user.role === "admin" ? user : null;
   }
 
   async function save(
+    actorId: string,
+    action: "platform_created" | "platform_updated" | "platform_archived" | "platform_restored",
     operation: () => Promise<ContentPlatform>
   ): Promise<PlatformActionResult> {
     try {
       const data = await operation();
+      await dependencies.recordAudit(actorId, action, data);
       refreshPlatformPages(dependencies.revalidatePath);
       return { ok: true, data };
     } catch {
@@ -50,21 +58,23 @@ export function makePlatformActions(dependencies: Dependencies) {
 
   return {
     async createPlatform(input: unknown): Promise<PlatformActionResult> {
-      if (!(await authorize())) {
+      const user = await authorize();
+      if (!user) {
         return { ok: false, message: ADMIN_ONLY_MESSAGE };
       }
       const parsed = platformInputSchema.safeParse(input);
       if (!parsed.success) {
         return { ok: false, message: "请检查平台名称和颜色。" };
       }
-      return save(() => dependencies.create(parsed.data));
+      return save(user.id, "platform_created", () => dependencies.create(parsed.data));
     },
 
     async updatePlatform(
       id: string,
       input: unknown
     ): Promise<PlatformActionResult> {
-      if (!(await authorize())) {
+      const user = await authorize();
+      if (!user) {
         return { ok: false, message: ADMIN_ONLY_MESSAGE };
       }
       const parsedId = z.uuid().safeParse(id);
@@ -72,29 +82,37 @@ export function makePlatformActions(dependencies: Dependencies) {
       if (!parsedId.success || !parsedInput.success) {
         return { ok: false, message: "请检查平台名称和颜色。" };
       }
-      return save(() => dependencies.update(parsedId.data, parsedInput.data));
+      return save(user.id, "platform_updated", () =>
+        dependencies.update(parsedId.data, parsedInput.data)
+      );
     },
 
     async archivePlatform(id: string): Promise<PlatformActionResult> {
-      if (!(await authorize())) {
+      const user = await authorize();
+      if (!user) {
         return { ok: false, message: ADMIN_ONLY_MESSAGE };
       }
       const parsedId = z.uuid().safeParse(id);
       if (!parsedId.success) {
         return { ok: false, message: "找不到这个平台。" };
       }
-      return save(() => dependencies.setArchived(parsedId.data, true));
+      return save(user.id, "platform_archived", () =>
+        dependencies.setArchived(parsedId.data, true)
+      );
     },
 
     async restorePlatform(id: string): Promise<PlatformActionResult> {
-      if (!(await authorize())) {
+      const user = await authorize();
+      if (!user) {
         return { ok: false, message: ADMIN_ONLY_MESSAGE };
       }
       const parsedId = z.uuid().safeParse(id);
       if (!parsedId.success) {
         return { ok: false, message: "找不到这个平台。" };
       }
-      return save(() => dependencies.setArchived(parsedId.data, false));
+      return save(user.id, "platform_restored", () =>
+        dependencies.setArchived(parsedId.data, false)
+      );
     },
   };
 }

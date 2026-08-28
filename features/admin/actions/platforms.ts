@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 
 import { makePlatformActions } from "@/features/admin/platform-action-service";
+import { adminRepository } from "@/features/admin/repository";
 import { contentRepository } from "@/features/content/repository";
 import { getVerifiedUser } from "@/lib/auth/get-verified-user";
 
@@ -10,6 +11,14 @@ const platformActions = makePlatformActions({
   update: (id, input) => contentRepository.updatePlatform(id, input),
   setArchived: (id, archived) =>
     contentRepository.setPlatformArchived(id, archived),
+  recordAudit: (actorId, action, platform) =>
+    adminRepository.recordAudit({
+      actorId,
+      entityType: "platform",
+      entityId: platform.id,
+      action,
+      afterData: platform,
+    }),
   revalidatePath,
 });
 

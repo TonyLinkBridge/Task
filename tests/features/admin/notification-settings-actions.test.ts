@@ -17,6 +17,7 @@ const enabledEvents: NotificationEventSettings = {
 
 function setup(role: "employee" | "admin" = "admin") {
   const saved: unknown[] = [];
+  const audited: unknown[] = [];
   const actions = makeNotificationSettingsActions({
     getVerifiedUser: async () => ({
       id: role === "admin" ? "admin-a" : "employee-a",
@@ -33,9 +34,12 @@ function setup(role: "employee" | "admin" = "admin") {
       saved.push(input);
       return { ...input, updatedAt: "2026-08-28T05:00:00.000Z" };
     },
+    recordAudit: async (input) => {
+      audited.push(input);
+    },
     revalidatePath: () => undefined,
   });
-  return { actions, saved };
+  return { actions, saved, audited };
 }
 
 describe("notification settings actions", () => {
@@ -56,7 +60,7 @@ describe("notification settings actions", () => {
   });
 
   it("validates the channel and saves its current name", async () => {
-    const { actions, saved } = setup();
+    const { actions, saved, audited } = setup();
 
     const result = await actions.saveNotificationSettings({
       channelId: "C001",
@@ -74,6 +78,13 @@ describe("notification settings actions", () => {
       },
     });
     expect(saved).toHaveLength(1);
+    expect(audited).toEqual([
+      expect.objectContaining({
+        actorId: "admin-a",
+        action: "notification_settings_updated",
+        channelId: "C001",
+      }),
+    ]);
   });
 
   it("explains when the app has not joined a private channel", async () => {
@@ -92,6 +103,7 @@ describe("notification settings actions", () => {
         ...input,
         updatedAt: "2026-08-28T05:00:00.000Z",
       }),
+      recordAudit: async () => undefined,
       revalidatePath: () => undefined,
     } as never);
 

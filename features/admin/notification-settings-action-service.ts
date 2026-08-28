@@ -37,6 +37,13 @@ type Dependencies = {
   getVerifiedUser: () => Promise<VerifiedUser>;
   getAllowedChannel: (id: string) => Promise<SlackChannel>;
   save: (input: SettingsSaveInput) => Promise<NotificationSettings>;
+  recordAudit: (input: {
+    actorId: string;
+    action: "notification_settings_updated";
+    channelId: string;
+    reminderMinutes: number;
+    enabledEvents: NotificationEventSettings;
+  }) => Promise<void>;
   revalidatePath: (path: string) => void;
 };
 
@@ -64,6 +71,13 @@ export function makeNotificationSettingsActions(dependencies: Dependencies) {
           reminderMinutes: parsed.data.reminderMinutes,
           enabledEvents: parsed.data.enabledEvents,
           updatedBy: user.id,
+        });
+        await dependencies.recordAudit({
+          actorId: user.id,
+          action: "notification_settings_updated",
+          channelId: channel.id,
+          reminderMinutes: parsed.data.reminderMinutes,
+          enabledEvents: parsed.data.enabledEvents,
         });
         dependencies.revalidatePath("/admin/settings");
         return { ok: true as const, data };

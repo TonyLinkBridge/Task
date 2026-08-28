@@ -14,6 +14,18 @@ const notificationSettingsActions = makeNotificationSettingsActions({
     return makeSlackClient({ token }).getAllowedChannel(id);
   },
   save: (input) => adminRepository.saveNotificationSettings(input),
+  recordAudit: (input) =>
+    adminRepository.recordAudit({
+      actorId: input.actorId,
+      entityType: "notification_settings",
+      entityId: "singleton",
+      action: input.action,
+      afterData: {
+        channelId: input.channelId,
+        reminderMinutes: input.reminderMinutes,
+        enabledEvents: input.enabledEvents,
+      },
+    }),
   revalidatePath,
 });
 

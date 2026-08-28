@@ -6,6 +6,10 @@ import {
   type NotificationSettings,
 } from "@/features/notifications/types";
 import type { AssignableUser } from "@/features/tasks/types";
+import type {
+  AuditEventView,
+  SlackDeliveryView,
+} from "@/features/admin/history-types";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 type SettingsRow = {
@@ -105,6 +109,102 @@ export function createAdminRepository(providedClient?: SupabaseClient) {
         after_data: input.afterData ?? null,
       });
       if (error) throw new Error(`ADMIN_DATABASE_ERROR:${error.message}`);
+    },
+
+    async findSlackDelivery(id: string) {
+      const { data, error } = await client()
+        .from("slack_deliveries")
+        .select("id, status")
+        .eq("id", id)
+        .maybeSingle();
+      if (error) throw new Error(`ADMIN_DATABASE_ERROR:${error.message}`);
+      return data as {
+        id: string;
+        status: "pending" | "sending" | "sent" | "failed" | "cancelled";
+      } | null;
+    },
+
+    async resetSlackDelivery(id: string) {
+      const { data, error } = await client()
+        .from("slack_deliveries")
+        .update({
+          status: "pending",
+          attempt_count: 0,
+          next_attempt_at: new Date().toISOString(),
+          last_error: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id)
+        .eq("status", "failed")
+        .select("id")
+        .maybeSingle();
+      if (error || !data) {
+        throw new Error(`ADMIN_DATABASE_ERROR:${error?.message ?? "NOT_FAILED"}`);
+      }
+    },
+
+    async listSlackDeliveries(limit = 100): Promise<SlackDeliveryView[]> {
+      const { data, error } = await client()
+        .from("slack_deliveries")
+        .select(
+          "id, event_type, status, attempt_count, scheduled_for, sent_at, last_error, channel_id, content:contents(title)"
+        )
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      if (error) throw new Error(`ADMIN_DATABASE_ERROR:${error.message}`);
+      return (data ?? []).map((item) => {
+        const row = item as unknown as {
+          id: string;
+          event_type: string;
+          status: SlackDeliveryView["status"];
+          attempt_count: number;
+          scheduled_for: string;
+          sent_at: string | null;
+          last_error: string | null;
+          channel_id: string;
+          content: { title: string } | null;
+        };
+        return {
+          id: row.id,
+          eventType: row.event_type,
+          status: row.status,
+          attemptCount: row.attempt_count,
+          scheduledFor: row.scheduled_for,
+          sentAt: row.sent_at,
+          lastError: row.last_error,
+          channelId: row.channel_id,
+          contentTitle: row.content?.title ?? null,
+        };
+      });
+    },
+
+    async listAuditEvents(limit = 200): Promise<AuditEventView[]> {
+      const { data, error } = await client()
+        .from("audit_events")
+        .select(
+          "id, entity_type, entity_id, action, created_at, actor:profiles!audit_events_actor_id_fkey(display_name)"
+        )
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      if (error) throw new Error(`ADMIN_DATABASE_ERROR:${error.message}`);
+      return (data ?? []).map((item) => {
+        const row = item as unknown as {
+          id: string;
+          entity_type: string;
+          entity_id: string;
+          action: string;
+          created_at: string;
+          actor: { display_name: string } | null;
+        };
+        return {
+          id: row.id,
+          actorName: row.actor?.display_name ?? null,
+          entityType: row.entity_type,
+          entityId: row.entity_id,
+          action: row.action,
+          createdAt: row.created_at,
+        };
+      });
     },
   };
 }
