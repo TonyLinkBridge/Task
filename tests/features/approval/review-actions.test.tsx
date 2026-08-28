@@ -256,4 +256,29 @@ describe("ReviewActions", () => {
 
     expect(screen.queryByRole("button", { name: "交给上司检查" })).not.toBeInTheDocument();
   });
+
+  it("warns before reopening approved content for editing", async () => {
+    const user = userEvent.setup();
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const unlockAction = vi.fn(async () => ({
+      ok: true as const,
+      data: content({ status: "changes_requested" }),
+    }));
+    render(
+      <ReviewActions
+        content={content({ status: "approved" })}
+        approvals={[approval]}
+        currentUser={{ id: "employee", role: "employee", name: "员工", imageUrl: null }}
+        admins={[]}
+        document={[]}
+        unlockAction={unlockAction}
+      />
+    );
+
+    await user.click(screen.getByRole("button", { name: "修改内容" }));
+
+    expect(confirm).toHaveBeenCalledWith("修改后需要重新批准。要继续吗？");
+    await waitFor(() => expect(unlockAction).toHaveBeenCalledWith(contentId));
+    confirm.mockRestore();
+  });
 });

@@ -180,6 +180,20 @@ describe("content approval actions", () => {
     expect(calls).toEqual([]);
   });
 
+  it("reopens approved content and restores body editing", async () => {
+    const { actions, calls, roomCalls } = createHarness({
+      role: "employee",
+      record: content({ status: "approved" }),
+    });
+
+    await expect(actions.unlockApprovedContent(contentId)).resolves.toMatchObject({
+      ok: true,
+      data: { status: "changes_requested" },
+    });
+    expect(calls).toEqual(["unlock:user_employee"]);
+    expect(roomCalls).toEqual([`content:${contentId}:write`]);
+  });
+
   it("only lets an admin archive content", async () => {
     const { actions, calls } = createHarness({ role: "employee" });
 

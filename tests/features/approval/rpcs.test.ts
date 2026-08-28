@@ -163,6 +163,35 @@ describe("approval workflow RPCs", () => {
       select approve_content_version('${employeeContentId}', 1, 'admin-a');
       select approve_content_version('${employeeContentId}', 1, 'admin-b');
       select unlock_approved_content('${employeeContentId}', 'employee');
+    `);
+
+    const reopened = await database.query<{
+      status: string;
+      current_version: number;
+      active_approvals: number;
+      invalid_approvals: number;
+      invalidation_events: number;
+    }>(`
+      select c.status::text, c.current_version,
+        count(a.id) filter (where a.invalidated_at is null)::integer as active_approvals,
+        count(a.id) filter (where a.invalidated_at is not null)::integer as invalid_approvals,
+        (select count(*)::integer from content_review_events e
+         where e.content_id = c.id and e.event_type = 'approval_invalidated')
+          as invalidation_events
+      from contents c
+      left join content_approvals a on a.content_id = c.id
+      where c.id = '${employeeContentId}'
+      group by c.id
+    `);
+    expect(reopened.rows[0]).toEqual({
+      status: "changes_requested",
+      current_version: 1,
+      active_approvals: 0,
+      invalid_approvals: 2,
+      invalidation_events: 1,
+    });
+
+    await database.exec(`
       select submit_content_for_review(
         '${employeeContentId}', 'employee', '[{"version":2}]'::jsonb, null
       );
