@@ -167,7 +167,7 @@ git commit -m "feat: add server configuration and profiles"
 - Produces: `assertAllowedSlackTeam(actual: string, expected: string): void`。
 - Produces: `getVerifiedUser(): Promise<{ id: string; role: AppRole; name: string; imageUrl: string | null }>`。
 
-- [ ] **Step 1: 写 Workspace 判断测试**
+- [x] **Step 1: 写 Workspace 判断测试**
 
 ```ts
 it("accepts the designated workspace", () => {
@@ -179,12 +179,13 @@ it("rejects another workspace", () => {
 });
 ```
 
-- [ ] **Step 2: 实现 Slack Team ID 读取**
+- [x] **Step 2: 实现 Slack Team ID 读取**
 
 `getVerifiedUser()` 的第一次验证顺序固定为：
 
 ```ts
-const tokens = await clerkClient.users.getUserOauthAccessToken(userId, "oauth_slack");
+const client = await clerkClient();
+const tokens = await client.users.getUserOauthAccessToken(userId, "slack");
 const response = await fetch("https://slack.com/api/openid.connect.userInfo", {
   headers: { Authorization: `Bearer ${tokens.data[0].token}` },
 });
@@ -202,11 +203,11 @@ publicMetadata: {
 }
 ```
 
-- [ ] **Step 3: 同步 Supabase profile**
+- [x] **Step 3: 同步 Supabase profile**
 
 验证通过后 `upsert` `clerk_user_id`, `role`, `display_name`, `avatar_url`, `slack_team_id`, `slack_verified_at`。已有验证时间时跳过 Slack 请求，但仍从 Clerk 当前 metadata 同步角色。
 
-- [ ] **Step 4: 测试三条路径**
+- [x] **Step 4: 测试三条路径**
 
 ```bash
 pnpm test tests/lib/slack-workspace.test.ts tests/lib/get-verified-user.test.ts
@@ -214,7 +215,7 @@ pnpm test tests/lib/slack-workspace.test.ts tests/lib/get-verified-user.test.ts
 
 测试必须覆盖：未登录、第一次正确 Workspace、已有验证时间不再请求 Slack。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add lib/auth app/access-denied tests
