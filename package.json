@@ -25,6 +25,7 @@
     "@liveblocks/node": "^3.24.1",
     "@liveblocks/react": "^3.24.1",
     "@liveblocks/react-blocknote": "^3.24.1",
+    "@liveblocks/react-ui": "^3.24.1",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@supabase/supabase-js": "^2.112.4",
     "class-variance-authority": "^0.7.1",

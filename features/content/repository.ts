@@ -4,6 +4,7 @@ import type { ContentInput } from "@/features/content/schema";
 import type {
   ContentAttachment,
   ContentComment,
+  ContentCommentView,
   ContentRecord,
   ContentStatus,
 } from "@/features/content/types";
@@ -22,6 +23,29 @@ export type ContentRow = {
   created_at: string;
   updated_at: string;
 };
+
+type ContentCommentRow = {
+  id: string;
+  content_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+  author: { display_name: string; avatar_url: string | null };
+};
+
+export function mapContentCommentRow(
+  row: ContentCommentRow
+): ContentCommentView {
+  return {
+    id: row.id,
+    contentId: row.content_id,
+    authorId: row.author_id,
+    body: row.body,
+    createdAt: row.created_at,
+    authorName: row.author.display_name,
+    authorImageUrl: row.author.avatar_url,
+  };
+}
 
 export function mapContentRow(row: ContentRow): ContentRecord {
   return {
@@ -119,6 +143,20 @@ export function createContentRepository(
         body: row.body,
         createdAt: row.created_at,
       };
+    },
+
+    async listComments(contentId: string): Promise<ContentCommentView[]> {
+      const { data, error } = await client()
+        .from("content_comments")
+        .select(
+          "id, content_id, author_id, body, created_at, author:profiles!content_comments_author_id_fkey(display_name, avatar_url)"
+        )
+        .eq("content_id", contentId)
+        .order("created_at");
+      if (error) throw new Error(`CONTENT_DATABASE_ERROR:${error.message}`);
+      return (data ?? []).map((row) =>
+        mapContentCommentRow(row as unknown as ContentCommentRow)
+      );
     },
 
     async findAttachment(id: string): Promise<ContentAttachment | null> {

@@ -2,10 +2,13 @@
 
 import { BlockNoteView } from "@blocknote/mantine";
 import {
+  FloatingComposer,
   useCreateBlockNoteWithLiveblocks,
   useIsEditorReady,
 } from "@liveblocks/react-blocknote";
-import { useStatus } from "@liveblocks/react/suspense";
+import { useStatus, useThreads } from "@liveblocks/react/suspense";
+
+import { InlineThreads } from "@/features/content/components/inline-threads";
 
 type ConnectionStatus = ReturnType<typeof useStatus>;
 
@@ -35,13 +38,19 @@ export function EditorSyncStatus({
   );
 }
 
-export function BlockNoteEditor({ editable }: { contentId: string; editable: boolean }) {
+export function BlockNoteEditor({
+  editable,
+}: {
+  contentId: string;
+  editable: boolean;
+}) {
   const editor = useCreateBlockNoteWithLiveblocks(
     {},
     { field: "document", offlineSupport_experimental: false }
   );
   const ready = useIsEditorReady();
   const status = useStatus();
+  const { threads } = useThreads({ query: { resolved: false } });
 
   if (!ready) {
     return <EditorSyncStatus ready={false} status={status} />;
@@ -49,8 +58,14 @@ export function BlockNoteEditor({ editable }: { contentId: string; editable: boo
 
   return (
     <section className="space-y-2" data-testid="content-editor">
-      <div className="min-h-72 overflow-hidden rounded-xl border bg-background py-4">
-        <BlockNoteView editor={editor} editable={editable} />
+      <div className="flex items-start gap-4">
+        <div className="min-h-72 min-w-0 flex-1 overflow-hidden rounded-xl border bg-background py-4">
+          <BlockNoteView editor={editor} editable={editable} />
+          {editable ? (
+            <FloatingComposer editor={editor} className="w-[22rem]" />
+          ) : null}
+        </div>
+        <InlineThreads editor={editor} threads={threads} />
       </div>
       <EditorSyncStatus ready status={status} />
     </section>

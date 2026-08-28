@@ -12,7 +12,7 @@ function getLiveblocksServer() {
   return serverClient;
 }
 
-function userColor(userId: string) {
+export function getUserColor(userId: string) {
   const colors = ["#2563eb", "#7c3aed", "#059669", "#dc2626"];
   const total = [...userId].reduce((sum, character) => sum + character.charCodeAt(0), 0);
   return colors[total % colors.length];
@@ -27,7 +27,7 @@ export async function authorizeContentRoom(
       name: user.name,
       avatar: user.imageUrl ?? "",
       role: user.role,
-      color: userColor(user.id),
+      color: getUserColor(user.id),
     },
   });
   session.allow(roomId, ["*:write"]);

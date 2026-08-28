@@ -50,3 +50,8 @@ export type ContentComment = {
   body: string;
   createdAt: string;
 };
+
+export type ContentCommentView = ContentComment & {
+  authorName: string;
+  authorImageUrl: string | null;
+};

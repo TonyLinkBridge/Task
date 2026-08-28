@@ -3,6 +3,8 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
+import "@liveblocks/react-ui/styles.css";
+import "@liveblocks/react-blocknote/styles.css";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 

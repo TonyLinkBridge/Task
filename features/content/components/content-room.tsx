@@ -14,7 +14,18 @@ export function ContentRoom({
   children: React.ReactNode;
 }) {
   return (
-    <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+    <LiveblocksProvider
+      authEndpoint="/api/liveblocks-auth"
+      resolveUsers={async ({ userIds }) => {
+        const response = await fetch("/api/liveblocks-users", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ userIds }),
+        });
+        if (!response.ok) return undefined;
+        return response.json();
+      }}
+    >
       <RoomProvider id={`content:${contentId}`} initialPresence={{}}>
         <ClientSideSuspense
           fallback={

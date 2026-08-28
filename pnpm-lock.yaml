@@ -69,6 +69,9 @@ importers:
       '@liveblocks/react-blocknote':
         specifier: ^3.24.1
         version: 3.24.1(694f375dbd8cca380a4dde58bb1ca221)
+      '@liveblocks/react-ui':
+        specifier: ^3.24.1
+        version: 3.24.1(@types/json-schema@7.0.15)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@modelcontextprotocol/sdk':
         specifier: ^1.29.0
         version: 1.29.0(zod@4.4.3)
@@ -5316,7 +5319,7 @@ snapshots:
 
   '@liveblocks/react-ui@3.24.1(@types/json-schema@7.0.15)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
-      '@floating-ui/react-dom': 2.1.8(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@floating-ui/react-dom': 2.1.9(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@liveblocks/client': 3.24.1(@types/json-schema@7.0.15)
       '@liveblocks/core': 3.24.1(@types/json-schema@7.0.15)
       '@liveblocks/react': 3.24.1(@types/json-schema@7.0.15)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react@19.2.3)

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createContentRepository,
+  mapContentCommentRow,
   mapContentRow,
 } from "@/features/content/repository";
 
@@ -75,5 +76,28 @@ describe("createContentRepository", () => {
     );
 
     expect(content.liveblocksRoomId).toBe(`content:${contentId}`);
+  });
+});
+
+describe("mapContentCommentRow", () => {
+  it("includes the ordinary comment author's profile", () => {
+    expect(
+      mapContentCommentRow({
+        id: "33333333-3333-4333-8333-333333333333",
+        content_id: contentId,
+        author_id: "user_admin",
+        body: "请换一张图片",
+        created_at: "2026-08-28T03:00:00.000Z",
+        author: { display_name: "上司", avatar_url: null },
+      })
+    ).toEqual({
+      id: "33333333-3333-4333-8333-333333333333",
+      contentId,
+      authorId: "user_admin",
+      body: "请换一张图片",
+      createdAt: "2026-08-28T03:00:00.000Z",
+      authorName: "上司",
+      authorImageUrl: null,
+    });
   });
 });
