@@ -6,6 +6,23 @@ import {
   AnchoredThreads,
   FloatingThreads,
 } from "@liveblocks/react-blocknote";
+import { useSyncExternalStore } from "react";
+
+const desktopQuery = "(min-width: 1024px)";
+
+function subscribeToViewport(onChange: () => void) {
+  const mediaQuery = window.matchMedia(desktopQuery);
+  mediaQuery.addEventListener("change", onChange);
+  return () => mediaQuery.removeEventListener("change", onChange);
+}
+
+function getDesktopSnapshot() {
+  return window.matchMedia(desktopQuery).matches;
+}
+
+function getDesktopServerSnapshot() {
+  return true;
+}
 
 export function InlineThreads({
   editor,
@@ -14,25 +31,27 @@ export function InlineThreads({
   editor: BlockNoteEditor;
   threads: ThreadData[];
 }) {
-  return (
-    <>
-      <div
-        data-testid="anchored-threads"
-        className="hidden w-80 shrink-0 lg:block"
-      >
-        <AnchoredThreads
-          editor={editor}
-          threads={threads}
-          className="w-full"
-        />
-      </div>
-      <div data-testid="floating-threads" className="lg:hidden">
-        <FloatingThreads
-          editor={editor}
-          threads={threads}
-          className="w-[min(22rem,calc(100vw-2rem))]"
-        />
-      </div>
-    </>
+  const isDesktop = useSyncExternalStore(
+    subscribeToViewport,
+    getDesktopSnapshot,
+    getDesktopServerSnapshot
+  );
+
+  return isDesktop ? (
+    <div data-testid="anchored-threads" className="w-80 shrink-0">
+      <AnchoredThreads
+        editor={editor}
+        threads={threads}
+        className="w-full"
+      />
+    </div>
+  ) : (
+    <div data-testid="floating-threads">
+      <FloatingThreads
+        editor={editor}
+        threads={threads}
+        className="w-[min(22rem,calc(100vw-2rem))]"
+      />
+    </div>
   );
 }
