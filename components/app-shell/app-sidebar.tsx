@@ -2,6 +2,7 @@
 
 import { Calendar03Icon, DashboardSquare01Icon, Note01Icon, Settings02Icon, UserGroupIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -14,10 +15,23 @@ export function AppSidebar({ currentUser }: { currentUser: VerifiedUser }) {
   const pathname = usePathname();
   return (
     <Sidebar className="border-r">
-      <SidebarHeader className="p-4">
-        <div className="flex items-center gap-2 rounded-lg px-2 py-1.5">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">J</div>
-          <div><p className="text-sm font-semibold">JUYU</p><p className="text-xs text-muted-foreground">内部工作台</p></div>
+      <SidebarHeader className="overflow-visible px-4 pb-4 pt-16">
+        <div className="group/brand relative isolate rounded-lg">
+          <Image
+            src="/mascots/chiikawa-peek.png"
+            alt=""
+            aria-hidden="true"
+            data-testid="sidebar-brand-mascot"
+            width={384}
+            height={384}
+            priority
+            draggable={false}
+            className="pointer-events-none absolute left-1/2 top-0 z-0 size-[4.5rem] -translate-x-1/2 -translate-y-6 select-none object-contain transition-transform duration-300 ease-out group-hover/brand:-translate-y-[3.75rem] group-hover/brand:-rotate-3 group-hover/brand:scale-105 motion-reduce:transition-none"
+          />
+          <div className="relative z-10 flex items-center gap-2 rounded-lg bg-sidebar px-2 py-1.5">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">J</div>
+            <div><p className="text-sm font-semibold">JUYU</p><p className="text-xs text-muted-foreground">内部工作台</p></div>
+          </div>
         </div>
       </SidebarHeader>
       <SidebarContent className="px-3">
