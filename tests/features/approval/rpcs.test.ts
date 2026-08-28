@@ -17,6 +17,7 @@ const migrations = [
 
 const employeeContentId = "22222222-2222-4222-8222-222222222222";
 const adminContentId = "33333333-3333-4333-8333-333333333333";
+const adminSelfContentId = "44444444-4444-4444-8444-444444444444";
 const platformId = "11111111-1111-4111-8111-111111111111";
 
 describe("approval workflow RPCs", () => {
@@ -285,6 +286,42 @@ describe("approval workflow RPCs", () => {
       required_approvals: 1,
       published_by: "employee",
       task_status: "done",
+    });
+  });
+
+  it("lets an admin author choose and complete self approval", async () => {
+    await database.exec(`
+      select create_scheduled_content(
+        '${adminSelfContentId}', '管理员自己审核', 'admin-a', 'employee',
+        '2026-08-29T02:00:00.000Z', array['${platformId}']::uuid[]
+      );
+      select submit_content_for_review(
+        '${adminSelfContentId}', 'admin-a',
+        '[{"type":"paragraph"}]'::jsonb, 'admin-a'
+      );
+      select approve_content_version('${adminSelfContentId}', 1, 'admin-a');
+    `);
+
+    const state = await database.query<{
+      status: string;
+      required_approvals: number;
+      requested_reviewer_id: string;
+      approval_count: number;
+    }>(`
+      select c.status::text, c.required_approvals, c.requested_reviewer_id,
+        count(a.id)::integer as approval_count
+      from contents c
+      left join content_approvals a
+        on a.content_id = c.id and a.invalidated_at is null
+      where c.id = '${adminSelfContentId}'
+      group by c.id
+    `);
+
+    expect(state.rows[0]).toEqual({
+      status: "approved",
+      required_approvals: 1,
+      requested_reviewer_id: "admin-a",
+      approval_count: 1,
     });
   });
 });
