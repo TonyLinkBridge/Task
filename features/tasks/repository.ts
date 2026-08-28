@@ -5,9 +5,17 @@ import type {
   TaskCommentRecord,
 } from "@/features/tasks/action-service";
 import type { TaskInput } from "@/features/tasks/schema";
-import { mapTaskRow } from "@/features/tasks/task-mapper";
+import {
+  mapAssignableUserRow,
+  mapTaskRow,
+} from "@/features/tasks/task-mapper";
 import type { TaskRow } from "@/features/tasks/task-mapper";
-import type { TaskPriority, TaskRecord, TaskStatus } from "@/features/tasks/types";
+import type {
+  AssignableUser,
+  TaskFilters,
+  TaskRecord,
+  TaskStatus,
+} from "@/features/tasks/types";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 type TaskCommentRow = {
@@ -18,14 +26,9 @@ type TaskCommentRow = {
   created_at: string;
 };
 
-export type TaskFilters = {
-  search?: string;
-  priority?: TaskPriority;
-  assigneeId?: string;
-};
-
 export type TaskRepository = TaskActionRepository & {
   list(filters?: TaskFilters): Promise<TaskRecord[]>;
+  listAssignees(): Promise<AssignableUser[]>;
 };
 
 function taskWrite(input: TaskInput) {
@@ -67,6 +70,18 @@ export function createTaskRepository(
       const { data, error } = await query;
       if (error) throw new Error(`TASK_DATABASE_ERROR:${error.message}`);
       return ((data ?? []) as TaskRow[]).map(mapTaskRow);
+    },
+
+    async listAssignees() {
+      const { data, error } = await client()
+        .from("profiles")
+        .select("clerk_user_id, role, display_name, avatar_url")
+        .is("archived_at", null)
+        .order("display_name");
+      if (error) throw new Error(`TASK_DATABASE_ERROR:${error.message}`);
+      return (data ?? []).map((row) =>
+        mapAssignableUserRow(row as Parameters<typeof mapAssignableUserRow>[0])
+      );
     },
 
     async create(input, creatorId) {

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { mapTaskRow } from "@/features/tasks/task-mapper";
+import {
+  mapAssignableUserRow,
+  mapTaskRow,
+} from "@/features/tasks/task-mapper";
 
 describe("mapTaskRow", () => {
   it("turns database field names and numeric positions into app data", () => {
@@ -36,6 +39,24 @@ describe("mapTaskRow", () => {
       archivedAt: null,
       createdAt: "2026-08-28T02:00:00.000Z",
       updatedAt: "2026-08-28T03:00:00.000Z",
+    });
+  });
+});
+
+describe("mapAssignableUserRow", () => {
+  it("maps an active profile for task assignment", () => {
+    expect(
+      mapAssignableUserRow({
+        clerk_user_id: "user_employee",
+        role: "employee",
+        display_name: "Employee",
+        avatar_url: null,
+      })
+    ).toEqual({
+      id: "user_employee",
+      role: "employee",
+      name: "Employee",
+      imageUrl: null,
     });
   });
 });

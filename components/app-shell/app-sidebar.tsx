@@ -1,5 +1,46 @@
-import { TasksSidebar } from "@/components/tasks/sidebar/tasks-sidebar";
+"use client";
 
-export function AppSidebar() {
-  return <TasksSidebar />;
+import { Calendar03Icon, Note01Icon, Settings02Icon, UserGroupIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import Link from "next/link";
+
+import { AdminOnly } from "@/components/auth/admin-only";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import type { VerifiedUser } from "@/lib/auth/types";
+
+export function AppSidebar({ currentUser }: { currentUser: VerifiedUser }) {
+  return (
+    <Sidebar className="border-r">
+      <SidebarHeader className="p-4">
+        <div className="flex items-center gap-2 rounded-lg px-2 py-1.5">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">J</div>
+          <div><p className="text-sm font-semibold">JUYU</p><p className="text-xs text-muted-foreground">内部工作台</p></div>
+        </div>
+      </SidebarHeader>
+      <SidebarContent className="px-3">
+        <SidebarGroup>
+          <SidebarGroupLabel>工作</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem><SidebarMenuButton isActive render={<Link href="/tasks" />}><HugeiconsIcon icon={Note01Icon} /><span>任务</span></SidebarMenuButton></SidebarMenuItem>
+              <SidebarMenuItem><SidebarMenuButton disabled><HugeiconsIcon icon={Calendar03Icon} /><span>内容排期（下一阶段）</span></SidebarMenuButton></SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <AdminOnly role={currentUser.role}>
+          <SidebarGroup>
+            <SidebarGroupLabel>管理员</SidebarGroupLabel>
+            <SidebarGroupContent><SidebarMenu><SidebarMenuItem><SidebarMenuButton disabled><HugeiconsIcon icon={Settings02Icon} /><span>管理员设置（稍后开放）</span></SidebarMenuButton></SidebarMenuItem></SidebarMenu></SidebarGroupContent>
+          </SidebarGroup>
+        </AdminOnly>
+      </SidebarContent>
+      <SidebarFooter className="p-4">
+        <div className="flex items-center gap-3 rounded-lg border p-3">
+          <Avatar className="size-8">{currentUser.imageUrl ? <AvatarImage src={currentUser.imageUrl} alt={currentUser.name} /> : null}<AvatarFallback><HugeiconsIcon icon={UserGroupIcon} /></AvatarFallback></Avatar>
+          <div className="min-w-0"><p className="truncate text-sm font-medium">{currentUser.name}</p><p className="text-xs text-muted-foreground">{currentUser.role === "admin" ? "管理员" : "员工"}</p></div>
+        </div>
+      </SidebarFooter>
+    </Sidebar>
+  );
 }

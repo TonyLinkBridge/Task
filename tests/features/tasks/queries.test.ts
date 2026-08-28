@@ -57,4 +57,32 @@ describe("task queries", () => {
     expect(result).toEqual([task]);
     expect(receivedFilters).toEqual({ priority: "urgent" });
   });
+
+  it("loads the board tasks, users, and current member together", async () => {
+    const currentUser = {
+      id: "user_admin",
+      role: "admin" as const,
+      name: "Admin",
+      imageUrl: null,
+    };
+    const assignees = [
+      {
+        id: "user_employee",
+        role: "employee" as const,
+        name: "Employee",
+        imageUrl: null,
+      },
+    ];
+    const queries = makeTaskQueries({
+      getVerifiedUser: async () => currentUser,
+      list: async () => [task],
+      listAssignees: async () => assignees,
+    });
+
+    await expect(queries.getTaskBoardData()).resolves.toEqual({
+      currentUser,
+      tasks: [task],
+      assignees,
+    });
+  });
 });

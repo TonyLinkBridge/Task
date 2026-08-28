@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { taskInputSchema } from "@/features/tasks/schema";
+import {
+  taskFiltersFromSearchParams,
+  taskInputSchema,
+} from "@/features/tasks/schema";
 
 const validInput = {
   title: "准备下周会议资料",
@@ -31,5 +34,23 @@ describe("taskInputSchema", () => {
     expect(
       taskInputSchema.safeParse({ ...validInput, dueAt: "tomorrow" }).success
     ).toBe(false);
+  });
+});
+
+describe("taskFiltersFromSearchParams", () => {
+  it("keeps supported filters and drops unknown values", () => {
+    expect(
+      taskFiltersFromSearchParams({
+        search: "  周报  ",
+        priority: "urgent",
+        assignee: "user_employee",
+      })
+    ).toEqual({
+      search: "周报",
+      priority: "urgent",
+      assigneeId: "user_employee",
+    });
+
+    expect(taskFiltersFromSearchParams({ priority: "highest" })).toEqual({});
   });
 });

@@ -1,4 +1,4 @@
-import type { TaskRecord } from "@/features/tasks/types";
+import type { AssignableUser, TaskRecord } from "@/features/tasks/types";
 
 export type TaskRow = {
   id: string;
@@ -33,5 +33,21 @@ export function mapTaskRow(row: TaskRow): TaskRecord {
     archivedAt: row.archived_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+  };
+}
+
+type AssignableUserRow = {
+  clerk_user_id: string;
+  role: AssignableUser["role"];
+  display_name: string;
+  avatar_url: string | null;
+};
+
+export function mapAssignableUserRow(row: AssignableUserRow): AssignableUser {
+  return {
+    id: row.clerk_user_id,
+    role: row.role,
+    name: row.display_name,
+    imageUrl: row.avatar_url,
   };
 }

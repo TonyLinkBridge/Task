@@ -22,3 +22,16 @@ export type TaskRecord = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type AssignableUser = {
+  id: string;
+  role: "employee" | "admin";
+  name: string;
+  imageUrl: string | null;
+};
+
+export type TaskFilters = {
+  search?: string;
+  priority?: TaskPriority;
+  assigneeId?: string;
+};
