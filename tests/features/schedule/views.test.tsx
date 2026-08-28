@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 import { ContentBoard, contentBoardMoveMessage } from "@/features/schedule/components/content-board";
 import { ContentCalendar } from "@/features/schedule/components/content-calendar";
@@ -67,5 +67,35 @@ describe("schedule views", () => {
       "必须使用已发布按钮，不能直接拖到这里。"
     );
     expect(contentBoardMoveMessage("changes_requested", "draft")).toBeNull();
+  });
+
+  it("shows the reason and keeps the card in draft after an invalid drop", () => {
+    const moveAction = vi.fn(async () => ({ ok: true as const }));
+    const draftContent = {
+      ...scheduled,
+      status: "draft" as const,
+      storedStatus: "draft" as const,
+      approvalAdminIds: [],
+    };
+    render(
+      <ContentBoard
+        initialContents={[draftContent]}
+        moveAction={moveAction}
+      />
+    );
+
+    const draftColumn = screen.getByRole("region", { name: "草稿" });
+    const approvedColumn = screen.getByRole("region", { name: "已经批准" });
+    const card = within(draftColumn).getByText("新品贴文").closest("article");
+
+    expect(card).not.toBeNull();
+    fireEvent.dragStart(card!);
+    fireEvent.drop(approvedColumn);
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "必须使用批准按钮，不能直接拖到这里。"
+    );
+    expect(within(draftColumn).getByText("新品贴文")).toBeInTheDocument();
+    expect(moveAction).not.toHaveBeenCalled();
   });
 });
