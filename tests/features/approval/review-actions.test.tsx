@@ -62,6 +62,24 @@ describe("ReviewActions", () => {
     expect(screen.getByRole("button", { name: "要求修改" })).toBeInTheDocument();
   });
 
+  it("tells an admin who already approved to wait for the other admin", () => {
+    render(
+      <ReviewActions
+        content={content()}
+        approvals={[approval]}
+        currentUser={{ id: "admin-a", role: "admin", name: "上司 A", imageUrl: null }}
+        admins={[]}
+        document={[]}
+      />
+    );
+
+    expect(
+      screen.getByText("你已经批准，正在等待另一位管理员。")
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "批准内容" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "要求修改" })).not.toBeInTheDocument();
+  });
+
   it("only lets the chosen reviewer approve admin content", () => {
     render(
       <ReviewActions

@@ -72,10 +72,17 @@ export function ReviewActions({
     content.requiredApprovals === 1 &&
     content.requestedReviewerId !== null &&
     content.requestedReviewerId !== currentUser.id;
+  const hasCurrentApproval = approvals.some(
+    (approval) =>
+      approval.adminId === currentUser.id &&
+      approval.version === content.currentVersion &&
+      approval.invalidatedAt === null
+  );
   const canReview =
     content.status === "in_review" &&
     currentUser.role === "admin" &&
-    !chosenOtherAdmin;
+    !chosenOtherAdmin &&
+    !hasCurrentApproval;
 
   async function run(operation: () => Promise<ApprovalActionResult>) {
     setIsSaving(true);
@@ -151,6 +158,12 @@ export function ReviewActions({
       {chosenOtherAdmin && content.status === "in_review" ? (
         <p className="mt-4 rounded-lg bg-muted p-3 text-sm">
           已经交给另一位管理员检查
+        </p>
+      ) : null}
+
+      {hasCurrentApproval && content.status === "in_review" ? (
+        <p className="mt-4 rounded-lg bg-muted p-3 text-sm">
+          你已经批准，正在等待另一位管理员。
         </p>
       ) : null}
 
