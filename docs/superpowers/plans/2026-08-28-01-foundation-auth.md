@@ -99,7 +99,7 @@ git commit -m "chore: bootstrap base ui internal tool"
 **Interfaces:**
 - Produces: `serverEnv`, `supabaseAdmin`, `profiles` table。
 
-- [ ] **Step 1: 写环境变量测试**
+- [x] **Step 1: 写环境变量测试**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -110,7 +110,7 @@ it("rejects a missing Slack team id", () => {
 });
 ```
 
-- [ ] **Step 2: 实现固定环境格式**
+- [x] **Step 2: 实现固定环境格式**
 
 ```ts
 const schema = z.object({
@@ -125,7 +125,7 @@ export const parseServerEnv = (input: NodeJS.ProcessEnv) => schema.parse(input);
 
 `.env.example` 只放变量名称，不放任何真实密钥。
 
-- [ ] **Step 3: 建立用户资料表**
+- [x] **Step 3: 建立用户资料表**
 
 ```sql
 create type app_role as enum ('employee', 'admin');
@@ -145,7 +145,7 @@ alter table profiles enable row level security;
 
 浏览器不直接读写该表；只有经过 Clerk 检查的 Next.js 后台使用 `supabaseAdmin`。
 
-- [ ] **Step 4: 运行测试和 Supabase 本地迁移**
+- [x] **Step 4: 运行测试和 Supabase 本地迁移**
 
 ```bash
 pnpm test tests/lib/env-server.test.ts
@@ -153,6 +153,8 @@ pnpm exec supabase db reset
 git add .env.example lib supabase tests
 git commit -m "feat: add server configuration and profiles"
 ```
+
+执行记录：本机没有 Docker，因此完整的 `supabase db reset` 留到连接 Supabase 项目时再跑；目前已用 PGlite 实际执行同一份 SQL，并验证角色、资料表和 RLS 均成功建立。
 
 ### Task 3: 实现第一次 Slack Workspace 验证
 
