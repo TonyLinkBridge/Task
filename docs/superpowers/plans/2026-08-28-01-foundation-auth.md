@@ -32,7 +32,7 @@
 - Consumes: Square UI `templates-baseui/tasks` 模板。
 - Produces: `pnpm test`, `pnpm test:e2e`, `pnpm lint`, `pnpm build` 四个固定检查命令。
 
-- [ ] **Step 1: 把模板复制到项目根目录并初始化 Git**
+- [x] **Step 1: 把模板复制到项目根目录并初始化 Git**
 
 ```bash
 git clone --depth 1 https://github.com/zerostaticthemes/square-ui.git /tmp/square-ui-source
@@ -41,14 +41,14 @@ git init
 pnpm install
 ```
 
-- [ ] **Step 2: 安装测试和后台基础套件**
+- [x] **Step 2: 安装测试和后台基础套件**
 
 ```bash
 pnpm add @clerk/nextjs @supabase/supabase-js server-only zod
 pnpm add -D vitest jsdom @vitejs/plugin-react @testing-library/react @testing-library/jest-dom @testing-library/user-event @playwright/test supabase
 ```
 
-- [ ] **Step 3: 先写会失败的首页测试**
+- [x] **Step 3: 先写会失败的首页测试**
 
 ```tsx
 // tests/smoke/home.test.tsx
@@ -64,7 +64,7 @@ describe("home page", () => {
 });
 ```
 
-- [ ] **Step 4: 加入 Vitest 设置和脚本，再把首页标题改成“内部工作台”**
+- [x] **Step 4: 加入 Vitest 设置和脚本，再把首页标题改成“内部工作台”**
 
 ```ts
 // vitest.config.ts
@@ -81,7 +81,7 @@ export default defineConfig({
 
 `package.json` 新增 `"test": "vitest run"` 和 `"test:e2e": "playwright test"`。
 
-- [ ] **Step 5: 运行并提交**
+- [x] **Step 5: 运行并提交**
 
 ```bash
 pnpm test
