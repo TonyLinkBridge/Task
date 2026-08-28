@@ -13,7 +13,7 @@ type ContentActionResult =
   | { ok: true; data: ContentRecord }
   | { ok: false; message: string };
 
-function defaultPublishAt() {
+function malaysiaDateTimeInputValue(date: Date) {
   return new Intl.DateTimeFormat("sv-SE", {
     timeZone: "Asia/Kuala_Lumpur",
     year: "numeric",
@@ -22,30 +22,50 @@ function defaultPublishAt() {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-  })
-    .format(new Date(Date.now() + 24 * 60 * 60 * 1000))
-    .replace(" ", "T");
+  }).format(date).replace(" ", "T");
+}
+
+function defaultPublishAt() {
+  return malaysiaDateTimeInputValue(
+    new Date(Date.now() + 24 * 60 * 60 * 1000)
+  );
 }
 
 export function ContentForm({
   platforms,
   assignees,
-  createContentAction = async () => ({
+  initialValues,
+  saveContentAction = async () => ({
     ok: false,
     message: "暂时无法保存，请稍后再试。",
   }),
+  submitLabel = "建立内容",
+  savingLabel = "正在建立…",
+  helperText = "建立后会马上产生发布任务。正文和文件会在下一页填写及上传。",
   onSaved,
 }: {
   platforms: ContentPlatform[];
   assignees: AssignableUser[];
-  createContentAction?: (input: unknown) => Promise<ContentActionResult>;
+  initialValues?: ContentInput;
+  saveContentAction?: (input: unknown) => Promise<ContentActionResult>;
+  submitLabel?: string;
+  savingLabel?: string;
+  helperText?: string;
   onSaved?: (content: ContentRecord) => void;
 }) {
-  const [title, setTitle] = useState("");
-  const [platformIds, setPlatformIds] = useState<string[]>([]);
+  const [title, setTitle] = useState(initialValues?.title ?? "");
+  const [platformIds, setPlatformIds] = useState<string[]>(
+    initialValues?.platformIds ?? []
+  );
   const [platformSearch, setPlatformSearch] = useState("");
-  const [assigneeId, setAssigneeId] = useState(assignees[0]?.id ?? "");
-  const [publishAt, setPublishAt] = useState(defaultPublishAt);
+  const [assigneeId, setAssigneeId] = useState(
+    initialValues?.assigneeId ?? assignees[0]?.id ?? ""
+  );
+  const [publishAt, setPublishAt] = useState(() =>
+    initialValues
+      ? malaysiaDateTimeInputValue(new Date(initialValues.publishAt))
+      : defaultPublishAt()
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const filteredPlatforms = useMemo(() => {
@@ -70,7 +90,7 @@ export function ContentForm({
     };
     setIsSaving(true);
     setMessage(null);
-    const result = await createContentAction(input);
+    const result = await saveContentAction(input);
     setIsSaving(false);
     if (!result.ok) {
       setMessage(result.message);
@@ -191,14 +211,14 @@ export function ContentForm({
       {message ? <p role="alert" className="text-sm text-destructive">{message}</p> : null}
       <div className="flex flex-col gap-4 rounded-lg bg-muted/60 p-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
-          建立后会马上产生发布任务。正文和文件会在下一页填写及上传。
+          {helperText}
         </p>
         <Button
           type="submit"
           className="self-end sm:self-auto"
           disabled={isSaving || !title.trim() || platformIds.length === 0 || !assigneeId}
         >
-          {isSaving ? "正在建立…" : "建立内容"}
+          {isSaving ? savingLabel : submitLabel}
         </Button>
       </div>
     </form>

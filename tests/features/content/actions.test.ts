@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { makeContentActions } from "@/features/content/action-service";
 import type { ContentInput } from "@/features/content/schema";
 
+const contentId = "22222222-2222-4222-8222-222222222222";
+
 const validInput: ContentInput = {
   title: "新品贴文",
   platformIds: ["11111111-1111-4111-8111-111111111111"],
@@ -35,6 +37,9 @@ describe("content actions", () => {
           updatedAt: "2026-08-28T02:00:00.000Z",
         };
       },
+      update: async () => {
+        throw new Error("should not run");
+      },
       revalidatePath: (path) => paths.push(path),
     });
 
@@ -51,11 +56,78 @@ describe("content actions", () => {
       create: async () => {
         throw new Error("should not run");
       },
+      update: async () => {
+        throw new Error("should not run");
+      },
       revalidatePath: () => undefined,
     });
 
     await expect(
       actions.createScheduledContent({ ...validInput, platformIds: [] })
+    ).resolves.toEqual({ ok: false, message: "请检查排期内容。" });
+  });
+
+  it("updates schedule fields as the signed-in person", async () => {
+    const actors: string[] = [];
+    const paths: string[] = [];
+    const actions = makeContentActions({
+      getVerifiedUser: async () => ({
+        id: "admin-a",
+        role: "admin",
+        name: "A",
+        imageUrl: null,
+      }),
+      create: async () => {
+        throw new Error("should not run");
+      },
+      update: async (id, input, actorId) => {
+        actors.push(actorId);
+        return {
+          id,
+          ...input,
+          status: "draft",
+          authorId: "admin-a",
+          liveblocksRoomId: `content:${id}`,
+          currentVersion: 0,
+          requiredApprovals: 1,
+          requestedReviewerId: null,
+          publishedBy: null,
+          publishedAt: null,
+          linkedTaskId: "33333333-3333-4333-8333-333333333333",
+          archivedAt: null,
+          createdAt: "2026-08-28T02:00:00.000Z",
+          updatedAt: "2026-08-28T06:00:00.000Z",
+        };
+      },
+      revalidatePath: (path) => paths.push(path),
+    });
+
+    const result = await actions.updateScheduledContent(contentId, validInput);
+
+    expect(result).toMatchObject({ ok: true, data: { title: "新品贴文" } });
+    expect(actors).toEqual(["admin-a"]);
+    expect(paths).toEqual(["/content", `/content/${contentId}`]);
+  });
+
+  it("rejects invalid update ids before saving", async () => {
+    const actions = makeContentActions({
+      getVerifiedUser: async () => ({
+        id: "admin-a",
+        role: "admin",
+        name: "A",
+        imageUrl: null,
+      }),
+      create: async () => {
+        throw new Error("should not run");
+      },
+      update: async () => {
+        throw new Error("should not run");
+      },
+      revalidatePath: () => undefined,
+    });
+
+    await expect(
+      actions.updateScheduledContent("not-a-content-id", validInput)
     ).resolves.toEqual({ ok: false, message: "请检查排期内容。" });
   });
 });

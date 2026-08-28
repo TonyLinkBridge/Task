@@ -52,4 +52,23 @@ describe("admin history", () => {
     expect(screen.getByText("上司 A")).toBeInTheDocument();
     expect(screen.getByText("批准内容")).toBeInTheDocument();
   });
+
+  it("shows schedule edits in plain Chinese", () => {
+    render(
+      <AuditLog
+        events={[
+          {
+            id: "audit-2",
+            actorName: "员工",
+            entityType: "content",
+            entityId: "content-1",
+            action: "content_updated",
+            createdAt: "2026-08-28T08:00:00.000Z",
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByText("修改排期资料")).toBeInTheDocument();
+  });
 });

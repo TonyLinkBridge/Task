@@ -7,10 +7,20 @@ import { getVerifiedUser } from "@/lib/auth/get-verified-user";
 const contentActions = makeContentActions({
   getVerifiedUser,
   create: (input, authorId) => contentRepository.create(input, authorId),
+  update: (contentId, input, actorId) =>
+    contentRepository.updateSchedule(contentId, input, actorId),
   revalidatePath,
 });
 
 export async function createScheduledContent(input: unknown) {
   "use server";
   return contentActions.createScheduledContent(input);
+}
+
+export async function updateScheduledContent(
+  contentId: unknown,
+  input: unknown
+) {
+  "use server";
+  return contentActions.updateScheduledContent(contentId, input);
 }

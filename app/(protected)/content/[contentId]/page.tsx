@@ -11,12 +11,15 @@ import { ReviewHistory } from "@/features/approval/components/review-history";
 import { approvalRepository } from "@/features/approval/repository";
 import { canEditBody } from "@/features/approval/rules";
 import { addContentComment } from "@/features/content/actions/comments";
+import { updateScheduledContent } from "@/features/content/actions/content";
 import { Attachments } from "@/features/content/components/attachments";
 import { ContentChat } from "@/features/content/components/content-chat";
 import { ContentEditorReview } from "@/features/content/components/content-editor-review";
 import { ContentRoom } from "@/features/content/components/content-room";
+import { ContentScheduleEditor } from "@/features/content/components/content-schedule-editor";
 import { finishUpload, requestUpload } from "@/features/content/files/actions";
 import { contentRepository } from "@/features/content/repository";
+import { canEditContentSchedule } from "@/features/content/schedule-edit-permission";
 import { taskRepository } from "@/features/tasks/repository";
 import { effectiveContentStatus } from "@/features/schedule/query-service";
 import { getVerifiedUser } from "@/lib/auth/get-verified-user";
@@ -87,6 +90,7 @@ export default async function ContentDetailPage({
   const assignee = assignees.find(({ id }) => id === content.assigneeId);
   const admins = assignees.filter(({ role }) => role === "admin");
   const editable = canEditBody(content.status);
+  const canEditSchedule = canEditContentSchedule(content, currentUser);
 
   return (
     <SidebarProvider>
@@ -123,6 +127,16 @@ export default async function ContentDetailPage({
                 </div>
               </dl>
             </section>
+
+            {canEditSchedule ? (
+              <ContentScheduleEditor
+                content={content}
+                platformIds={platformIds}
+                platforms={platforms}
+                assignees={assignees}
+                updateAction={updateScheduledContent}
+              />
+            ) : null}
 
             <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
               <div className="space-y-5">

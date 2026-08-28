@@ -255,6 +255,22 @@ export function createContentRepository(
       return mapContentRow(assertData(data as ContentRow | null, error));
     },
 
+    async updateSchedule(
+      contentId: string,
+      input: ContentInput,
+      actorId: string
+    ): Promise<ContentRecord> {
+      const { data, error } = await client().rpc("update_scheduled_content", {
+        p_content_id: contentId,
+        p_actor_id: actorId,
+        p_title: input.title,
+        p_assignee_id: input.assigneeId,
+        p_publish_at: input.publishAt,
+        p_platform_ids: input.platformIds,
+      });
+      return mapContentRow(assertData(data as ContentRow | null, error));
+    },
+
     async find(id: string): Promise<ContentRecord | null> {
       const { data, error } = await client()
         .from("contents")

@@ -13,6 +13,7 @@ const actionLabels: Record<string, string> = {
   failed: "Slack 发送失败",
   manual_retry: "手动重新发送",
   notification_settings_updated: "修改通知设置",
+  content_updated: "修改排期资料",
 };
 
 const timeFormatter = new Intl.DateTimeFormat("zh-MY", {
