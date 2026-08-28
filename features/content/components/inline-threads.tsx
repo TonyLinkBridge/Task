@@ -2,7 +2,10 @@
 
 import type { BlockNoteEditor } from "@blocknote/core";
 import type { ThreadData } from "@liveblocks/client";
-import { FloatingThreads } from "@liveblocks/react-blocknote";
+import {
+  AnchoredThreads,
+  FloatingThreads,
+} from "@liveblocks/react-blocknote";
 
 export function InlineThreads({
   editor,
@@ -12,15 +15,24 @@ export function InlineThreads({
   threads: ThreadData[];
 }) {
   return (
-    <div
-      data-testid="floating-threads"
-      className="pointer-events-none absolute inset-0 z-20 [&>*]:pointer-events-auto"
-    >
-      <FloatingThreads
-        editor={editor}
-        threads={threads}
-        className="w-[min(22rem,calc(100vw-2rem))]"
-      />
-    </div>
+    <>
+      <div
+        data-testid="anchored-threads"
+        className="hidden w-80 shrink-0 lg:block"
+      >
+        <AnchoredThreads
+          editor={editor}
+          threads={threads}
+          className="w-full"
+        />
+      </div>
+      <div data-testid="floating-threads" className="lg:hidden">
+        <FloatingThreads
+          editor={editor}
+          threads={threads}
+          className="w-[min(22rem,calc(100vw-2rem))]"
+        />
+      </div>
+    </>
   );
 }
