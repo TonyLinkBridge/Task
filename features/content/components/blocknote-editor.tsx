@@ -7,6 +7,7 @@ import {
   useIsEditorReady,
 } from "@liveblocks/react-blocknote";
 import { useStatus, useSyncStatus, useThreads } from "@liveblocks/react/suspense";
+import { useTheme } from "next-themes";
 import { useEffect } from "react";
 
 import { InlineThreads } from "@/features/content/components/inline-threads";
@@ -57,6 +58,8 @@ export function BlockNoteEditor({
   const status = useStatus();
   const syncStatus = useSyncStatus();
   const { threads } = useThreads({ query: { resolved: false } });
+  const { resolvedTheme } = useTheme();
+  const blockNoteTheme = resolvedTheme === "dark" ? "dark" : "light";
 
   useEffect(() => {
     if (ready) onDocumentChange?.(editor.document);
@@ -76,6 +79,7 @@ export function BlockNoteEditor({
           <BlockNoteView
             editor={editor}
             editable={editable}
+            theme={blockNoteTheme}
             onChange={() => onDocumentChange?.(editor.document)}
           />
           <FloatingComposer editor={editor} className="w-[22rem]" />

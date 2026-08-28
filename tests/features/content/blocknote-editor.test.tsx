@@ -1,7 +1,36 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { EditorSyncStatus } from "@/features/content/components/blocknote-editor";
+vi.mock("next-themes", () => ({
+  useTheme: () => ({ resolvedTheme: "light" }),
+}));
+
+vi.mock("@blocknote/mantine", () => ({
+  BlockNoteView: ({ theme }: { theme?: string }) => (
+    <div data-testid="blocknote-view" data-theme={theme ?? "unset"} />
+  ),
+}));
+
+vi.mock("@liveblocks/react-blocknote", () => ({
+  FloatingComposer: () => null,
+  useCreateBlockNoteWithLiveblocks: () => ({ document: [] }),
+  useIsEditorReady: () => true,
+}));
+
+vi.mock("@liveblocks/react/suspense", () => ({
+  useStatus: () => "connected",
+  useSyncStatus: () => "synchronized",
+  useThreads: () => ({ threads: [] }),
+}));
+
+vi.mock("@/features/content/components/inline-threads", () => ({
+  InlineThreads: () => null,
+}));
+
+import {
+  BlockNoteEditor,
+  EditorSyncStatus,
+} from "@/features/content/components/blocknote-editor";
 
 describe("EditorSyncStatus", () => {
   it("shows a loading skeleton before the editor is ready", () => {
@@ -20,5 +49,16 @@ describe("EditorSyncStatus", () => {
     render(<EditorSyncStatus ready status="connected" />);
 
     expect(screen.getByText("已经同步")).toBeInTheDocument();
+  });
+});
+
+describe("BlockNoteEditor", () => {
+  it("uses the page's light theme instead of the computer's dark theme", () => {
+    render(<BlockNoteEditor contentId="content-1" editable />);
+
+    expect(screen.getByTestId("blocknote-view")).toHaveAttribute(
+      "data-theme",
+      "light"
+    );
   });
 });
