@@ -225,7 +225,7 @@ git commit -m "feat: verify Slack workspace on first sign in"
 ### Task 4: 建立登录页和受保护的系统外壳
 
 **Files:**
-- Create: `middleware.ts`, `app/login/[[...login]]/page.tsx`, `app/(protected)/layout.tsx`, `components/app-shell/app-sidebar.tsx`, `components/auth/admin-only.tsx`
+- Create: `proxy.ts`, `app/login/[[...login]]/page.tsx`, `app/(protected)/layout.tsx`, `components/app-shell/app-sidebar.tsx`, `components/auth/admin-only.tsx`
 - Modify: `app/layout.tsx`, `app/page.tsx`
 - Test: `tests/components/admin-only.test.tsx`, `tests/e2e/login.spec.ts`
 
@@ -233,7 +233,7 @@ git commit -m "feat: verify Slack workspace on first sign in"
 - Consumes: `getVerifiedUser()`。
 - Produces: `AdminOnly({ role, children })` 和受保护布局。
 
-- [ ] **Step 1: 写角色显示测试**
+- [x] **Step 1: 写角色显示测试**
 
 ```tsx
 it("hides admin settings from employees", () => {
@@ -242,15 +242,15 @@ it("hides admin settings from employees", () => {
 });
 ```
 
-- [ ] **Step 2: 建立参考 JUYU Help Centre 的登录页**
+- [x] **Step 2: 建立参考 JUYU Help Centre 的登录页**
 
 页面显示“仅限指定 Slack Workspace 授权员工使用”和“使用 Slack 继续”，登录后回到 `redirect` 参数指定的内部页面。不要加入角色预览按钮。
 
-- [ ] **Step 3: 在受保护布局重新检查身份**
+- [x] **Step 3: 在受保护布局重新检查身份**
 
-`app/(protected)/layout.tsx` 调用 `getVerifiedUser()`；未登录跳去 `/login?redirect=当前路径`，错误 Workspace 跳去 `/access-denied`。
+`app/(protected)/layout.tsx` 调用 `getVerifiedUser()`；`proxy.ts` 把未登录用户送去 `/login?redirect=当前路径`，错误 Workspace 跳去 `/access-denied`。Next.js 16 使用 `proxy.ts` 取代旧的 `middleware.ts` 文件名。
 
-- [ ] **Step 4: 加入 Playwright 检查**
+- [x] **Step 4: 加入 Playwright 检查**
 
 ```ts
 test("anonymous visitor is redirected to login", async ({ page }) => {
@@ -260,7 +260,7 @@ test("anonymous visitor is redirected to login", async ({ page }) => {
 });
 ```
 
-- [ ] **Step 5: 完成第一阶段检查并提交**
+- [x] **Step 5: 完成第一阶段检查并提交**
 
 ```bash
 pnpm test
@@ -272,3 +272,5 @@ git commit -m "feat: add protected app shell and Slack login page"
 ```
 
 人工检查 Clerk 测试账号：正确 Workspace 第一次可进入；刷新和第二次登录不再出现 Workspace 验证；错误 Workspace 不能进入；员工看不到管理员设置。
+
+执行记录：代码、自动测试、未登录跳转和正式打包均已通过。真实 Clerk + Slack 登录仍需放入项目密钥后，使用三个真实测试账号完成上述人工检查。
