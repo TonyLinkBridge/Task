@@ -155,7 +155,10 @@ export function ContentForm({
         ) : null}
       </fieldset>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div
+        data-testid="content-scheduling-fields"
+        className="grid items-start gap-4 sm:grid-cols-2"
+      >
         <div className="grid gap-2">
           <Label htmlFor="content-assignee">负责人</Label>
           <select

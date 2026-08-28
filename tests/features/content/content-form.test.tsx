@@ -101,4 +101,15 @@ describe("ContentForm", () => {
     expect(screen.getByText("已选择 1 个平台")).toBeInTheDocument();
     expect(screen.getByText("Instagram", { selector: "span" })).toBeInTheDocument();
   });
+
+  it("keeps the assignee and publish time fields aligned at the top", () => {
+    render(
+      <ContentForm
+        platforms={[platform]}
+        assignees={[employee]}
+      />
+    );
+
+    expect(screen.getByTestId("content-scheduling-fields")).toHaveClass("items-start");
+  });
 });
