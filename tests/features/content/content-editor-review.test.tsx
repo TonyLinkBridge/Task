@@ -85,4 +85,32 @@ describe("ContentEditorReview", () => {
       "true"
     );
   });
+
+  it("restores the editable body after an admin requests changes", () => {
+    render(
+      <ContentEditorReview
+        content={{ ...content, status: "changes_requested" }}
+        approvals={[]}
+        currentUser={{
+          id: "user_employee",
+          role: "employee",
+          name: "员工",
+          imageUrl: null,
+        }}
+        admins={[]}
+        snapshotDocument={[
+          { type: "paragraph", content: "上一次送审的正文" },
+        ]}
+      />
+    );
+
+    expect(screen.getByTestId("live-editor")).toHaveAttribute(
+      "data-editable",
+      "true"
+    );
+    expect(screen.queryByTestId("fixed-snapshot")).not.toBeInTheDocument();
+    expect(
+      screen.getByText("可以选中文字直接留言；送审前会先确认内容已经同步。")
+    ).toBeInTheDocument();
+  });
 });

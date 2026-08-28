@@ -221,11 +221,19 @@ describe("approval workflow RPCs", () => {
       current_version: number;
       active_approvals: number;
       change_requests: number;
+      change_actor: string;
+      change_message: string;
     }>(`
       select c.status::text, c.current_version,
         count(distinct a.admin_id) filter (where a.invalidated_at is null)::integer as active_approvals,
         (select count(*)::integer from content_review_events e
-         where e.content_id = c.id and e.event_type = 'changes_requested') as change_requests
+         where e.content_id = c.id and e.event_type = 'changes_requested') as change_requests,
+        (select e.actor_id from content_review_events e
+         where e.content_id = c.id and e.event_type = 'changes_requested'
+         order by e.created_at desc limit 1) as change_actor,
+        (select e.message from content_review_events e
+         where e.content_id = c.id and e.event_type = 'changes_requested'
+         order by e.created_at desc limit 1) as change_message
       from contents c
       left join content_approvals a on a.content_id = c.id
       where c.id = '${employeeContentId}'
@@ -236,6 +244,8 @@ describe("approval workflow RPCs", () => {
       current_version: 2,
       active_approvals: 2,
       change_requests: 1,
+      change_actor: "admin-b",
+      change_message: "请修改开头",
     });
   });
 

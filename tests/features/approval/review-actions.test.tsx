@@ -139,6 +139,35 @@ describe("ReviewActions", () => {
     expect(screen.getByRole("button", { name: "要求修改" })).toBeInTheDocument();
   });
 
+  it("sends the admin's change request message", async () => {
+    const user = userEvent.setup();
+    const requestChangesAction = vi.fn(async () => ({
+      ok: true as const,
+      data: content({ status: "changes_requested" }),
+    }));
+    render(
+      <ReviewActions
+        content={content()}
+        approvals={[approval]}
+        currentUser={{ id: "admin-b", role: "admin", name: "上司 B", imageUrl: null }}
+        admins={[]}
+        document={[]}
+        requestChangesAction={requestChangesAction}
+      />
+    );
+
+    await user.type(screen.getByLabelText("需要修改的地方"), "请修改开头");
+    await user.click(screen.getByRole("button", { name: "要求修改" }));
+
+    await waitFor(() =>
+      expect(requestChangesAction).toHaveBeenCalledWith(
+        contentId,
+        1,
+        "请修改开头"
+      )
+    );
+  });
+
   it("tells an admin who already approved to wait for the other admin", () => {
     render(
       <ReviewActions
