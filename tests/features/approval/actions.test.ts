@@ -141,6 +141,27 @@ describe("content approval actions", () => {
     expect(revalidatedPaths).toEqual(["/content", `/content/${contentId}`]);
   });
 
+  it("locks the body when an employee submits content for review", async () => {
+    const { actions, calls, roomCalls } = createHarness({
+      role: "employee",
+      record: content({ status: "draft", currentVersion: 0 }),
+    });
+
+    await expect(
+      actions.submitForReview(contentId, [
+        { type: "paragraph", content: "员工准备好的内容" },
+      ])
+    ).resolves.toMatchObject({
+      ok: true,
+      data: { status: "in_review", currentVersion: 1 },
+    });
+    expect(calls).toEqual(["submit:user_employee:none"]);
+    expect(roomCalls).toEqual([
+      `content:${contentId}:read`,
+      `content:${contentId}:read`,
+    ]);
+  });
+
   it("opens the room for editing after changes are requested", async () => {
     const { actions, roomCalls } = createHarness();
 
