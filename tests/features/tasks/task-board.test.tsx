@@ -47,6 +47,18 @@ describe("TaskBoard", () => {
       )
     ).not.toBeInTheDocument();
   });
+
+  it("does not show drag or edit controls for a linked publish task", () => {
+    render(
+      <TaskBoard
+        initialTasks={[{ ...task, kind: "content_publish", linkedContentId: "22222222-2222-4222-8222-222222222222" }]}
+        assignees={[]}
+      />
+    );
+
+    expect(screen.queryByRole("button", { name: /拖动/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "编辑" })).not.toBeInTheDocument();
+  });
 });
 
 describe("persistTaskMove", () => {

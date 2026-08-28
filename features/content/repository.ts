@@ -88,6 +88,57 @@ export function createContentRepository(
   const client = () => providedClient ?? getSupabaseAdmin();
 
   return {
+    async findVersion(
+      contentId: string,
+      version: number
+    ): Promise<unknown | null> {
+      const { data, error } = await client()
+        .from("content_versions")
+        .select("blocknote_json")
+        .eq("content_id", contentId)
+        .eq("version", version)
+        .maybeSingle();
+      if (error) throw new Error(`CONTENT_DATABASE_ERROR:${error.message}`);
+      return data?.blocknote_json ?? null;
+    },
+
+    async listVersionAttachments(
+      contentId: string,
+      version: number
+    ): Promise<ContentAttachment[]> {
+      const { data, error } = await client()
+        .from("content_versions")
+        .select(
+          "attachments:content_version_attachments(attachment:content_attachments(*))"
+        )
+        .eq("content_id", contentId)
+        .eq("version", version)
+        .maybeSingle();
+      if (error) throw new Error(`CONTENT_DATABASE_ERROR:${error.message}`);
+      const links = (data?.attachments ?? []) as unknown as {
+        attachment: {
+          id: string;
+          content_id: string;
+          storage_path: string;
+          file_name: string;
+          mime_type: string;
+          byte_size: number | string;
+          uploader_id: string;
+          created_at: string;
+        };
+      }[];
+      return links.map(({ attachment: row }) => ({
+        id: row.id,
+        contentId: row.content_id,
+        storagePath: row.storage_path,
+        fileName: row.file_name,
+        mimeType: row.mime_type,
+        byteSize: Number(row.byte_size),
+        uploaderId: row.uploader_id,
+        createdAt: row.created_at,
+      }));
+    },
+
     async listPlatforms(): Promise<ContentPlatform[]> {
       const { data, error } = await client()
         .from("platforms")

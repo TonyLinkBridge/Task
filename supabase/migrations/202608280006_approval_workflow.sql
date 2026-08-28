@@ -23,6 +23,19 @@ create table content_review_events (
   created_at timestamptz not null default now()
 );
 
+create table content_version_attachments (
+  content_version_id uuid not null references content_versions(id),
+  attachment_id uuid not null references content_attachments(id),
+  primary key (content_version_id, attachment_id)
+);
+
+insert into content_version_attachments (content_version_id, attachment_id)
+select version.id, attachment.id
+from content_versions version
+join content_attachments attachment on attachment.content_id = version.content_id
+  and attachment.created_at <= version.created_at
+on conflict do nothing;
+
 alter table contents
   add column required_approvals smallint not null default 2
     check (required_approvals in (1, 2)),
@@ -47,6 +60,9 @@ create index content_approvals_active_idx
   where invalidated_at is null;
 create index content_review_events_content_idx
   on content_review_events (content_id, created_at desc);
+create index content_version_attachments_attachment_idx
+  on content_version_attachments (attachment_id);
 
 alter table content_approvals enable row level security;
 alter table content_review_events enable row level security;
+alter table content_version_attachments enable row level security;

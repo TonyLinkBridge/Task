@@ -6,6 +6,25 @@ import {
   makeContentFileActions,
 } from "@/features/content/files/service";
 
+function fileHarness(status: "draft" | "in_review") {
+  return makeContentFileActions({
+    getVerifiedUser: async () => ({
+      id: "user_employee",
+      role: "employee",
+      name: "Employee",
+      imageUrl: null,
+    }),
+    findContent: async () => ({ id: "content", status }),
+    createUploadUrl: async () => ({ token: "upload-token" }),
+    inspectUpload: async () => ({ size: 1024, type: "image/png" }),
+    saveAttachment: async () => {
+      throw new Error("unused");
+    },
+    createId: () => "33333333-3333-4333-8333-333333333333",
+    revalidatePath: () => undefined,
+  });
+}
+
 describe("fileSchema", () => {
   it("rejects a file larger than 100 MB", () => {
     expect(
@@ -43,6 +62,21 @@ describe("buildStoragePath", () => {
 });
 
 describe("content file actions", () => {
+  it("does not allow attachments while content is locked for review", async () => {
+    const actions = fileHarness("in_review");
+
+    await expect(
+      actions.requestUpload("22222222-2222-4222-8222-222222222222", {
+        name: "post.png",
+        type: "image/png",
+        size: 1024,
+      })
+    ).resolves.toEqual({
+      ok: false,
+      message: "审核期间不能更换文件。",
+    });
+  });
+
   it("does not create an upload link for missing content", async () => {
     const actions = makeContentFileActions({
       getVerifiedUser: async () => ({
@@ -77,7 +111,7 @@ describe("content file actions", () => {
         name: "Employee",
         imageUrl: null,
       }),
-      findContent: async () => ({ id: "content" }),
+      findContent: async () => ({ id: "content", status: "draft" as const }),
       createUploadUrl: async () => ({ token: "unused" }),
       inspectUpload: async () => ({ size: 1024, type: "image/png" }),
       saveAttachment: async () => {

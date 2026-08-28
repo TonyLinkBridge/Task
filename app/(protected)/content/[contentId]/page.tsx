@@ -9,6 +9,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ReviewHistory } from "@/features/approval/components/review-history";
 import { approvalRepository } from "@/features/approval/repository";
+import { canEditBody } from "@/features/approval/rules";
 import { addContentComment } from "@/features/content/actions/comments";
 import { Attachments } from "@/features/content/components/attachments";
 import { ContentChat } from "@/features/content/components/content-chat";
@@ -17,6 +18,7 @@ import { ContentRoom } from "@/features/content/components/content-room";
 import { finishUpload, requestUpload } from "@/features/content/files/actions";
 import { contentRepository } from "@/features/content/repository";
 import { taskRepository } from "@/features/tasks/repository";
+import { effectiveContentStatus } from "@/features/schedule/query-service";
 import { getVerifiedUser } from "@/lib/auth/get-verified-user";
 
 const statusLabels = {
@@ -43,8 +45,16 @@ export default async function ContentDetailPage({
   const { contentId } = await params;
   if (!z.uuid().safeParse(contentId).success) notFound();
 
-  const content = await contentRepository.find(contentId);
-  if (!content) notFound();
+  const storedContent = await contentRepository.find(contentId);
+  if (!storedContent) notFound();
+  const content = {
+    ...storedContent,
+    status: effectiveContentStatus(
+      storedContent.status,
+      storedContent.publishAt,
+      new Date()
+    ),
+  };
 
   const [
     currentUser,
@@ -55,6 +65,8 @@ export default async function ContentDetailPage({
     platforms,
     platformIds,
     assignees,
+    snapshotDocument,
+    snapshotAttachments,
   ] = await Promise.all([
     getVerifiedUser(),
     approvalRepository.listApprovals(contentId),
@@ -64,10 +76,17 @@ export default async function ContentDetailPage({
     contentRepository.listPlatforms(),
     contentRepository.listPlatformIds(contentId),
     taskRepository.listAssignees(),
+    content.currentVersion > 0
+      ? contentRepository.findVersion(contentId, content.currentVersion)
+      : Promise.resolve(null),
+    content.currentVersion > 0
+      ? contentRepository.listVersionAttachments(contentId, content.currentVersion)
+      : Promise.resolve([]),
   ]);
   const contentPlatforms = platforms.filter(({ id }) => platformIds.includes(id));
   const assignee = assignees.find(({ id }) => id === content.assigneeId);
   const admins = assignees.filter(({ role }) => role === "admin");
+  const editable = canEditBody(content.status);
 
   return (
     <SidebarProvider>
@@ -113,6 +132,7 @@ export default async function ContentDetailPage({
                     approvals={approvals}
                     currentUser={currentUser}
                     admins={admins}
+                    snapshotDocument={snapshotDocument}
                   />
                 </ContentRoom>
                 <ContentChat
@@ -125,7 +145,8 @@ export default async function ContentDetailPage({
               <div className="space-y-5">
                 <Attachments
                   contentId={content.id}
-                  attachments={attachments}
+                  attachments={editable ? attachments : snapshotAttachments}
+                  editable={editable}
                   requestUploadAction={requestUpload}
                   finishUploadAction={finishUpload}
                 />

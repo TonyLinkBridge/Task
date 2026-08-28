@@ -40,11 +40,17 @@ function createHarness(options?: { authenticated?: boolean }) {
     },
     async update(id, input) {
       const index = tasks.findIndex((task) => task.id === id);
+      if (tasks[index]?.kind === "content_publish") {
+        throw new Error("CONTENT_PUBLISH_TASK_CANNOT_EDIT");
+      }
       tasks[index] = { ...tasks[index], ...input };
       return tasks[index];
     },
     async move(id, status, position) {
       const index = tasks.findIndex((task) => task.id === id);
+      if (tasks[index]?.kind === "content_publish") {
+        throw new Error("CONTENT_PUBLISH_TASK_CANNOT_EDIT");
+      }
       tasks[index] = { ...tasks[index], status, position };
       return tasks[index];
     },
@@ -153,5 +159,20 @@ describe("task actions", () => {
       message: "发布任务要从内容排期里处理，不能在这里收起。",
     });
     expect(tasks[0].archivedAt).toBeNull();
+  });
+
+  it("does not edit or move a task linked to scheduled content", async () => {
+    const { actions, tasks } = createHarness();
+    await actions.createTask(validInput);
+    tasks[0] = { ...tasks[0], kind: "content_publish" };
+
+    await expect(actions.updateTask(tasks[0].id, validInput)).resolves.toEqual({
+      ok: false,
+      message: "发布任务要从内容排期里处理。",
+    });
+    await expect(actions.moveTask(tasks[0].id, "done", 1000)).resolves.toEqual({
+      ok: false,
+      message: "发布任务要从内容排期里处理。",
+    });
   });
 });

@@ -49,6 +49,19 @@ export function createTaskRepository(
 ): TaskRepository {
   const client = () => providedClient ?? getSupabaseAdmin();
 
+  async function assertEditableTask(id: string) {
+    const { data, error } = await client()
+      .from("tasks")
+      .select("kind")
+      .eq("id", id)
+      .is("archived_at", null)
+      .single();
+    if (error) throw new Error(`TASK_DATABASE_ERROR:${error.message}`);
+    if (data.kind === "content_publish") {
+      throw new Error("CONTENT_PUBLISH_TASK_CANNOT_EDIT");
+    }
+  }
+
   return {
     async list(filters = {}) {
       let query = client()
@@ -115,6 +128,7 @@ export function createTaskRepository(
     },
 
     async update(id, input) {
+      await assertEditableTask(id);
       const { data, error } = await client()
         .from("tasks")
         .update({ ...taskWrite(input), updated_at: new Date().toISOString() })
@@ -126,6 +140,7 @@ export function createTaskRepository(
     },
 
     async move(id, status: TaskStatus, position) {
+      await assertEditableTask(id);
       const { data, error } = await client()
         .from("tasks")
         .update({ status, position, updated_at: new Date().toISOString() })

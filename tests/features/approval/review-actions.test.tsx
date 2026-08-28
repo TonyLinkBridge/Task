@@ -94,4 +94,22 @@ describe("ReviewActions", () => {
 
     expect(screen.getByRole("button", { name: "交给上司检查" })).toBeInTheDocument();
   });
+
+  it("does not let another admin choose the reviewer for admin-authored content", () => {
+    render(
+      <ReviewActions
+        content={content({
+          status: "draft",
+          authorId: "admin-a",
+          requiredApprovals: 1,
+        })}
+        approvals={[]}
+        currentUser={{ id: "admin-b", role: "admin", name: "上司 B", imageUrl: null }}
+        admins={[]}
+        document={[]}
+      />
+    );
+
+    expect(screen.queryByRole("button", { name: "交给上司检查" })).not.toBeInTheDocument();
+  });
 });

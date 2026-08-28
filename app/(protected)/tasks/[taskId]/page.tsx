@@ -62,11 +62,20 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
                 ← 返回任务看板
               </Link>
               <div className="flex items-center gap-2">
-                <TaskForm
-                  assignees={assignees}
-                  initialTask={task}
-                  updateTaskAction={updateTask}
-                />
+                {task.kind === "general" ? (
+                  <TaskForm
+                    assignees={assignees}
+                    initialTask={task}
+                    updateTaskAction={updateTask}
+                  />
+                ) : task.linkedContentId ? (
+                  <Link
+                    href={`/content/${task.linkedContentId}`}
+                    className={buttonVariants({ variant: "outline" })}
+                  >
+                    打开排期内容
+                  </Link>
+                ) : null}
                 <ArchiveTaskButton
                   taskId={task.id}
                   taskKind={task.kind}

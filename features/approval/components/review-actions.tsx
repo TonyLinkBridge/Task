@@ -63,9 +63,11 @@ export function ReviewActions({
     content.status === "draft" || content.status === "changes_requested";
   const canSubmit =
     editable &&
-    (content.authorId === currentUser.id ||
-      content.assigneeId === currentUser.id ||
-      currentUser.role === "admin");
+    (content.requiredApprovals === 1
+      ? content.authorId === currentUser.id
+      : content.authorId === currentUser.id ||
+        content.assigneeId === currentUser.id ||
+        currentUser.role === "admin");
   const chosenOtherAdmin =
     content.requiredApprovals === 1 &&
     content.requestedReviewerId !== null &&
@@ -140,6 +142,9 @@ export function ReviewActions({
           >
             交给上司检查
           </Button>
+          {document === null ? (
+            <p className="text-xs text-amber-700">请等到正文显示“已经同步”再提交。</p>
+          ) : null}
         </div>
       ) : null}
 

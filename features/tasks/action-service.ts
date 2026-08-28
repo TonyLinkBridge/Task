@@ -61,6 +61,12 @@ export function makeTaskActions(dependencies: Dependencies) {
           message: "发布任务要从内容排期里处理，不能在这里收起。",
         };
       }
+      if (
+        error instanceof Error &&
+        error.message === "CONTENT_PUBLISH_TASK_CANNOT_EDIT"
+      ) {
+        return { ok: false, message: "发布任务要从内容排期里处理。" };
+      }
       return { ok: false, message: "暂时无法保存，请稍后再试。" };
     }
   }

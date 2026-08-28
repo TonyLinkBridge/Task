@@ -56,15 +56,17 @@ export function TaskCard({
         <Badge className={`border-0 ${priorityStyles[task.priority]}`}>
           {priorityLabels[task.priority]}
         </Badge>
-        <Button
-          aria-label={`拖动 ${task.title}`}
-          variant="ghost"
-          size="icon-xs"
-          {...attributes}
-          {...listeners}
-        >
-          <HugeiconsIcon icon={DragDropVerticalIcon} />
-        </Button>
+        {task.kind === "general" ? (
+          <Button
+            aria-label={`拖动 ${task.title}`}
+            variant="ghost"
+            size="icon-xs"
+            {...attributes}
+            {...listeners}
+          >
+            <HugeiconsIcon icon={DragDropVerticalIcon} />
+          </Button>
+        ) : null}
       </div>
 
       <Link
@@ -94,7 +96,7 @@ export function TaskCard({
           </Avatar>
           <span className="truncate text-xs">{assignee?.name ?? "未找到负责人"}</span>
         </div>
-        {onEdit ? (
+        {onEdit && task.kind === "general" ? (
           <Button variant="ghost" size="xs" onClick={() => onEdit(task)}>
             编辑
           </Button>

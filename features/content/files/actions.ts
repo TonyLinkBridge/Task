@@ -32,17 +32,14 @@ const fileActions = makeContentFileActions({
   },
   async saveAttachment(input): Promise<ContentAttachment> {
     const { data, error } = await getSupabaseAdmin()
-      .from("content_attachments")
-      .insert({
-        content_id: input.contentId,
-        storage_path: input.storagePath,
-        file_name: input.fileName,
-        mime_type: input.mimeType,
-        byte_size: input.byteSize,
-        uploader_id: input.uploaderId,
-      })
-      .select("*")
-      .single();
+      .rpc("save_content_attachment", {
+        p_content_id: input.contentId,
+        p_storage_path: input.storagePath,
+        p_file_name: input.fileName,
+        p_mime_type: input.mimeType,
+        p_byte_size: input.byteSize,
+        p_uploader_id: input.uploaderId,
+      });
     if (error || !data) {
       throw new Error(`ATTACHMENT_SAVE_FAILED:${error?.message ?? "NO_DATA"}`);
     }

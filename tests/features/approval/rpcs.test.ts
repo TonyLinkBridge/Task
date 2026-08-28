@@ -38,11 +38,68 @@ describe("approval workflow RPCs", () => {
     `);
   });
 
+  it("does not expose identity-spoofable workflow functions to public callers", async () => {
+    const functions = await database.query<{ proname: string; proacl: string | null }>(`
+      select proname, proacl::text
+      from pg_proc
+      where proname in (
+        'create_scheduled_content', 'submit_content_for_review',
+        'approve_content_version', 'request_content_changes',
+        'unlock_approved_content', 'mark_content_published', 'archive_content',
+        'create_content_snapshot', 'save_content_attachment'
+      )
+      order by proname
+    `);
+
+    expect(functions.rows).toHaveLength(9);
+    for (const item of functions.rows) {
+      expect(item.proacl, item.proname).not.toBeNull();
+      expect(item.proacl, item.proname).not.toMatch(/(^|[{,])=X/);
+    }
+  });
+
+  it("saves attachments only while the parent content row is editable", async () => {
+    await database.exec(`
+      select create_scheduled_content(
+        '${employeeContentId}', '员工内容', 'employee', 'employee',
+        '2026-08-29T02:00:00.000Z', array['${platformId}']::uuid[]
+      );
+      select save_content_attachment(
+        '${employeeContentId}', '${employeeContentId}/draft.png', 'draft.png',
+        'image/png', 1024, 'employee'
+      );
+      select submit_content_for_review(
+        '${employeeContentId}', 'employee', '[{"type":"paragraph"}]'::jsonb, null
+      );
+    `);
+
+    await expect(
+      database.exec(`
+        select save_content_attachment(
+          '${employeeContentId}', '${employeeContentId}/late.png', 'late.png',
+          'image/png', 1024, 'employee'
+        )
+      `)
+    ).rejects.toThrow(/CONTENT_NOT_EDITABLE/);
+
+    const attachments = await database.query<{ file_name: string }>(`
+      select file_name from content_attachments
+      where content_id = '${employeeContentId}' order by file_name
+    `);
+    expect(attachments.rows).toEqual([{ file_name: "draft.png" }]);
+  });
+
   it("creates a linked publish task and requires two distinct admins", async () => {
     await database.exec(`
       select create_scheduled_content(
         '${employeeContentId}', '员工内容', 'employee', 'employee',
         '2026-08-29T02:00:00.000Z', array['${platformId}']::uuid[]
+      );
+      insert into content_attachments (
+        content_id, storage_path, file_name, mime_type, byte_size, uploader_id
+      ) values (
+        '${employeeContentId}', '${employeeContentId}/image.png', 'image.png',
+        'image/png', 1024, 'employee'
       );
       select submit_content_for_review(
         '${employeeContentId}', 'employee', '[{"type":"paragraph"}]'::jsonb, null
@@ -55,11 +112,17 @@ describe("approval workflow RPCs", () => {
       status: string;
       required_approvals: number;
       approval_count: number;
+      snapshot_attachments: number;
       linked_task_id: string;
       task_link: string;
     }>(`
       select c.status::text, c.required_approvals,
         count(a.id)::integer as approval_count,
+        (select count(*)::integer
+         from content_version_attachments cva
+         join content_versions cv on cv.id = cva.content_version_id
+         where cv.content_id = c.id and cv.version = c.current_version
+        ) as snapshot_attachments,
         c.linked_task_id::text,
         t.linked_content_id::text as task_link
       from contents c
@@ -74,6 +137,7 @@ describe("approval workflow RPCs", () => {
       status: "in_review",
       required_approvals: 2,
       approval_count: 1,
+      snapshot_attachments: 1,
       task_link: employeeContentId,
     });
 
@@ -131,12 +195,65 @@ describe("approval workflow RPCs", () => {
     });
   });
 
+  it("supports request changes, resubmission, and fresh two-admin approval", async () => {
+    await database.exec(`
+      select create_scheduled_content(
+        '${employeeContentId}', '员工内容', 'employee', 'employee',
+        '2026-08-29T02:00:00.000Z', array['${platformId}']::uuid[]
+      );
+      select submit_content_for_review(
+        '${employeeContentId}', 'employee', '[{"version":1}]'::jsonb, null
+      );
+      select approve_content_version('${employeeContentId}', 1, 'admin-a');
+      select request_content_changes(
+        '${employeeContentId}', 1, 'admin-b', '请修改开头'
+      );
+      select submit_content_for_review(
+        '${employeeContentId}', 'employee', '[{"version":2}]'::jsonb, null
+      );
+      select approve_content_version('${employeeContentId}', 2, 'admin-a');
+      select approve_content_version('${employeeContentId}', 2, 'admin-b');
+    `);
+
+    const result = await database.query<{
+      status: string;
+      current_version: number;
+      active_approvals: number;
+      change_requests: number;
+    }>(`
+      select c.status::text, c.current_version,
+        count(distinct a.admin_id) filter (where a.invalidated_at is null)::integer as active_approvals,
+        (select count(*)::integer from content_review_events e
+         where e.content_id = c.id and e.event_type = 'changes_requested') as change_requests
+      from contents c
+      left join content_approvals a on a.content_id = c.id
+      where c.id = '${employeeContentId}'
+      group by c.id
+    `);
+    expect(result.rows[0]).toEqual({
+      status: "approved",
+      current_version: 2,
+      active_approvals: 2,
+      change_requests: 1,
+    });
+  });
+
   it("honors an admin author's chosen reviewer and finishes the linked task on publish", async () => {
     await database.exec(`
       select create_scheduled_content(
         '${adminContentId}', '管理员内容', 'admin-a', 'employee',
         '2026-08-29T02:00:00.000Z', array['${platformId}']::uuid[]
       );
+    `);
+    await expect(
+      database.exec(`
+        select submit_content_for_review(
+          '${adminContentId}', 'admin-b', '[{"type":"paragraph"}]'::jsonb, 'admin-b'
+        )
+      `)
+    ).rejects.toThrow(/CONTENT_FORBIDDEN/);
+
+    await database.exec(`
       select submit_content_for_review(
         '${adminContentId}', 'admin-a', '[{"type":"paragraph"}]'::jsonb, 'admin-b'
       );

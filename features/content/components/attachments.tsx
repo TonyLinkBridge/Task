@@ -27,6 +27,7 @@ export function Attachments({
   attachments: initialAttachments,
   requestUploadAction = unavailable,
   finishUploadAction = unavailable,
+  editable = true,
 }: {
   contentId: string;
   attachments: ContentAttachment[];
@@ -39,6 +40,7 @@ export function Attachments({
     storagePath: string,
     fileMeta: ContentFileMeta
   ) => Promise<FinishUploadResult>;
+  editable?: boolean;
 }) {
   const [attachments, setAttachments] = useState(initialAttachments);
   const [isUploading, setIsUploading] = useState(false);
@@ -100,21 +102,23 @@ export function Attachments({
             图片、影片、音频、PDF 或 Office 文件，最大 100MB
           </p>
         </div>
-        <label
-          className={buttonVariants({
-            className: isUploading ? "pointer-events-none opacity-50" : "cursor-pointer",
-          })}
-        >
-          {isUploading ? "正在上传…" : "上传文件"}
-          <input
-            aria-label="上传文件"
-            type="file"
-            className="sr-only"
-            accept="image/*,video/*,audio/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-            disabled={isUploading}
-            onChange={(event) => void handleFile(event.target.files?.[0])}
-          />
-        </label>
+        {editable ? (
+          <label
+            className={buttonVariants({
+              className: isUploading ? "pointer-events-none opacity-50" : "cursor-pointer",
+            })}
+          >
+            {isUploading ? "正在上传…" : "上传文件"}
+            <input
+              aria-label="上传文件"
+              type="file"
+              className="sr-only"
+              accept="image/*,video/*,audio/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+              disabled={isUploading}
+              onChange={(event) => void handleFile(event.target.files?.[0])}
+            />
+          </label>
+        ) : null}
       </div>
 
       <div className="mt-4 space-y-2">

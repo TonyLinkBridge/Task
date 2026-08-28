@@ -6,7 +6,7 @@ import {
   useCreateBlockNoteWithLiveblocks,
   useIsEditorReady,
 } from "@liveblocks/react-blocknote";
-import { useStatus, useThreads } from "@liveblocks/react/suspense";
+import { useStatus, useSyncStatus, useThreads } from "@liveblocks/react/suspense";
 import { useEffect } from "react";
 
 import { InlineThreads } from "@/features/content/components/inline-threads";
@@ -42,10 +42,12 @@ export function EditorSyncStatus({
 export function BlockNoteEditor({
   editable,
   onDocumentChange,
+  onSyncChange,
 }: {
   contentId: string;
   editable: boolean;
   onDocumentChange?: (document: unknown) => void;
+  onSyncChange?: (synchronized: boolean) => void;
 }) {
   const editor = useCreateBlockNoteWithLiveblocks(
     {},
@@ -53,11 +55,15 @@ export function BlockNoteEditor({
   );
   const ready = useIsEditorReady();
   const status = useStatus();
+  const syncStatus = useSyncStatus();
   const { threads } = useThreads({ query: { resolved: false } });
 
   useEffect(() => {
     if (ready) onDocumentChange?.(editor.document);
   }, [editor, onDocumentChange, ready]);
+  useEffect(() => {
+    onSyncChange?.(ready && syncStatus === "synchronized");
+  }, [onSyncChange, ready, syncStatus]);
 
   if (!ready) {
     return <EditorSyncStatus ready={false} status={status} />;

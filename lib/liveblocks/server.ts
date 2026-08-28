@@ -4,6 +4,7 @@ import { Liveblocks } from "@liveblocks/node";
 
 import type { VerifiedUser } from "@/lib/auth/types";
 import { getServerEnv } from "@/lib/env/server";
+import { roomPermissions } from "@/features/content/room-permissions";
 
 let serverClient: Liveblocks | undefined;
 
@@ -20,9 +21,16 @@ export function getUserColor(userId: string) {
 
 export async function authorizeContentRoom(
   user: VerifiedUser,
-  roomId: string
+  roomId: string,
+  editable: boolean
 ): Promise<{ token: string }> {
-  const session = getLiveblocksServer().prepareSession(user.id, {
+  const client = getLiveblocksServer();
+  const permissions = roomPermissions(editable);
+  await client.upsertRoom(roomId, {
+    update: { defaultAccesses: permissions },
+    create: { defaultAccesses: permissions },
+  });
+  const authorization = await client.identifyUser(user.id, {
     userInfo: {
       name: user.name,
       avatar: user.imageUrl ?? "",
@@ -30,11 +38,19 @@ export async function authorizeContentRoom(
       color: getUserColor(user.id),
     },
   });
-  session.allow(roomId, ["*:write"]);
-
-  const authorization = await session.authorize();
   if (authorization.status !== 200) {
     throw authorization.error ?? new Error("LIVEBLOCKS_AUTH_FAILED");
   }
   return JSON.parse(authorization.body) as { token: string };
+}
+
+export async function setContentRoomEditable(
+  roomId: string,
+  editable: boolean
+): Promise<void> {
+  const permissions = roomPermissions(editable);
+  await getLiveblocksServer().upsertRoom(roomId, {
+    update: { defaultAccesses: permissions },
+    create: { defaultAccesses: permissions },
+  });
 }

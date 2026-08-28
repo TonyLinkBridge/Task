@@ -70,7 +70,7 @@ end;
 $$;
 
 with missing_content as (
-  select c.id, c.title, c.assignee_id, c.author_id, c.publish_at
+  select c.id, c.title, c.assignee_id, c.author_id, c.publish_at, c.status
   from contents c
   where c.linked_task_id is null and c.archived_at is null
 ), created_task as (
@@ -79,7 +79,9 @@ with missing_content as (
     due_at, position, linked_content_id
   )
   select
-    '发布 ' || title || ' 内容', '', 'todo', 'medium', 'content_publish',
+    '发布 ' || title || ' 内容', '',
+    case when status = 'published' then 'done'::task_status else 'todo'::task_status end,
+    'medium', 'content_publish',
     assignee_id, author_id, publish_at, 1000, id
   from missing_content
   returning id, linked_content_id
@@ -98,6 +100,42 @@ create unique index contents_one_linked_task_idx
 
 drop function create_content(uuid, text, text, text, timestamptz, uuid[]);
 
+create or replace function save_content_attachment(
+  p_content_id uuid,
+  p_storage_path text,
+  p_file_name text,
+  p_mime_type text,
+  p_byte_size bigint,
+  p_uploader_id text
+) returns content_attachments
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  content_row contents;
+  attachment_row content_attachments;
+begin
+  select * into content_row
+  from contents
+  where id = p_content_id and archived_at is null
+  for update;
+  if content_row.id is null then raise exception 'CONTENT_NOT_FOUND'; end if;
+  if content_row.status not in ('draft', 'changes_requested') then
+    raise exception 'CONTENT_NOT_EDITABLE';
+  end if;
+
+  insert into content_attachments (
+    content_id, storage_path, file_name, mime_type, byte_size, uploader_id
+  ) values (
+    p_content_id, p_storage_path, p_file_name, p_mime_type,
+    p_byte_size, p_uploader_id
+  ) returning * into attachment_row;
+
+  return attachment_row;
+end;
+$$;
+
 create or replace function submit_content_for_review(
   p_content_id uuid,
   p_actor_id text,
@@ -114,6 +152,7 @@ declare
   author_role app_role;
   reviewer_role app_role;
   next_version integer;
+  snapshot_id uuid;
   event_name text;
   invalidated_count integer;
 begin
@@ -137,6 +176,10 @@ begin
   select role into author_role from profiles
   where clerk_user_id = content_row.author_id and archived_at is null;
   if author_role is null then raise exception 'CONTENT_AUTHOR_INVALID'; end if;
+
+  if author_role = 'admin' and p_actor_id <> content_row.author_id then
+    raise exception 'CONTENT_FORBIDDEN';
+  end if;
 
   if author_role = 'admin' then
     if p_requested_reviewer_id is null then
@@ -172,7 +215,12 @@ begin
     content_id, version, blocknote_json, created_by
   ) values (
     p_content_id, next_version, p_blocknote_json, p_actor_id
-  );
+  ) returning id into snapshot_id;
+
+  insert into content_version_attachments (content_version_id, attachment_id)
+  select snapshot_id, id
+  from content_attachments
+  where content_id = p_content_id;
 
   update contents
   set status = 'in_review', current_version = next_version,
@@ -454,3 +502,29 @@ begin
   return content_row;
 end;
 $$;
+
+revoke all on function create_scheduled_content(uuid, text, text, text, timestamptz, uuid[]) from public;
+revoke all on function submit_content_for_review(uuid, text, jsonb, text) from public;
+revoke all on function approve_content_version(uuid, integer, text) from public;
+revoke all on function request_content_changes(uuid, integer, text, text) from public;
+revoke all on function unlock_approved_content(uuid, text) from public;
+revoke all on function mark_content_published(uuid, text) from public;
+revoke all on function archive_content(uuid, text) from public;
+revoke all on function create_content_snapshot(uuid, text, jsonb) from public;
+revoke all on function save_content_attachment(uuid, text, text, text, bigint, text) from public;
+
+do $grant_workflow_to_service_role$
+begin
+  if exists (select 1 from pg_roles where rolname = 'service_role') then
+    execute 'grant execute on function create_scheduled_content(uuid, text, text, text, timestamptz, uuid[]) to service_role';
+    execute 'grant execute on function submit_content_for_review(uuid, text, jsonb, text) to service_role';
+    execute 'grant execute on function approve_content_version(uuid, integer, text) to service_role';
+    execute 'grant execute on function request_content_changes(uuid, integer, text, text) to service_role';
+    execute 'grant execute on function unlock_approved_content(uuid, text) to service_role';
+    execute 'grant execute on function mark_content_published(uuid, text) to service_role';
+    execute 'grant execute on function archive_content(uuid, text) to service_role';
+    execute 'grant execute on function create_content_snapshot(uuid, text, jsonb) to service_role';
+    execute 'grant execute on function save_content_attachment(uuid, text, text, text, bigint, text) to service_role';
+  end if;
+end;
+$grant_workflow_to_service_role$;

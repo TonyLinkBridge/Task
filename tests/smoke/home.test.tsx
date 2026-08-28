@@ -10,9 +10,9 @@ vi.mock("next/navigation", () => ({
 import HomePage from "@/app/page";
 
 describe("home page", () => {
-  it("sends users to the tasks page", () => {
+  it("sends users to the dashboard", () => {
     expect(() => HomePage()).toThrow("NEXT_REDIRECT");
 
-    expect(redirect).toHaveBeenCalledWith("/tasks");
+    expect(redirect).toHaveBeenCalledWith("/dashboard");
   });
 });

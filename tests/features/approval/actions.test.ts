@@ -36,6 +36,7 @@ function createHarness(options?: {
 }) {
   let record = options?.record ?? content();
   const calls: string[] = [];
+  const roomCalls: string[] = [];
   const revalidatedPaths: string[] = [];
 
   const repository: ApprovalActionRepository = {
@@ -87,10 +88,13 @@ function createHarness(options?: {
       imageUrl: null,
     }),
     repository,
+    setRoomEditable: async (roomId, editable) => {
+      roomCalls.push(`${roomId}:${editable ? "write" : "read"}`);
+    },
     revalidatePath: (path) => revalidatedPaths.push(path),
   });
 
-  return { actions, calls, revalidatedPaths };
+  return { actions, calls, roomCalls, revalidatedPaths };
 }
 
 describe("content approval actions", () => {
@@ -115,7 +119,7 @@ describe("content approval actions", () => {
   });
 
   it("submits the current document and chosen reviewer", async () => {
-    const { actions, calls, revalidatedPaths } = createHarness();
+    const { actions, calls, roomCalls, revalidatedPaths } = createHarness();
 
     const result = await actions.submitForReview(
       contentId,
@@ -128,7 +132,20 @@ describe("content approval actions", () => {
       data: { status: "in_review", requestedReviewerId: "user_admin_b" },
     });
     expect(calls).toEqual(["submit:user_admin_a:user_admin_b"]);
+    expect(roomCalls).toEqual([
+      `content:${contentId}:read`,
+      `content:${contentId}:read`,
+    ]);
     expect(revalidatedPaths).toEqual(["/content", `/content/${contentId}`]);
+  });
+
+  it("opens the room for editing after changes are requested", async () => {
+    const { actions, roomCalls } = createHarness();
+
+    await expect(
+      actions.requestChanges(contentId, 4, "请修改开头")
+    ).resolves.toMatchObject({ ok: true });
+    expect(roomCalls).toEqual([`content:${contentId}:write`]);
   });
 
   it("requires a reason before requesting changes", async () => {
@@ -148,5 +165,16 @@ describe("content approval actions", () => {
       message: "只有管理员可以收起内容。",
     });
     expect(calls).toEqual([]);
+  });
+
+  it("locks an editable room when an admin archives its content", async () => {
+    const { actions, roomCalls } = createHarness({
+      record: content({ status: "draft" }),
+    });
+
+    await expect(actions.archiveContent(contentId)).resolves.toMatchObject({
+      ok: true,
+    });
+    expect(roomCalls).toEqual([`content:${contentId}:read`]);
   });
 });

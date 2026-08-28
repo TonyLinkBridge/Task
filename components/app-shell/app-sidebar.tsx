@@ -1,8 +1,9 @@
 "use client";
 
-import { Calendar03Icon, Note01Icon, Settings02Icon, UserGroupIcon } from "@hugeicons/core-free-icons";
+import { Calendar03Icon, DashboardSquare01Icon, Note01Icon, Settings02Icon, UserGroupIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { AdminOnly } from "@/components/auth/admin-only";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,6 +11,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupConte
 import type { VerifiedUser } from "@/lib/auth/types";
 
 export function AppSidebar({ currentUser }: { currentUser: VerifiedUser }) {
+  const pathname = usePathname();
   return (
     <Sidebar className="border-r">
       <SidebarHeader className="p-4">
@@ -23,8 +25,9 @@ export function AppSidebar({ currentUser }: { currentUser: VerifiedUser }) {
           <SidebarGroupLabel>工作</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem><SidebarMenuButton isActive render={<Link href="/tasks" />}><HugeiconsIcon icon={Note01Icon} /><span>任务</span></SidebarMenuButton></SidebarMenuItem>
-              <SidebarMenuItem><SidebarMenuButton render={<Link href="/content" />}><HugeiconsIcon icon={Calendar03Icon} /><span>内容排期</span></SidebarMenuButton></SidebarMenuItem>
+              <SidebarMenuItem><SidebarMenuButton isActive={pathname.startsWith("/dashboard")} render={<Link href="/dashboard" />}><HugeiconsIcon icon={DashboardSquare01Icon} /><span>首页</span></SidebarMenuButton></SidebarMenuItem>
+              <SidebarMenuItem><SidebarMenuButton isActive={pathname.startsWith("/tasks")} render={<Link href="/tasks" />}><HugeiconsIcon icon={Note01Icon} /><span>任务</span></SidebarMenuButton></SidebarMenuItem>
+              <SidebarMenuItem><SidebarMenuButton isActive={pathname.startsWith("/content")} render={<Link href="/content" />}><HugeiconsIcon icon={Calendar03Icon} /><span>内容排期</span></SidebarMenuButton></SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

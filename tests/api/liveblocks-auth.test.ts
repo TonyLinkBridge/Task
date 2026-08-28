@@ -46,8 +46,10 @@ describe("POST /api/liveblocks-auth", () => {
     const room = "content:22222222-2222-4222-8222-222222222222";
     const handler = makeLiveblocksAuthHandler({
       getVerifiedUser: async () => user,
-      findContentByRoomId: async () => ({ id: room.slice(8) }),
-      authorizeRoom: async () => ({ token: "private-room-token" }),
+      findContentByRoomId: async () => ({ id: room.slice(8), status: "draft" as const }),
+      authorizeRoom: async (_user, _room, editable) => ({
+        token: editable ? "private-room-token" : "wrong-token",
+      }),
     });
 
     const response = await handler(requestWithRoom(room));
@@ -56,5 +58,23 @@ describe("POST /api/liveblocks-auth", () => {
     await expect(response.json()).resolves.toEqual({
       token: "private-room-token",
     });
+  });
+
+  it("opens locked content without body-write permission", async () => {
+    const room = "content:22222222-2222-4222-8222-222222222222";
+    let editable: boolean | undefined;
+    const handler = makeLiveblocksAuthHandler({
+      getVerifiedUser: async () => user,
+      findContentByRoomId: async () => ({ id: room.slice(8), status: "in_review" as const }),
+      authorizeRoom: async (_user, _room, canEdit) => {
+        editable = canEdit;
+        return { token: "read-and-comment-token" };
+      },
+    });
+
+    const response = await handler(requestWithRoom(room));
+
+    expect(response.status).toBe(200);
+    expect(editable).toBe(false);
   });
 });

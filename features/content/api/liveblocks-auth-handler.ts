@@ -1,11 +1,16 @@
 import type { VerifiedUser } from "@/lib/auth/types";
+import type { ContentStatus } from "@/features/content/types";
+import { canEditBody } from "@/features/approval/rules";
 
 type Dependencies = {
   getVerifiedUser: () => Promise<VerifiedUser>;
-  findContentByRoomId: (roomId: string) => Promise<{ id: string } | null>;
+  findContentByRoomId: (
+    roomId: string
+  ) => Promise<{ id: string; status: ContentStatus } | null>;
   authorizeRoom: (
     user: VerifiedUser,
-    roomId: string
+    roomId: string,
+    editable: boolean
   ) => Promise<{ token: string }>;
 };
 
@@ -29,7 +34,11 @@ export function makeLiveblocksAuthHandler(dependencies: Dependencies) {
         return Response.json({ error: "forbidden" }, { status: 403 });
       }
 
-      const token = await dependencies.authorizeRoom(user, body.room);
+      const token = await dependencies.authorizeRoom(
+        user,
+        body.room,
+        canEditBody(content.status)
+      );
       return Response.json(token);
     } catch {
       return Response.json({ error: "forbidden" }, { status: 403 });

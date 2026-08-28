@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 import type { ContentAttachment } from "@/features/content/types";
+import type { ContentStatus } from "@/features/content/types";
+import { canEditBody } from "@/features/approval/rules";
 import type { VerifiedUser } from "@/lib/auth/types";
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
@@ -51,7 +53,9 @@ export function buildStoragePath(
 
 type Dependencies = {
   getVerifiedUser: () => Promise<VerifiedUser>;
-  findContent: (contentId: string) => Promise<{ id: string } | null>;
+  findContent: (
+    contentId: string
+  ) => Promise<{ id: string; status: ContentStatus } | null>;
   createUploadUrl: (storagePath: string) => Promise<{ token: string }>;
   inspectUpload: (
     storagePath: string
@@ -83,6 +87,9 @@ export function makeContentFileActions(dependencies: Dependencies) {
       const content = await dependencies.findContent(parsedId.data);
       if (!content) {
         return { ok: false as const, message: "找不到这条内容。" };
+      }
+      if (!canEditBody(content.status)) {
+        return { ok: false as const, message: "审核期间不能更换文件。" };
       }
 
       try {
@@ -121,6 +128,9 @@ export function makeContentFileActions(dependencies: Dependencies) {
       const content = await dependencies.findContent(parsedId.data);
       if (!content) {
         return { ok: false as const, message: "找不到这条内容。" };
+      }
+      if (!canEditBody(content.status)) {
+        return { ok: false as const, message: "审核期间不能更换文件。" };
       }
 
       try {
