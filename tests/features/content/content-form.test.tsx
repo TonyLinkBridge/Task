@@ -14,6 +14,13 @@ const platform: ContentPlatform = {
   archivedAt: null,
   createdAt: "2026-08-28T02:00:00.000Z",
 };
+const linkedInPlatform: ContentPlatform = {
+  id: "44444444-4444-4444-8444-444444444444",
+  name: "LinkedIn",
+  color: "#2563eb",
+  archivedAt: null,
+  createdAt: "2026-08-28T02:00:00.000Z",
+};
 const employee: AssignableUser = {
   id: "employee",
   role: "employee",
@@ -75,5 +82,23 @@ describe("ContentForm", () => {
     expect(screen.queryByLabelText("内容目的")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("目标观众")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Hashtag")).not.toBeInTheDocument();
+  });
+
+  it("lets people search many platforms and keeps the selection visible", async () => {
+    const user = userEvent.setup();
+    render(
+      <ContentForm
+        platforms={[platform, linkedInPlatform]}
+        assignees={[employee]}
+      />
+    );
+
+    await user.click(screen.getByLabelText("Instagram"));
+    await user.type(screen.getByLabelText("搜索发布平台"), "linked");
+
+    expect(screen.queryByLabelText("Instagram")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("LinkedIn")).toBeInTheDocument();
+    expect(screen.getByText("已选择 1 个平台")).toBeInTheDocument();
+    expect(screen.getByText("Instagram", { selector: "span" })).toBeInTheDocument();
   });
 });

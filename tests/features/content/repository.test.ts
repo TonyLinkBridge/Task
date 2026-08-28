@@ -4,6 +4,7 @@ import {
   createContentRepository,
   mapContentCommentRow,
   mapContentRow,
+  mapPlatformRow,
 } from "@/features/content/repository";
 
 const contentId = "22222222-2222-4222-8222-222222222222";
@@ -116,6 +117,26 @@ describe("mapContentCommentRow", () => {
       createdAt: "2026-08-28T03:00:00.000Z",
       authorName: "上司",
       authorImageUrl: null,
+    });
+  });
+});
+
+describe("mapPlatformRow", () => {
+  it("keeps the active or stopped state for administrator settings", () => {
+    expect(
+      mapPlatformRow({
+        id: "11111111-1111-4111-8111-111111111111",
+        name: "Instagram",
+        color: "#ec4899",
+        archived_at: "2026-08-28T04:00:00.000Z",
+        created_at: "2026-08-28T02:00:00.000Z",
+      })
+    ).toEqual({
+      id: "11111111-1111-4111-8111-111111111111",
+      name: "Instagram",
+      color: "#ec4899",
+      archivedAt: "2026-08-28T04:00:00.000Z",
+      createdAt: "2026-08-28T02:00:00.000Z",
     });
   });
 });

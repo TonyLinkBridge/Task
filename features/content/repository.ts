@@ -39,6 +39,24 @@ type ContentCommentRow = {
   author: { display_name: string; avatar_url: string | null };
 };
 
+export type PlatformRow = {
+  id: string;
+  name: string;
+  color: string;
+  archived_at: string | null;
+  created_at: string;
+};
+
+export function mapPlatformRow(row: PlatformRow): ContentPlatform {
+  return {
+    id: row.id,
+    name: row.name,
+    color: row.color,
+    archivedAt: row.archived_at,
+    createdAt: row.created_at,
+  };
+}
+
 export function mapContentCommentRow(
   row: ContentCommentRow
 ): ContentCommentView {
@@ -146,13 +164,54 @@ export function createContentRepository(
         .is("archived_at", null)
         .order("name");
       if (error) throw new Error(`CONTENT_DATABASE_ERROR:${error.message}`);
-      return (data ?? []).map((row) => ({
-        id: row.id,
-        name: row.name,
-        color: row.color,
-        archivedAt: row.archived_at,
-        createdAt: row.created_at,
-      }));
+      return (data ?? []).map((row) => mapPlatformRow(row as PlatformRow));
+    },
+
+    async listAllPlatforms(): Promise<ContentPlatform[]> {
+      const { data, error } = await client()
+        .from("platforms")
+        .select("*")
+        .order("name");
+      if (error) throw new Error(`CONTENT_DATABASE_ERROR:${error.message}`);
+      return (data ?? []).map((row) => mapPlatformRow(row as PlatformRow));
+    },
+
+    async createPlatform(input: {
+      name: string;
+      color: string;
+    }): Promise<ContentPlatform> {
+      const { data, error } = await client()
+        .from("platforms")
+        .insert({ name: input.name, color: input.color })
+        .select("*")
+        .single();
+      return mapPlatformRow(assertData(data as PlatformRow | null, error));
+    },
+
+    async updatePlatform(
+      id: string,
+      input: { name: string; color: string }
+    ): Promise<ContentPlatform> {
+      const { data, error } = await client()
+        .from("platforms")
+        .update({ name: input.name, color: input.color })
+        .eq("id", id)
+        .select("*")
+        .single();
+      return mapPlatformRow(assertData(data as PlatformRow | null, error));
+    },
+
+    async setPlatformArchived(
+      id: string,
+      archived: boolean
+    ): Promise<ContentPlatform> {
+      const { data, error } = await client()
+        .from("platforms")
+        .update({ archived_at: archived ? new Date().toISOString() : null })
+        .eq("id", id)
+        .select("*")
+        .single();
+      return mapPlatformRow(assertData(data as PlatformRow | null, error));
     },
 
     async listPlatformIds(contentId: string): Promise<string[]> {
