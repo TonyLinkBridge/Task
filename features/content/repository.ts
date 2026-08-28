@@ -7,6 +7,7 @@ import type {
   ContentCommentView,
   ContentRecord,
   ContentStatus,
+  ContentPlatform,
 } from "@/features/content/types";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
@@ -87,6 +88,50 @@ export function createContentRepository(
   const client = () => providedClient ?? getSupabaseAdmin();
 
   return {
+    async listPlatforms(): Promise<ContentPlatform[]> {
+      const { data, error } = await client()
+        .from("platforms")
+        .select("*")
+        .is("archived_at", null)
+        .order("name");
+      if (error) throw new Error(`CONTENT_DATABASE_ERROR:${error.message}`);
+      return (data ?? []).map((row) => ({
+        id: row.id,
+        name: row.name,
+        color: row.color,
+        archivedAt: row.archived_at,
+        createdAt: row.created_at,
+      }));
+    },
+
+    async listPlatformIds(contentId: string): Promise<string[]> {
+      const { data, error } = await client()
+        .from("content_platforms")
+        .select("platform_id")
+        .eq("content_id", contentId);
+      if (error) throw new Error(`CONTENT_DATABASE_ERROR:${error.message}`);
+      return (data ?? []).map(({ platform_id }) => platform_id);
+    },
+
+    async listAttachments(contentId: string): Promise<ContentAttachment[]> {
+      const { data, error } = await client()
+        .from("content_attachments")
+        .select("*")
+        .eq("content_id", contentId)
+        .order("created_at");
+      if (error) throw new Error(`CONTENT_DATABASE_ERROR:${error.message}`);
+      return (data ?? []).map((row) => ({
+        id: row.id,
+        contentId: row.content_id,
+        storagePath: row.storage_path,
+        fileName: row.file_name,
+        mimeType: row.mime_type,
+        byteSize: Number(row.byte_size),
+        uploaderId: row.uploader_id,
+        createdAt: row.created_at,
+      }));
+    },
+
     async create(input: ContentInput, authorId: string): Promise<ContentRecord> {
       const contentId = createId();
       const { data, error } = await client().rpc("create_scheduled_content", {

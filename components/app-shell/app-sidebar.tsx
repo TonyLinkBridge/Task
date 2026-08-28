@@ -24,7 +24,7 @@ export function AppSidebar({ currentUser }: { currentUser: VerifiedUser }) {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem><SidebarMenuButton isActive render={<Link href="/tasks" />}><HugeiconsIcon icon={Note01Icon} /><span>任务</span></SidebarMenuButton></SidebarMenuItem>
-              <SidebarMenuItem><SidebarMenuButton disabled><HugeiconsIcon icon={Calendar03Icon} /><span>内容排期（下一阶段）</span></SidebarMenuButton></SidebarMenuItem>
+              <SidebarMenuItem><SidebarMenuButton render={<Link href="/content" />}><HugeiconsIcon icon={Calendar03Icon} /><span>内容排期</span></SidebarMenuButton></SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

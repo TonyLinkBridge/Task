@@ -1,6 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { ApprovalActionRepository } from "@/features/approval/action-service";
+import type {
+  ContentApprovalView,
+  ContentReviewEventView,
+  ReviewEventType,
+} from "@/features/approval/types";
 import {
   mapContentRow,
   type ContentRow,
@@ -20,10 +25,79 @@ function mapRpcResult(
 
 export function createApprovalRepository(
   providedClient?: SupabaseClient
-): ApprovalActionRepository {
+): ApprovalActionRepository & {
+  listApprovals(contentId: string): Promise<ContentApprovalView[]>;
+  listHistory(contentId: string): Promise<ContentReviewEventView[]>;
+} {
   const client = () => providedClient ?? getSupabaseAdmin();
 
   return {
+    async listApprovals(contentId) {
+      const { data, error } = await client()
+        .from("content_approvals")
+        .select(
+          "id, content_id, version, admin_id, approved_at, invalidated_at, admin:profiles!content_approvals_admin_id_fkey(display_name, avatar_url)"
+        )
+        .eq("content_id", contentId)
+        .order("approved_at");
+      if (error) throw new Error(`CONTENT_DATABASE_ERROR:${error.message}`);
+      return (data ?? []).map((item) => {
+        const row = item as unknown as {
+          id: string;
+          content_id: string;
+          version: number;
+          admin_id: string;
+          approved_at: string;
+          invalidated_at: string | null;
+          admin: { display_name: string; avatar_url: string | null };
+        };
+        return {
+          id: row.id,
+          contentId: row.content_id,
+          version: row.version,
+          adminId: row.admin_id,
+          approvedAt: row.approved_at,
+          invalidatedAt: row.invalidated_at,
+          adminName: row.admin.display_name,
+          adminImageUrl: row.admin.avatar_url,
+        };
+      });
+    },
+
+    async listHistory(contentId) {
+      const { data, error } = await client()
+        .from("content_review_events")
+        .select(
+          "id, content_id, version, event_type, actor_id, message, created_at, actor:profiles!content_review_events_actor_id_fkey(display_name, avatar_url)"
+        )
+        .eq("content_id", contentId)
+        .order("created_at", { ascending: false });
+      if (error) throw new Error(`CONTENT_DATABASE_ERROR:${error.message}`);
+      return (data ?? []).map((item) => {
+        const row = item as unknown as {
+          id: string;
+          content_id: string;
+          version: number;
+          event_type: ReviewEventType;
+          actor_id: string;
+          message: string | null;
+          created_at: string;
+          actor: { display_name: string; avatar_url: string | null };
+        };
+        return {
+          id: row.id,
+          contentId: row.content_id,
+          version: row.version,
+          eventType: row.event_type,
+          actorId: row.actor_id,
+          message: row.message,
+          createdAt: row.created_at,
+          actorName: row.actor.display_name,
+          actorImageUrl: row.actor.avatar_url,
+        };
+      });
+    },
+
     async find(contentId) {
       const { data, error } = await client()
         .from("contents")

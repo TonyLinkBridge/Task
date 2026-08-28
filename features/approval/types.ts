@@ -14,6 +14,11 @@ export type ContentApproval = {
   invalidatedAt: string | null;
 };
 
+export type ContentApprovalView = ContentApproval & {
+  adminName: string;
+  adminImageUrl: string | null;
+};
+
 export const REVIEW_EVENT_TYPES = [
   "submitted",
   "approved",
@@ -34,6 +39,11 @@ export type ContentReviewEvent = {
   actorId: string;
   message: string | null;
   createdAt: string;
+};
+
+export type ContentReviewEventView = ContentReviewEvent & {
+  actorName: string;
+  actorImageUrl: string | null;
 };
 
 export type PublishableContentStatus = Extract<

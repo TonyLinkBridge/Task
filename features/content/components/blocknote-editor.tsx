@@ -7,6 +7,7 @@ import {
   useIsEditorReady,
 } from "@liveblocks/react-blocknote";
 import { useStatus, useThreads } from "@liveblocks/react/suspense";
+import { useEffect } from "react";
 
 import { InlineThreads } from "@/features/content/components/inline-threads";
 
@@ -40,9 +41,11 @@ export function EditorSyncStatus({
 
 export function BlockNoteEditor({
   editable,
+  onDocumentChange,
 }: {
   contentId: string;
   editable: boolean;
+  onDocumentChange?: (document: unknown) => void;
 }) {
   const editor = useCreateBlockNoteWithLiveblocks(
     {},
@@ -52,6 +55,10 @@ export function BlockNoteEditor({
   const status = useStatus();
   const { threads } = useThreads({ query: { resolved: false } });
 
+  useEffect(() => {
+    if (ready) onDocumentChange?.(editor.document);
+  }, [editor, onDocumentChange, ready]);
+
   if (!ready) {
     return <EditorSyncStatus ready={false} status={status} />;
   }
@@ -60,10 +67,12 @@ export function BlockNoteEditor({
     <section className="space-y-2" data-testid="content-editor">
       <div className="flex items-start gap-4">
         <div className="min-h-72 min-w-0 flex-1 overflow-hidden rounded-xl border bg-background py-4">
-          <BlockNoteView editor={editor} editable={editable} />
-          {editable ? (
-            <FloatingComposer editor={editor} className="w-[22rem]" />
-          ) : null}
+          <BlockNoteView
+            editor={editor}
+            editable={editable}
+            onChange={() => onDocumentChange?.(editor.document)}
+          />
+          <FloatingComposer editor={editor} className="w-[22rem]" />
         </div>
         <InlineThreads editor={editor} threads={threads} />
       </div>
