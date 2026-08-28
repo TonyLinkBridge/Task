@@ -2,10 +2,6 @@
 
 import type { BlockNoteEditor } from "@blocknote/core";
 import type { ThreadData } from "@liveblocks/client";
-import {
-  AnchoredThreads,
-  FloatingThreads,
-} from "@liveblocks/react-blocknote";
 import { useMarkThreadAsUnresolved } from "@liveblocks/react/suspense";
 import { Thread } from "@liveblocks/react-ui";
 import { useState, useSyncExternalStore } from "react";
@@ -26,8 +22,14 @@ function getDesktopServerSnapshot() {
   return true;
 }
 
+function scrollToThreadText(threadId: string) {
+  const mark = Array.from(
+    document.querySelectorAll<HTMLElement>("[data-lb-thread-id]")
+  ).find((element) => element.dataset.lbThreadId === threadId);
+  mark?.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
 export function InlineThreads({
-  editor,
   threads,
 }: {
   editor: BlockNoteEditor;
@@ -42,7 +44,6 @@ export function InlineThreads({
   );
   const openThreads = threads.filter((thread) => !thread.resolved);
   const resolvedThreads = threads.filter((thread) => thread.resolved);
-  const visibleThreads = view === "open" ? openThreads : resolvedThreads;
 
   const emptyState = (
     <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
@@ -67,6 +68,23 @@ export function InlineThreads({
             重新打开
           </button>
         </div>
+      ))}
+    </div>
+  ) : (
+    emptyState
+  );
+
+  const openThreadList = openThreads.length > 0 ? (
+    <div className="space-y-3">
+      {openThreads.map((thread) => (
+        <Thread
+          key={thread.id}
+          className="cursor-pointer"
+          onClick={() => scrollToThreadText(thread.id)}
+          thread={thread}
+          showComposer="collapsed"
+          showResolveAction
+        />
       ))}
     </div>
   ) : (
@@ -101,32 +119,12 @@ export function InlineThreads({
   return isDesktop ? (
     <div data-testid="anchored-threads" className="w-80 shrink-0">
       {filters}
-      {view === "resolved" ? (
-        resolvedThreadList
-      ) : visibleThreads.length > 0 ? (
-        <AnchoredThreads
-          editor={editor}
-          threads={visibleThreads}
-          className="w-full"
-        />
-      ) : (
-        emptyState
-      )}
+      {view === "resolved" ? resolvedThreadList : openThreadList}
     </div>
   ) : (
     <div data-testid="floating-threads">
       {filters}
-      {view === "resolved" ? (
-        resolvedThreadList
-      ) : visibleThreads.length > 0 ? (
-        <FloatingThreads
-          editor={editor}
-          threads={visibleThreads}
-          className="w-[min(22rem,calc(100vw-2rem))]"
-        />
-      ) : (
-        emptyState
-      )}
+      {view === "resolved" ? resolvedThreadList : openThreadList}
     </div>
   );
 }

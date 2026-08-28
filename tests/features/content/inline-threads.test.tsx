@@ -26,8 +26,14 @@ vi.mock("@liveblocks/react-blocknote", () => ({
 }));
 
 vi.mock("@liveblocks/react-ui", () => ({
-  Thread: ({ thread }: { thread: { resolved: boolean } }) => (
-    <article>
+  Thread: ({
+    thread,
+    onClick,
+  }: {
+    thread: { id: string; resolved: boolean };
+    onClick?: () => void;
+  }) => (
+    <article aria-label={`留言 ${thread.id}`} onClick={onClick}>
       <span>{thread.resolved ? "已解决留言卡片" : "未解决留言卡片"}</span>
     </article>
   ),
@@ -96,8 +102,8 @@ describe("InlineThreads", () => {
       "aria-pressed",
       "true"
     );
-    expect(screen.getByText("未解决留言")).toBeInTheDocument();
-    expect(screen.queryByText("已解决留言")).not.toBeInTheDocument();
+    expect(screen.getByText("未解决留言卡片")).toBeInTheDocument();
+    expect(screen.queryByText("已解决留言卡片")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "已解决 1" }));
 
@@ -106,9 +112,36 @@ describe("InlineThreads", () => {
       "true"
     );
     expect(screen.getByText("已解决留言卡片")).toBeInTheDocument();
-    expect(screen.queryByText("未解决留言")).not.toBeInTheDocument();
+    expect(screen.queryByText("未解决留言卡片")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "重新打开" }));
 
     expect(markThreadAsUnresolved).toHaveBeenCalledWith("resolved");
+  });
+
+  it("shows open threads as cards and selects their original text when clicked", async () => {
+    const user = userEvent.setup();
+    const scrollIntoView = vi.fn();
+    const originalText = document.createElement("span");
+    originalText.dataset.lbThreadId = "open-a";
+    originalText.scrollIntoView = scrollIntoView;
+    document.body.appendChild(originalText);
+    setDesktopViewport(true);
+    render(
+      <InlineThreads
+        editor={{} as never}
+        threads={[
+          { id: "open-a", resolved: false },
+          { id: "open-b", resolved: false },
+        ] as never}
+      />
+    );
+
+    expect(screen.getAllByText("未解决留言卡片")).toHaveLength(2);
+
+    await user.click(screen.getByRole("article", { name: "留言 open-a" }));
+
+    expect(scrollIntoView).toHaveBeenCalledOnce();
+
+    originalText.remove();
   });
 });
