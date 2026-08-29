@@ -20,13 +20,32 @@ const scheduled: ScheduledContent = {
 
 describe("schedule views", () => {
   it("shows the same content in the calendar and list", () => {
-    const { rerender } = render(<ContentCalendar contents={[scheduled]} />);
-    expect(screen.getByText("2026年8月29日")).toBeInTheDocument();
+    const { rerender } = render(
+      <ContentCalendar contents={[scheduled]} initialMonth="2026-08" />
+    );
+    expect(screen.getByRole("heading", { name: "2026年8月" })).toBeInTheDocument();
+    expect(screen.getAllByRole("gridcell")).toHaveLength(42);
+    const scheduledDay = screen.getByRole("gridcell", { name: "2026年8月29日" });
+    expect(within(scheduledDay).getByText("新品贴文")).toBeInTheDocument();
     expect(screen.getByText("新品贴文")).toBeInTheDocument();
 
     rerender(<ContentList contents={[scheduled]} />);
     expect(screen.getByText("新品贴文")).toBeInTheDocument();
     expect(screen.getByText("已批准 1/2")).toBeInTheDocument();
+  });
+
+  it("moves between complete calendar months", () => {
+    render(<ContentCalendar contents={[scheduled]} initialMonth="2026-08" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "下个月" }));
+
+    expect(screen.getByRole("heading", { name: "2026年9月" })).toBeInTheDocument();
+    expect(screen.getAllByRole("gridcell")).toHaveLength(42);
+    expect(screen.queryByText("新品贴文")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "上个月" }));
+    expect(screen.getByRole("heading", { name: "2026年8月" })).toBeInTheDocument();
+    expect(screen.getByText("新品贴文")).toBeInTheDocument();
   });
 
   it("shows zero approvals after old approvals are removed from the current version", () => {
