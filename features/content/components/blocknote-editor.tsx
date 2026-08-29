@@ -81,15 +81,21 @@ export function BlockNoteEditor({
 
   return (
     <section className="space-y-2" data-testid="content-editor">
-      <div className="flex items-start gap-4">
-        <div className="min-h-72 min-w-0 flex-1 overflow-hidden rounded-xl border bg-background py-4">
+      <div
+        data-testid="editor-and-comments-layout"
+        className="flex min-w-0 flex-col items-stretch gap-4 lg:flex-row lg:items-start"
+      >
+        <div className="min-h-72 w-full min-w-0 flex-1 overflow-hidden rounded-xl border bg-background py-4">
           <BlockNoteView
             editor={editor}
             editable={editable}
             theme={blockNoteTheme}
             onChange={() => onDocumentChange?.(editor.document)}
           />
-          <FloatingComposer editor={editor} className="w-[22rem]" />
+          <FloatingComposer
+            editor={editor}
+            className="max-w-[calc(100vw-3rem)] sm:w-[22rem]"
+          />
         </div>
         <InlineThreads
           canClearResolved={canClearResolved}

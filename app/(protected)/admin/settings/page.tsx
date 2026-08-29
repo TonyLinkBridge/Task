@@ -22,7 +22,7 @@ import { makeSlackClient } from "@/lib/slack/client";
 export default async function AdminSettingsPage() {
   const currentUser = await getVerifiedUser();
   if (currentUser.role !== "admin") {
-    redirect("/access-denied");
+    redirect("/access-denied?reason=admin-only");
   }
 
   const token = getServerEnv().SLACK_BOT_TOKEN;

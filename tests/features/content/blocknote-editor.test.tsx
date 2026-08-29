@@ -24,7 +24,7 @@ vi.mock("@liveblocks/react/suspense", () => ({
 }));
 
 vi.mock("@/features/content/components/inline-threads", () => ({
-  InlineThreads: () => null,
+  InlineThreads: () => <div data-testid="inline-threads" />,
 }));
 
 import {
@@ -59,6 +59,18 @@ describe("BlockNoteEditor", () => {
     expect(screen.getByTestId("blocknote-view")).toHaveAttribute(
       "data-theme",
       "light"
+    );
+  });
+
+  it("stacks the editor and comments on a phone to prevent overlap", () => {
+    render(<BlockNoteEditor contentId="content-1" editable />);
+
+    expect(screen.getByTestId("editor-and-comments-layout")).toHaveClass(
+      "flex-col",
+      "lg:flex-row"
+    );
+    expect(screen.getByTestId("inline-threads").parentElement).toHaveClass(
+      "min-w-0"
     );
   });
 });

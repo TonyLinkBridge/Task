@@ -166,13 +166,13 @@ export function InlineThreads({
   );
 
   return isDesktop ? (
-    <div data-testid="anchored-threads" className="w-80 shrink-0">
+    <div data-testid="anchored-threads" className="w-80 min-w-0 shrink-0">
       {filters}
       {clearResolvedButton}
       {view === "resolved" ? resolvedThreadList : openThreadList}
     </div>
   ) : (
-    <div data-testid="floating-threads">
+    <div data-testid="floating-threads" className="w-full min-w-0">
       {filters}
       {clearResolvedButton}
       {view === "resolved" ? resolvedThreadList : openThreadList}

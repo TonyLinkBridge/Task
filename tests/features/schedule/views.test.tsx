@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { ContentBoard, contentBoardMoveMessage } from "@/features/schedule/components/content-board";
@@ -116,5 +117,33 @@ describe("schedule views", () => {
     );
     expect(within(draftColumn).getByText("新品贴文")).toBeInTheDocument();
     expect(moveAction).not.toHaveBeenCalled();
+  });
+
+  it("lets a keyboard user move editable content without dragging", async () => {
+    const user = userEvent.setup();
+    const moveAction = vi.fn(async () => ({ ok: true as const }));
+    const onMoved = vi.fn();
+    const draftContent = {
+      ...scheduled,
+      status: "draft" as const,
+      storedStatus: "draft" as const,
+      approvalAdminIds: [],
+    };
+    render(
+      <ContentBoard
+        initialContents={[draftContent]}
+        moveAction={moveAction}
+        onMoved={onMoved}
+      />
+    );
+
+    const moveButton = screen.getByRole("button", {
+      name: "把新品贴文移动到需要修改",
+    });
+    moveButton.focus();
+    await user.keyboard("{Enter}");
+
+    expect(moveAction).toHaveBeenCalledWith(draftContent.id, "changes_requested");
+    expect(onMoved).toHaveBeenCalledOnce();
   });
 });
