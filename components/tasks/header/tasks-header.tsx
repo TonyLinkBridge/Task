@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAccountMenu } from "@/components/auth/user-account-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { VerifiedUser } from "@/lib/auth/types";
@@ -17,10 +17,7 @@ export function TasksHeader({ currentUser }: { currentUser: VerifiedUser }) {
       </div>
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         <ThemeToggle />
-        <Avatar className="size-8">
-          {currentUser.imageUrl ? <AvatarImage src={currentUser.imageUrl} alt={currentUser.name} /> : null}
-          <AvatarFallback>{currentUser.name.slice(0, 1)}</AvatarFallback>
-        </Avatar>
+        <UserAccountMenu currentUser={currentUser} />
       </div>
     </header>
   );

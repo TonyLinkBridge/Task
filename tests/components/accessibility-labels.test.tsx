@@ -1,8 +1,17 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+
+const { signOutMock } = vi.hoisted(() => ({
+  signOutMock: vi.fn(),
+}));
 
 vi.mock("next-themes", () => ({
   useTheme: () => ({ resolvedTheme: "light", setTheme: vi.fn() }),
+}));
+
+vi.mock("@clerk/nextjs", () => ({
+  useClerk: () => ({ signOut: signOutMock }),
 }));
 
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -102,5 +111,27 @@ describe("Chinese accessibility labels", () => {
       "hidden",
       "sm:block"
     );
+  });
+
+  it("opens the account menu from the avatar and signs out to the login page", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <SidebarProvider>
+        <ContentHeader
+          currentUser={{
+            id: "employee-1",
+            role: "employee",
+            name: "Tony",
+            imageUrl: null,
+          }}
+        />
+      </SidebarProvider>
+    );
+
+    fireEvent.mouseDown(screen.getByRole("button", { name: "打开账号菜单" }));
+    await user.click(await screen.findByRole("menuitem", { name: "退出登录" }));
+
+    expect(signOutMock).toHaveBeenCalledWith({ redirectUrl: "/login" });
   });
 });
