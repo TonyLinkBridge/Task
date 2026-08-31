@@ -5,6 +5,7 @@ import type { TaskFilters } from "@/features/tasks/types";
 
 export const taskInputSchema = z.object({
   title: z.string().trim().min(1).max(200),
+  project: z.string().trim().min(1).max(100),
   description: z.string().trim().max(10_000).default(""),
   assigneeId: z.string().trim().min(1),
   priority: z.enum(TASK_PRIORITIES),
@@ -25,9 +26,11 @@ export function taskFiltersFromSearchParams(
   const filters: TaskFilters = {};
   const search = first(params.search)?.trim();
   const priority = first(params.priority);
+  const project = first(params.project)?.trim();
   const assigneeId = first(params.assignee)?.trim();
 
   if (search) filters.search = search.slice(0, 100);
+  if (project) filters.project = project.slice(0, 100);
   if (TASK_PRIORITIES.includes(priority as (typeof TASK_PRIORITIES)[number])) {
     filters.priority = priority as TaskFilters["priority"];
   }

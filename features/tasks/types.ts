@@ -9,6 +9,7 @@ export type TaskKind = (typeof TASK_KINDS)[number];
 export type TaskRecord = {
   id: string;
   title: string;
+  project: string;
   description: string;
   status: TaskStatus;
   priority: TaskPriority;
@@ -32,6 +33,7 @@ export type AssignableUser = {
 
 export type TaskFilters = {
   search?: string;
+  project?: string;
   priority?: TaskPriority;
   assigneeId?: string;
 };

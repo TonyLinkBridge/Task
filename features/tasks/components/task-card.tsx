@@ -75,6 +75,7 @@ export function TaskCard({
       >
         {task.title}
       </Link>
+      <p className="mt-1 text-xs text-muted-foreground">{task.project}</p>
       {task.description ? (
         <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
           {task.description}

@@ -7,6 +7,7 @@ import type {
 export type TaskRow = {
   id: string;
   title: string;
+  project: string;
   description: string;
   status: TaskRecord["status"];
   priority: TaskRecord["priority"];
@@ -25,6 +26,7 @@ export function mapTaskRow(row: TaskRow): TaskRecord {
   return {
     id: row.id,
     title: row.title,
+    project: row.project,
     description: row.description,
     status: row.status,
     priority: row.priority,

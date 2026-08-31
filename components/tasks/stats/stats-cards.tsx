@@ -1,5 +1,3 @@
-"use client";
-
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Note01Icon,
@@ -7,72 +5,102 @@ import {
   TaskDaily01Icon,
   FireIcon,
 } from "@hugeicons/core-free-icons";
-import { statsData } from "@/mock-data/chart-data";
+
+import type { TaskRecord } from "@/features/tasks/types";
 
 interface StatCardProps {
   icon: React.ReactNode;
   title: string;
   value: number;
-  change: string;
-  comparison: string;
+  description: string;
 }
 
-function StatCard({ icon, title, value, change, comparison }: StatCardProps) {
+const MALAYSIA_OFFSET_MS = 8 * 60 * 60 * 1000;
+
+function malaysiaDateKey(value: Date | string) {
+  const date = typeof value === "string" ? new Date(value) : value;
+  return new Date(date.getTime() + MALAYSIA_OFFSET_MS)
+    .toISOString()
+    .slice(0, 10);
+}
+
+function malaysiaWeekStart(now: Date) {
+  const malaysiaNow = new Date(now.getTime() + MALAYSIA_OFFSET_MS);
+  const dayFromMonday = (malaysiaNow.getUTCDay() + 6) % 7;
   return (
-    <div className="flex-1 min-w-0 space-y-4">
+    Date.UTC(
+      malaysiaNow.getUTCFullYear(),
+      malaysiaNow.getUTCMonth(),
+      malaysiaNow.getUTCDate() - dayFromMonday
+    ) - MALAYSIA_OFFSET_MS
+  );
+}
+
+export function getTaskStats(tasks: TaskRecord[], now = new Date()) {
+  const today = malaysiaDateKey(now);
+  const nowTime = now.getTime();
+  const weekStart = malaysiaWeekStart(now);
+
+  return {
+    dueToday: tasks.filter(
+      (task) => task.status !== "done" && malaysiaDateKey(task.dueAt) === today
+    ).length,
+    overdue: tasks.filter(
+      (task) =>
+        task.status !== "done" &&
+        new Date(task.dueAt).getTime() < nowTime &&
+        malaysiaDateKey(task.dueAt) < today
+    ).length,
+    inProgress: tasks.filter((task) => task.status === "in_progress").length,
+    completedThisWeek: tasks.filter((task) => {
+      const completedAt = new Date(task.updatedAt).getTime();
+      return task.status === "done" && completedAt >= weekStart && completedAt <= nowTime;
+    }).length,
+  };
+}
+
+function StatCard({ icon, title, value, description }: StatCardProps) {
+  return (
+    <article aria-label={title} className="min-w-0 rounded-xl border bg-card p-4 sm:p-5">
       <div className="flex items-center gap-1.5">
         {icon}
         <span className="text-xs text-muted-foreground">{title}</span>
       </div>
-      <p className="text-4xl font-bold">{value}</p>
-      <div className="flex items-center gap-2 text-xs">
-        <span className="text-emerald-500 font-medium">{change}</span>
-        <span className="size-1 rounded-full bg-muted-foreground" />
-        <span className="text-muted-foreground">{comparison}</span>
-      </div>
-    </div>
+      <p data-testid="task-stat-value" className="mt-3 text-3xl font-bold">{value}</p>
+      <p className="mt-2 text-xs text-muted-foreground">{description}</p>
+    </article>
   );
 }
 
-export function StatsCards() {
+export function StatsCards({ tasks, now }: { tasks: TaskRecord[]; now?: Date }) {
+  const stats = getTaskStats(tasks, now);
+
   return (
-    <div className="pt-4 sm:pt-6 px-4 sm:px-6 flex items-center justify-center w-full">
-      <div className="rounded-xl border border-border p-4 sm:p-6 w-full">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            icon={<HugeiconsIcon icon={Note01Icon} className="size-[18px] text-muted-foreground" />}
-            title="Tasks Due Today"
-            value={statsData.tasksDueToday.value}
-            change={statsData.tasksDueToday.change}
-            comparison={statsData.tasksDueToday.comparison}
-          />
-          <StatCard
-            icon={
-              <HugeiconsIcon icon={Notebook01Icon} className="size-[18px] text-muted-foreground" />
-            }
-            title="Overdue Tasks"
-            value={statsData.overdueTasks.value}
-            change={statsData.overdueTasks.change}
-            comparison={statsData.overdueTasks.comparison}
-          />
-          <StatCard
-            icon={
-              <HugeiconsIcon icon={TaskDaily01Icon} className="size-[18px] text-muted-foreground" />
-            }
-            title="In Progress"
-            value={statsData.inProgress.value}
-            change={statsData.inProgress.change}
-            comparison={statsData.inProgress.comparison}
-          />
-          <StatCard
-            icon={<HugeiconsIcon icon={FireIcon} className="size-[18px] text-muted-foreground" />}
-            title="Completed This Week"
-            value={statsData.completedThisWeek.value}
-            change={statsData.completedThisWeek.change}
-            comparison={statsData.completedThisWeek.comparison}
-          />
-        </div>
-      </div>
+    <div className="grid gap-3 px-4 sm:grid-cols-2 sm:px-6 xl:grid-cols-4">
+      <StatCard
+        icon={<HugeiconsIcon icon={Note01Icon} className="size-[18px] text-muted-foreground" />}
+        title="今天到期"
+        value={stats.dueToday}
+        description="今天需要处理完的任务"
+      />
+      <StatCard
+        icon={<HugeiconsIcon icon={Notebook01Icon} className="size-[18px] text-muted-foreground" />}
+        title="已经逾期"
+        value={stats.overdue}
+        description="到期日早于今天、仍未完成"
+      />
+      <StatCard
+        icon={<HugeiconsIcon icon={TaskDaily01Icon} className="size-[18px] text-muted-foreground" />}
+        title="正在处理"
+        value={stats.inProgress}
+        description="目前放在“正在做”的任务"
+      />
+      <StatCard
+        icon={<HugeiconsIcon icon={FireIcon} className="size-[18px] text-muted-foreground" />}
+        title="本周完成"
+        value={stats.completedThisWeek}
+        description="本周一至现在完成的任务"
+      />
     </div>
   );
 }

@@ -72,6 +72,7 @@ export function TaskForm({
   const [internalOpen, setInternalOpen] = useState(false);
   const [title, setTitle] = useState(initialTask?.title ?? "");
   const [description, setDescription] = useState(initialTask?.description ?? "");
+  const [project, setProject] = useState(initialTask?.project ?? "一般");
   const [assigneeId, setAssigneeId] = useState(
     initialTask?.assigneeId ?? assignees[0]?.id ?? ""
   );
@@ -96,6 +97,7 @@ export function TaskForm({
 
     const input: TaskInput = {
       title,
+      project,
       description,
       assigneeId,
       priority,
@@ -117,6 +119,7 @@ export function TaskForm({
     changeOpen(false);
     if (!initialTask) {
       setTitle("");
+      setProject("一般");
       setDescription("");
       setPriority("medium");
       setDueAt(defaultDueAt());
@@ -147,6 +150,17 @@ export function TaskForm({
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               maxLength={200}
+              required
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="task-project">项目／分类</Label>
+            <Input
+              id="task-project"
+              value={project}
+              onChange={(event) => setProject(event.target.value)}
+              maxLength={100}
+              placeholder="例如：内容运营、网站、客户项目"
               required
             />
           </div>

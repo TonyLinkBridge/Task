@@ -12,6 +12,7 @@ describe("mapTaskRow", () => {
       mapTaskRow({
         id: "11111111-1111-4111-8111-111111111111",
         title: "准备周报",
+        project: "内容运营",
         description: "",
         status: "review",
         priority: "urgent",
@@ -28,6 +29,7 @@ describe("mapTaskRow", () => {
     ).toEqual({
       id: "11111111-1111-4111-8111-111111111111",
       title: "准备周报",
+      project: "内容运营",
       description: "",
       status: "review",
       priority: "urgent",

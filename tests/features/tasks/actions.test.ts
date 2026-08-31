@@ -10,6 +10,7 @@ import type { TaskRecord, TaskStatus } from "@/features/tasks/types";
 
 const validInput: TaskInput = {
   title: "准备周报",
+  project: "内容运营",
   description: "汇总本周进度",
   assigneeId: "user_employee",
   priority: "medium",

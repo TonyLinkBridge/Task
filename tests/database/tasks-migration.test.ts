@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 const migrations = [
   "202608280001_profiles.sql",
   "202608280002_tasks.sql",
+  "202608310002_task_project.sql",
 ].map((name) =>
   path.resolve(import.meta.dirname, "../../supabase/migrations", name)
 );
@@ -35,6 +36,16 @@ describe("tasks migration", () => {
        where relname in ('tasks', 'task_comments')
        order by relname`
     );
+    const projectColumn = await database.query<{
+      column_default: string;
+      is_nullable: string;
+    }>(
+      `select column_default, is_nullable
+       from information_schema.columns
+       where table_schema = 'public'
+         and table_name = 'tasks'
+         and column_name = 'project'`
+    );
 
     expect(statuses.rows.map(({ enumlabel }) => enumlabel)).toEqual([
       "todo",
@@ -45,6 +56,9 @@ describe("tasks migration", () => {
     expect(protectedTables.rows).toEqual([
       { relname: "task_comments", relrowsecurity: true },
       { relname: "tasks", relrowsecurity: true },
+    ]);
+    expect(projectColumn.rows).toEqual([
+      { column_default: "'一般'::text", is_nullable: "NO" },
     ]);
 
     await database.close();

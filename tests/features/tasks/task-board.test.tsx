@@ -10,6 +10,7 @@ import type { TaskRecord } from "@/features/tasks/types";
 const task: TaskRecord = {
   id: "11111111-1111-4111-8111-111111111111",
   title: "准备周报",
+  project: "内容运营",
   description: "汇总本周进度",
   status: "todo",
   priority: "medium",
@@ -46,6 +47,7 @@ describe("TaskBoard", () => {
         "准备周报"
       )
     ).not.toBeInTheDocument();
+    expect(screen.getByText("内容运营")).toBeInTheDocument();
   });
 
   it("does not show drag or edit controls for a linked publish task", () => {

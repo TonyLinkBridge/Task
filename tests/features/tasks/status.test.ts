@@ -4,6 +4,7 @@ import { groupTasksByStatus } from "@/features/tasks/status";
 import type { TaskRecord } from "@/features/tasks/types";
 
 const baseTask: Omit<TaskRecord, "id" | "title" | "status" | "position"> = {
+  project: "内容运营",
   description: "",
   priority: "medium",
   kind: "general",

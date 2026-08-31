@@ -106,6 +106,10 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
 
               <dl className="mt-6 grid gap-4 border-t pt-5 sm:grid-cols-2">
                 <div>
+                  <dt className="text-xs text-muted-foreground">项目／分类</dt>
+                  <dd className="mt-1 text-sm font-medium">{task.project}</dd>
+                </div>
+                <div>
                   <dt className="text-xs text-muted-foreground">负责人</dt>
                   <dd className="mt-1 text-sm font-medium">
                     {assignee?.name ?? "未找到负责人"}

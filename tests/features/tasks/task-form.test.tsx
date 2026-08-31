@@ -45,6 +45,8 @@ describe("TaskForm", () => {
 
     await user.click(screen.getByRole("button", { name: "新增任务" }));
     await user.type(screen.getByLabelText("标题"), "准备周报");
+    await user.clear(screen.getByLabelText("项目／分类"));
+    await user.type(screen.getByLabelText("项目／分类"), "内容运营");
     await user.selectOptions(screen.getByLabelText("负责人"), "user_employee");
     await user.selectOptions(screen.getByLabelText("优先级"), "urgent");
     fireEvent.change(screen.getByLabelText("完成时间"), {
@@ -59,6 +61,7 @@ describe("TaskForm", () => {
     await waitFor(() => expect(savedTasks).toHaveLength(1));
     expect(receivedInput).toMatchObject({
       title: "准备周报",
+      project: "内容运营",
       assigneeId: "user_employee",
       priority: "urgent",
     });
@@ -72,6 +75,7 @@ describe("TaskForm", () => {
         initialTask={{
           id: "11111111-1111-4111-8111-111111111111",
           title: "准备周报",
+          project: "内容运营",
           description: "",
           status: "todo",
           priority: "medium",

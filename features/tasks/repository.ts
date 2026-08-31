@@ -30,6 +30,7 @@ export type TaskRepository = TaskActionRepository & {
 function taskWrite(input: TaskInput) {
   return {
     title: input.title,
+    project: input.project,
     description: input.description,
     priority: input.priority,
     assignee_id: input.assigneeId,
@@ -72,7 +73,13 @@ export function createTaskRepository(
         .order("position")
         .order("created_at");
 
-      if (filters.search) query = query.ilike("title", `%${filters.search}%`);
+      if (filters.search) {
+        const safeSearch = filters.search.replaceAll(",", " ");
+        query = query.or(
+          `title.ilike.%${safeSearch}%,project.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%`
+        );
+      }
+      if (filters.project) query = query.ilike("project", filters.project);
       if (filters.priority) query = query.eq("priority", filters.priority);
       if (filters.assigneeId) query = query.eq("assignee_id", filters.assigneeId);
 
