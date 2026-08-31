@@ -3,6 +3,7 @@
 import { UserAccountMenu } from "@/components/auth/user-account-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationCenter } from "@/features/notifications/components/notification-center";
 import type { VerifiedUser } from "@/lib/auth/types";
 
 export function TasksHeader({ currentUser }: { currentUser: VerifiedUser }) {
@@ -16,6 +17,7 @@ export function TasksHeader({ currentUser }: { currentUser: VerifiedUser }) {
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+        <NotificationCenter />
         <ThemeToggle />
         <UserAccountMenu currentUser={currentUser} />
       </div>
