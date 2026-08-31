@@ -118,11 +118,11 @@ describe("notification workflow", () => {
 
     const first = await database.query<{ id: string; attempt_count: number }>(`
       select id::text, attempt_count
-      from claim_slack_deliveries('2026-08-30T08:00:00.000Z', 10)
+      from claim_slack_deliveries('2099-08-30T08:00:00.000Z', 10)
     `);
     const second = await database.query<{ id: string }>(`
       select id::text
-      from claim_slack_deliveries('2026-08-30T08:00:00.000Z', 10)
+      from claim_slack_deliveries('2099-08-30T08:00:00.000Z', 10)
     `);
 
     expect(first.rows).toHaveLength(1);

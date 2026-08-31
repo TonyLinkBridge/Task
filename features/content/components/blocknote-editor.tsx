@@ -14,6 +14,48 @@ import { InlineThreads } from "@/features/content/components/inline-threads";
 
 type ConnectionStatus = ReturnType<typeof useStatus>;
 
+type PasteHandlerContext = {
+  event: ClipboardEvent;
+  editor: { pasteMarkdown: (markdown: string) => void };
+  defaultPasteHandler: (options?: {
+    prioritizeMarkdownOverHTML?: boolean;
+    plainTextAsMarkdown?: boolean;
+  }) => boolean | undefined;
+};
+
+export function preserveParagraphsOnPaste({
+  event,
+  editor,
+  defaultPasteHandler,
+}: PasteHandlerContext): boolean | undefined {
+  const clipboard = event.clipboardData;
+  if (!clipboard) return defaultPasteHandler();
+
+  const types = Array.from(clipboard.types);
+  if (types.includes("text/html") || types.includes("blocknote/html")) {
+    return defaultPasteHandler({
+      prioritizeMarkdownOverHTML: false,
+      plainTextAsMarkdown: false,
+    });
+  }
+
+  if (!types.includes("text/plain")) return defaultPasteHandler();
+
+  const text = clipboard.getData("text/plain");
+  if (!text.includes("\n") && !text.includes("\r")) {
+    return defaultPasteHandler();
+  }
+
+  const paragraphs = text
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .map((line) => (line.trim() === "\\" ? "" : line))
+    .filter((line) => line.trim().length > 0);
+
+  editor.pasteMarkdown(paragraphs.join("\n\n"));
+  return true;
+}
+
 export function EditorSyncStatus({
   ready,
   status,
@@ -58,7 +100,7 @@ export function BlockNoteEditor({
   onSyncChange?: (synchronized: boolean) => void;
 }) {
   const editor = useCreateBlockNoteWithLiveblocks(
-    {},
+    { pasteHandler: preserveParagraphsOnPaste },
     { field: "document", offlineSupport_experimental: false }
   );
   const ready = useIsEditorReady();

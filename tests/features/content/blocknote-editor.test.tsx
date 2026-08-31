@@ -1,6 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+const { blockNoteOptions } = vi.hoisted(() => ({
+  blockNoteOptions: {
+    current: null as null | Record<string, unknown>,
+  },
+}));
+
 vi.mock("next-themes", () => ({
   useTheme: () => ({ resolvedTheme: "light" }),
 }));
@@ -13,7 +19,10 @@ vi.mock("@blocknote/mantine", () => ({
 
 vi.mock("@liveblocks/react-blocknote", () => ({
   FloatingComposer: () => null,
-  useCreateBlockNoteWithLiveblocks: () => ({ document: [] }),
+  useCreateBlockNoteWithLiveblocks: (options: Record<string, unknown>) => {
+    blockNoteOptions.current = options;
+    return { document: [] };
+  },
   useIsEditorReady: () => true,
 }));
 
@@ -53,6 +62,40 @@ describe("EditorSyncStatus", () => {
 });
 
 describe("BlockNoteEditor", () => {
+  it("keeps every pasted social-post line as a separate paragraph", () => {
+    render(<BlockNoteEditor contentId="content-1" editable />);
+
+    const pasteHandler = blockNoteOptions.current?.pasteHandler as
+      | ((context: {
+          event: ClipboardEvent;
+          editor: { pasteMarkdown: (markdown: string) => void };
+          defaultPasteHandler: (options?: {
+            prioritizeMarkdownOverHTML?: boolean;
+            plainTextAsMarkdown?: boolean;
+          }) => boolean | undefined;
+        }) => boolean | undefined)
+      | undefined;
+    const pasteMarkdown = vi.fn();
+    const defaultPasteHandler = vi.fn();
+
+    expect(pasteHandler).toBeTypeOf("function");
+    pasteHandler?.({
+      event: {
+        clipboardData: {
+          types: ["text/plain"],
+          getData: () => "第一段\n\\\n第二段\n\n**第三段**",
+        },
+      } as unknown as ClipboardEvent,
+      editor: { pasteMarkdown },
+      defaultPasteHandler,
+    });
+
+    expect(pasteMarkdown).toHaveBeenCalledWith(
+      "第一段\n\n第二段\n\n**第三段**"
+    );
+    expect(defaultPasteHandler).not.toHaveBeenCalled();
+  });
+
   it("uses the page's light theme instead of the computer's dark theme", () => {
     render(<BlockNoteEditor contentId="content-1" editable />);
 
