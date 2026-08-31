@@ -32,5 +32,11 @@ describe("AppSidebar brand mascot", () => {
       "src",
       expect.stringContaining("chiikawa-peek.png")
     );
+    expect(screen.getByText("LinkBridge")).toBeInTheDocument();
+    expect(screen.getByText("目前只有一个工作区")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "帮助中心" })).toHaveAttribute(
+      "href",
+      "https://juyu-help-centre.vercel.app"
+    );
   });
 });

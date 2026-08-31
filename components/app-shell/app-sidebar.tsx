@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar03Icon, DashboardSquare01Icon, Note01Icon, Settings02Icon, UserGroupIcon } from "@hugeicons/core-free-icons";
+import { ArrowUpDownIcon, Calendar03Icon, DashboardSquare01Icon, HelpSquareIcon, Note01Icon, Settings02Icon, UserGroupIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -33,6 +33,23 @@ export function AppSidebar({ currentUser }: { currentUser: VerifiedUser }) {
             <div><p className="text-sm font-semibold">JUYU</p><p className="text-xs text-muted-foreground">内部工作台</p></div>
           </div>
         </div>
+        <details className="group/workspace rounded-lg border bg-sidebar">
+          <summary className="flex cursor-pointer list-none items-center gap-3 p-3">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-blue-500/10 text-sm font-semibold text-blue-600">
+              L
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">LinkBridge</p>
+              <p className="truncate text-[10px] text-muted-foreground">
+                目前只有一个工作区
+              </p>
+            </div>
+            <HugeiconsIcon icon={ArrowUpDownIcon} className="size-4 text-muted-foreground" />
+          </summary>
+          <div className="border-t px-3 py-2 text-xs text-muted-foreground">
+            当前登入成员都属于这个指定的 Slack Workspace。
+          </div>
+        </details>
       </SidebarHeader>
       <SidebarContent className="px-3">
         <SidebarGroup>
@@ -58,6 +75,22 @@ export function AppSidebar({ currentUser }: { currentUser: VerifiedUser }) {
         </AdminOnly>
       </SidebarContent>
       <SidebarFooter className="p-4">
+        <SidebarMenu className="mb-2">
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              render={
+                <Link
+                  href="https://juyu-help-centre.vercel.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                />
+              }
+            >
+              <HugeiconsIcon icon={HelpSquareIcon} />
+              <span>帮助中心</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
         <div className="flex items-center gap-3 rounded-lg border p-3">
           <Avatar className="size-8">{currentUser.imageUrl ? <AvatarImage src={currentUser.imageUrl} alt={currentUser.name} /> : null}<AvatarFallback><HugeiconsIcon icon={UserGroupIcon} /></AvatarFallback></Avatar>
           <div className="min-w-0"><p className="truncate text-sm font-medium">{currentUser.name}</p><p className="text-xs text-muted-foreground">{currentUser.role === "admin" ? "管理员" : "员工"}</p></div>
