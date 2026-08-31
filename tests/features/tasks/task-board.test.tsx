@@ -16,6 +16,7 @@ const task: TaskRecord = {
   priority: "medium",
   kind: "general",
   assigneeId: "user_employee",
+  assigneeIds: ["user_employee", "user_admin"],
   creatorId: "user_admin",
   dueAt: "2026-08-29T02:00:00.000Z",
   position: 1000,
@@ -35,7 +36,10 @@ describe("TaskBoard", () => {
   });
 
   it("shows each task inside its workflow column", () => {
-    render(<TaskBoard initialTasks={[task]} assignees={[]} />);
+    render(<TaskBoard initialTasks={[task]} assignees={[
+      { id: "user_employee", role: "employee", name: "Employee", imageUrl: null },
+      { id: "user_admin", role: "admin", name: "Admin", imageUrl: null },
+    ]} />);
 
     expect(
       within(screen.getByRole("region", { name: "还没开始" })).getByText(
@@ -48,6 +52,7 @@ describe("TaskBoard", () => {
       )
     ).not.toBeInTheDocument();
     expect(screen.getByText("内容运营")).toBeInTheDocument();
+    expect(screen.getByText("Employee、Admin")).toBeInTheDocument();
   });
 
   it("does not show drag or edit controls for a linked publish task", () => {

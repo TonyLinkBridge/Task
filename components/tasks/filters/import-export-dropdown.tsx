@@ -71,7 +71,9 @@ export function buildTaskCsv(tasks: TaskRecord[], assignees: AssignableUser[]) {
       task.title,
       task.project,
       task.description,
-      assigneeNames.get(task.assigneeId) ?? task.assigneeId,
+      (task.assigneeIds ?? [task.assigneeId])
+        .map((id) => assigneeNames.get(id) ?? id)
+        .join("、"),
       priorityToChinese[task.priority],
       malaysiaDateTime(task.dueAt),
     ]
@@ -150,7 +152,14 @@ export function parseTaskCsv(content: string, assignees: AssignableUser[]) {
       : ["一般", ...rest];
     const title = rawTitle.trim();
     const project = (rawProject ?? "").trim();
-    const assigneeId = people.get(rawAssignee.trim().toLocaleLowerCase());
+    const assigneeNames = rawAssignee
+      .split(/[、;；]/)
+      .map((name) => name.trim())
+      .filter(Boolean);
+    const assigneeIds = assigneeNames
+      .map((name) => people.get(name.toLocaleLowerCase()))
+      .filter((id): id is string => Boolean(id));
+    const assigneeId = assigneeIds[0];
     const priority = csvPriority.get(rawPriority.trim().toLocaleLowerCase());
     const dueAt = parseDueAt(rawDueAt);
 
@@ -158,7 +167,7 @@ export function parseTaskCsv(content: string, assignees: AssignableUser[]) {
       errors.push(`第 ${rowNumber} 行：标题不能为空，而且不能超过 200 个字。`);
     } else if (!project || project.length > 100) {
       errors.push(`第 ${rowNumber} 行：项目／分类不能为空，而且不能超过 100 个字。`);
-    } else if (!assigneeId) {
+    } else if (!assigneeId || assigneeIds.length !== assigneeNames.length) {
       errors.push(`第 ${rowNumber} 行：找不到负责人“${rawAssignee.trim()}”。`);
     } else if (!priority) {
       errors.push(`第 ${rowNumber} 行：优先级必须是普通、重要或紧急。`);
@@ -167,7 +176,7 @@ export function parseTaskCsv(content: string, assignees: AssignableUser[]) {
     } else if (description.length > 10_000) {
       errors.push(`第 ${rowNumber} 行：说明不能超过 10000 个字。`);
     } else {
-      inputs.push({ title, project, description: description.trim(), assigneeId, priority, dueAt });
+      inputs.push({ title, project, description: description.trim(), assigneeId, assigneeIds, priority, dueAt });
     }
   });
 
@@ -225,7 +234,9 @@ export function ImportExportDropdown({
         标题: task.title,
         "项目／分类": task.project,
         说明: task.description,
-        负责人: names.get(task.assigneeId) ?? task.assigneeId,
+        负责人: (task.assigneeIds ?? [task.assigneeId])
+          .map((id) => names.get(id) ?? id)
+          .join("、"),
         优先级: priorityToChinese[task.priority],
         完成时间: malaysiaDateTime(task.dueAt),
       })),

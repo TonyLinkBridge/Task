@@ -34,11 +34,11 @@ const dateFormatter = new Intl.DateTimeFormat("zh-MY", {
 
 export function TaskCard({
   task,
-  assignee,
+  assignees = [],
   onEdit,
 }: {
   task: TaskRecord;
-  assignee?: AssignableUser;
+  assignees?: AssignableUser[];
   onEdit?: (task: TaskRecord) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
@@ -94,13 +94,17 @@ export function TaskCard({
 
       <div className="mt-4 flex items-center justify-between border-t pt-3">
         <div className="flex min-w-0 items-center gap-2">
-          <Avatar className="size-7">
-            {assignee?.imageUrl ? (
-              <AvatarImage src={assignee.imageUrl} alt={assignee.name} />
-            ) : null}
-            <AvatarFallback>{assignee?.name.slice(0, 1) ?? "?"}</AvatarFallback>
-          </Avatar>
-          <span className="truncate text-xs">{assignee?.name ?? "未找到负责人"}</span>
+          <div className="flex -space-x-2">
+            {assignees.slice(0, 3).map((assignee) => (
+              <Avatar key={assignee.id} className="size-7 border-2 border-background">
+                {assignee.imageUrl ? <AvatarImage src={assignee.imageUrl} alt={assignee.name} /> : null}
+                <AvatarFallback>{assignee.name.slice(0, 1)}</AvatarFallback>
+              </Avatar>
+            ))}
+          </div>
+          <span className="truncate text-xs">
+            {assignees.length ? assignees.map(({ name }) => name).join("、") : "未找到负责人"}
+          </span>
         </div>
         {onEdit && task.kind === "general" ? (
           <Button variant="ghost" size="xs" onClick={() => onEdit(task)}>

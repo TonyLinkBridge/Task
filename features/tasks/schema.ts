@@ -8,9 +8,13 @@ export const taskInputSchema = z.object({
   project: z.string().trim().min(1).max(100),
   description: z.string().trim().max(10_000).default(""),
   assigneeId: z.string().trim().min(1),
+  assigneeIds: z.array(z.string().trim().min(1)).min(1).max(10).optional(),
   priority: z.enum(TASK_PRIORITIES),
   dueAt: z.iso.datetime({ offset: true }),
-});
+}).refine(
+  (input) => !input.assigneeIds || input.assigneeIds.includes(input.assigneeId),
+  { path: ["assigneeIds"], message: "主要负责人必须包含在负责人名单内" }
+);
 
 export type TaskInput = z.infer<typeof taskInputSchema>;
 

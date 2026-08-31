@@ -76,6 +76,10 @@ export function TaskForm({
   const [assigneeId, setAssigneeId] = useState(
     initialTask?.assigneeId ?? assignees[0]?.id ?? ""
   );
+  const [additionalAssigneeIds, setAdditionalAssigneeIds] = useState(
+    (initialTask?.assigneeIds ?? [initialTask?.assigneeId])
+      .filter((id): id is string => Boolean(id) && id !== initialTask?.assigneeId)
+  );
   const [priority, setPriority] = useState<TaskRecord["priority"]>(
     initialTask?.priority ?? "medium"
   );
@@ -100,6 +104,10 @@ export function TaskForm({
       project,
       description,
       assigneeId,
+      assigneeIds: [
+        assigneeId,
+        ...additionalAssigneeIds.filter((id) => id !== assigneeId),
+      ],
       priority,
       dueAt: new Date(`${dueAt}:00+08:00`).toISOString(),
     };
@@ -181,7 +189,13 @@ export function TaskForm({
               <select
                 id="task-assignee"
                 value={assigneeId}
-                onChange={(event) => setAssigneeId(event.target.value)}
+                onChange={(event) => {
+                  const nextPrimary = event.target.value;
+                  setAssigneeId(nextPrimary);
+                  setAdditionalAssigneeIds((current) =>
+                    current.filter((id) => id !== nextPrimary)
+                  );
+                }}
                 required
                 className="h-9 rounded-md border border-input bg-background px-2.5 text-sm"
               >
@@ -208,6 +222,30 @@ export function TaskForm({
               </select>
             </div>
           </div>
+          <fieldset className="grid gap-2 rounded-lg border p-3">
+            <legend className="px-1 text-sm font-medium">共同负责人（可不选）</legend>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {assignees
+                .filter((assignee) => assignee.id !== assigneeId)
+                .map((assignee) => (
+                  <label key={assignee.id} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      aria-label={`共同负责人 ${assignee.name}`}
+                      checked={additionalAssigneeIds.includes(assignee.id)}
+                      onChange={(event) =>
+                        setAdditionalAssigneeIds((current) =>
+                          event.target.checked
+                            ? [...current, assignee.id]
+                            : current.filter((id) => id !== assignee.id)
+                        )
+                      }
+                    />
+                    {assignee.name}
+                  </label>
+                ))}
+            </div>
+          </fieldset>
           <div className="grid gap-2">
             <Label htmlFor="task-due-at">完成时间</Label>
             <Input

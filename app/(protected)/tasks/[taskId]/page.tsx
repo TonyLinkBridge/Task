@@ -50,7 +50,9 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
     await getTaskDetailData(taskId);
   if (!task) notFound();
 
-  const assignee = assignees.find(({ id }) => id === task.assigneeId);
+  const taskAssignees = assignees.filter(({ id }) =>
+    (task.assigneeIds ?? [task.assigneeId]).includes(id)
+  );
 
   return (
     <SidebarProvider>
@@ -112,7 +114,9 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
                 <div>
                   <dt className="text-xs text-muted-foreground">负责人</dt>
                   <dd className="mt-1 text-sm font-medium">
-                    {assignee?.name ?? "未找到负责人"}
+                    {taskAssignees.length
+                      ? taskAssignees.map(({ name }) => name).join("、")
+                      : "未找到负责人"}
                   </dd>
                 </div>
                 <div>

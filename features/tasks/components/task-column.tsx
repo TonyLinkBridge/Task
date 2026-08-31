@@ -62,7 +62,9 @@ export function TaskColumn({
             <TaskCard
               key={task.id}
               task={task}
-              assignee={assignees.find(({ id }) => id === task.assigneeId)}
+              assignees={assignees.filter(({ id }) =>
+                (task.assigneeIds ?? [task.assigneeId]).includes(id)
+              )}
               onEdit={onEdit}
             />
           ))}

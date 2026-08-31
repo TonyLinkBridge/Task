@@ -8,6 +8,7 @@ const migrations = [
   "202608280001_profiles.sql",
   "202608280002_tasks.sql",
   "202608310002_task_project.sql",
+  "202608310003_task_multi_assignees.sql",
 ].map((name) =>
   path.resolve(import.meta.dirname, "../../supabase/migrations", name)
 );
@@ -59,6 +60,33 @@ describe("tasks migration", () => {
     ]);
     expect(projectColumn.rows).toEqual([
       { column_default: "'一般'::text", is_nullable: "NO" },
+    ]);
+
+    await database.exec(`
+      insert into profiles (clerk_user_id, role, display_name, slack_team_id, slack_verified_at)
+      values
+        ('employee', 'employee', 'Employee', 'T094DTFCVA8', now()),
+        ('admin', 'admin', 'Admin', 'T094DTFCVA8', now());
+
+      insert into tasks (
+        title, project, assignee_id, assignee_ids, creator_id, due_at
+      ) values (
+        '多人任务', '内容运营', 'employee', array['employee', 'admin'], 'admin', now()
+      );
+
+      insert into tasks (
+        title, project, kind, assignee_id, assignee_ids, creator_id, due_at
+      ) values (
+        '发布任务', '内容排期', 'content_publish', 'employee', array['employee', 'admin'], 'admin', now()
+      );
+    `);
+    const assignmentRows = await database.query<{
+      title: string;
+      assignee_ids: string[];
+    }>("select title, assignee_ids from tasks order by title");
+    expect(assignmentRows.rows).toEqual([
+      { title: "发布任务", assignee_ids: ["employee"] },
+      { title: "多人任务", assignee_ids: ["employee", "admin"] },
     ]);
 
     await database.close();

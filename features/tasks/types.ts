@@ -15,6 +15,7 @@ export type TaskRecord = {
   priority: TaskPriority;
   kind: TaskKind;
   assigneeId: string;
+  assigneeIds?: string[];
   creatorId: string;
   dueAt: string;
   position: number;

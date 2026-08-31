@@ -28,12 +28,16 @@ export type TaskRepository = TaskActionRepository & {
 };
 
 function taskWrite(input: TaskInput) {
+  const assigneeIds = Array.from(
+    new Set([input.assigneeId, ...(input.assigneeIds ?? [])])
+  );
   return {
     title: input.title,
     project: input.project,
     description: input.description,
     priority: input.priority,
     assignee_id: input.assigneeId,
+    assignee_ids: assigneeIds,
     due_at: input.dueAt,
   };
 }
@@ -81,7 +85,7 @@ export function createTaskRepository(
       }
       if (filters.project) query = query.ilike("project", filters.project);
       if (filters.priority) query = query.eq("priority", filters.priority);
-      if (filters.assigneeId) query = query.eq("assignee_id", filters.assigneeId);
+      if (filters.assigneeId) query = query.contains("assignee_ids", [filters.assigneeId]);
 
       const { data, error } = await query;
       if (error) throw new Error(`TASK_DATABASE_ERROR:${error.message}`);

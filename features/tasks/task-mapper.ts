@@ -13,6 +13,7 @@ export type TaskRow = {
   priority: TaskRecord["priority"];
   kind: TaskRecord["kind"];
   assignee_id: string;
+  assignee_ids?: string[] | null;
   creator_id: string;
   due_at: string;
   position: string | number;
@@ -32,6 +33,7 @@ export function mapTaskRow(row: TaskRow): TaskRecord {
     priority: row.priority,
     kind: row.kind,
     assigneeId: row.assignee_id,
+    assigneeIds: row.assignee_ids?.length ? row.assignee_ids : [row.assignee_id],
     creatorId: row.creator_id,
     dueAt: row.due_at,
     position: Number(row.position),
