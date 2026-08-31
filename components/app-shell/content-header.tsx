@@ -5,6 +5,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationCenter } from "@/features/notifications/components/notification-center";
 import { PrivateMessages } from "@/features/messages/components/private-messages";
+import { GlobalSearch } from "@/features/search/components/global-search";
 import type { VerifiedUser } from "@/lib/auth/types";
 
 export function ContentHeader({
@@ -26,6 +27,7 @@ export function ContentHeader({
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+        <GlobalSearch />
         <PrivateMessages />
         <NotificationCenter />
         <ThemeToggle />
