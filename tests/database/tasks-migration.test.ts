@@ -10,6 +10,7 @@ const migrations = [
   "202608310002_task_project.sql",
   "202608310003_task_multi_assignees.sql",
   "202608310004_task_draft_status.sql",
+  "202608310005_task_attachments.sql",
 ].map((name) =>
   path.resolve(import.meta.dirname, "../../supabase/migrations", name)
 );
@@ -35,7 +36,7 @@ describe("tasks migration", () => {
     }>(
       `select relname, relrowsecurity
        from pg_class
-       where relname in ('tasks', 'task_comments')
+       where relname in ('tasks', 'task_comments', 'task_attachments')
        order by relname`
     );
     const projectColumn = await database.query<{
@@ -57,6 +58,7 @@ describe("tasks migration", () => {
       "done",
     ]);
     expect(protectedTables.rows).toEqual([
+      { relname: "task_attachments", relrowsecurity: true },
       { relname: "task_comments", relrowsecurity: true },
       { relname: "tasks", relrowsecurity: true },
     ]);

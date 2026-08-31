@@ -10,7 +10,12 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { ArchiveTaskButton } from "@/features/tasks/components/archive-task-button";
 import { DeleteTaskButton } from "@/features/tasks/components/delete-task-button";
 import { TaskComments } from "@/features/tasks/components/task-comments";
+import { TaskAttachments } from "@/features/tasks/components/task-attachments";
 import { TaskForm } from "@/features/tasks/components/task-form";
+import {
+  finishTaskUpload,
+  requestTaskUpload,
+} from "@/features/tasks/files/actions";
 import {
   addTaskComment,
   archiveTask,
@@ -47,7 +52,7 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
   const { taskId } = await params;
   if (!z.uuid().safeParse(taskId).success) notFound();
 
-  const { task, comments, currentUser, assignees } =
+  const { task, comments, attachments, currentUser, assignees } =
     await getTaskDetailData(taskId);
   if (!task) notFound();
 
@@ -135,6 +140,14 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
               currentUser={currentUser}
               addCommentAction={addTaskComment}
             />
+            {task.kind === "general" ? (
+              <TaskAttachments
+                taskId={task.id}
+                attachments={attachments}
+                requestUploadAction={requestTaskUpload}
+                finishUploadAction={finishTaskUpload}
+              />
+            ) : null}
           </div>
         </main>
       </div>

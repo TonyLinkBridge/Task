@@ -13,6 +13,7 @@ import {
 import type { TaskCommentRow, TaskRow } from "@/features/tasks/task-mapper";
 import type {
   AssignableUser,
+  TaskAttachment,
   TaskFilters,
   TaskCommentView,
   TaskRecord,
@@ -25,7 +26,31 @@ export type TaskRepository = TaskActionRepository & {
   listAssignees(): Promise<AssignableUser[]>;
   get(id: string): Promise<TaskRecord | null>;
   listComments(taskId: string): Promise<TaskCommentView[]>;
+  listAttachments(taskId: string): Promise<TaskAttachment[]>;
+  findAttachment(id: string): Promise<TaskAttachment | null>;
 };
+
+function mapTaskAttachment(row: {
+  id: string;
+  task_id: string;
+  storage_path: string;
+  file_name: string;
+  mime_type: string;
+  byte_size: string | number;
+  uploader_id: string;
+  created_at: string;
+}): TaskAttachment {
+  return {
+    id: row.id,
+    taskId: row.task_id,
+    storagePath: row.storage_path,
+    fileName: row.file_name,
+    mimeType: row.mime_type,
+    byteSize: Number(row.byte_size),
+    uploaderId: row.uploader_id,
+    createdAt: row.created_at,
+  };
+}
 
 function taskWrite(input: TaskInput) {
   const assigneeIds = Array.from(
@@ -128,6 +153,27 @@ export function createTaskRepository(
       return (data ?? []).map((row) =>
         mapTaskCommentRow(row as unknown as TaskCommentRow)
       );
+    },
+
+    async listAttachments(taskId) {
+      const { data, error } = await client()
+        .from("task_attachments")
+        .select("*")
+        .eq("task_id", taskId)
+        .order("created_at");
+      if (error) throw new Error(`TASK_DATABASE_ERROR:${error.message}`);
+      return (data ?? []).map((row) => mapTaskAttachment(row));
+    },
+
+    async findAttachment(id) {
+      const { data, error } = await client()
+        .from("task_attachments")
+        .select("*, task:tasks!inner(archived_at)")
+        .eq("id", id)
+        .is("task.archived_at", null)
+        .maybeSingle();
+      if (error) throw new Error(`TASK_DATABASE_ERROR:${error.message}`);
+      return data ? mapTaskAttachment(data) : null;
     },
 
     async create(input, creatorId) {

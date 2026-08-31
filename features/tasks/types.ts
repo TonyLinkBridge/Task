@@ -57,3 +57,14 @@ export type TaskCommentView = TaskCommentRecord & {
   authorName: string;
   authorImageUrl: string | null;
 };
+
+export type TaskAttachment = {
+  id: string;
+  taskId: string;
+  storagePath: string;
+  fileName: string;
+  mimeType: string;
+  byteSize: number;
+  uploaderId: string;
+  createdAt: string;
+};
