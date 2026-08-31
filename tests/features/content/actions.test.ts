@@ -130,4 +130,111 @@ describe("content actions", () => {
       actions.updateScheduledContent("not-a-content-id", validInput)
     ).resolves.toEqual({ ok: false, message: "请检查排期内容。" });
   });
+
+  it("lets an employee delete content they created and clears external files", async () => {
+    const calls: string[] = [];
+    const actions = makeContentActions({
+      getVerifiedUser: async () => ({
+        id: "employee",
+        role: "employee",
+        name: "员工",
+        imageUrl: null,
+      }),
+      create: async () => {
+        throw new Error("should not run");
+      },
+      update: async () => {
+        throw new Error("should not run");
+      },
+      find: async () => ({
+        id: contentId,
+        ...validInput,
+        status: "draft",
+        authorId: "employee",
+        liveblocksRoomId: `content:${contentId}`,
+        currentVersion: 0,
+        requiredApprovals: 2,
+        requestedReviewerId: null,
+        publishedBy: null,
+        publishedAt: null,
+        linkedTaskId: "33333333-3333-4333-8333-333333333333",
+        archivedAt: null,
+        createdAt: "2026-08-28T02:00:00.000Z",
+        updatedAt: "2026-08-28T02:00:00.000Z",
+      }),
+      remove: async (id, actorId) => {
+        calls.push(`remove:${id}:${actorId}`);
+        return {
+          roomId: `content:${id}`,
+          storagePaths: [`${id}/cover.png`],
+        };
+      },
+      deleteRoom: async (roomId) => {
+        calls.push(`room:${roomId}`);
+      },
+      deleteFiles: async (paths) => {
+        calls.push(`files:${paths.join(",")}`);
+      },
+      revalidatePath: (path) => calls.push(`path:${path}`),
+    });
+
+    await expect(actions.deleteScheduledContent(contentId)).resolves.toEqual({
+      ok: true,
+    });
+    expect(calls).toEqual([
+      `remove:${contentId}:employee`,
+      `room:content:${contentId}`,
+      `files:${contentId}/cover.png`,
+      "path:/content",
+      "path:/tasks",
+    ]);
+  });
+
+  it("does not let an employee delete another person's content", async () => {
+    const actions = makeContentActions({
+      getVerifiedUser: async () => ({
+        id: "employee-b",
+        role: "employee",
+        name: "员工 B",
+        imageUrl: null,
+      }),
+      create: async () => {
+        throw new Error("should not run");
+      },
+      update: async () => {
+        throw new Error("should not run");
+      },
+      find: async () => ({
+        id: contentId,
+        ...validInput,
+        status: "draft",
+        authorId: "employee",
+        liveblocksRoomId: `content:${contentId}`,
+        currentVersion: 0,
+        requiredApprovals: 2,
+        requestedReviewerId: null,
+        publishedBy: null,
+        publishedAt: null,
+        linkedTaskId: "33333333-3333-4333-8333-333333333333",
+        archivedAt: null,
+        createdAt: "2026-08-28T02:00:00.000Z",
+        updatedAt: "2026-08-28T02:00:00.000Z",
+      }),
+      remove: async () => {
+        throw new Error("should not run");
+      },
+      deleteRoom: async () => {
+        throw new Error("should not run");
+      },
+      deleteFiles: async () => {
+        throw new Error("should not run");
+      },
+      revalidatePath: () => undefined,
+    });
+
+    await expect(actions.deleteScheduledContent(contentId)).resolves.toEqual({
+      ok: false,
+      message: "你只能删除自己建立的内容。",
+    });
+  });
 });

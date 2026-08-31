@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { processClaimedDelivery } from "@/features/notifications/processor";
+import {
+  processClaimedDeletion,
+  processClaimedDelivery,
+} from "@/features/notifications/processor";
 
 const delivery = {
   id: "delivery-1",
@@ -61,5 +64,38 @@ describe("Slack delivery processor", () => {
     );
 
     expect(result).toMatchObject({ status: "failed", nextAttemptAt: null });
+  });
+});
+
+describe("Slack deletion processor", () => {
+  const deletion = {
+    id: "deletion-1",
+    channelId: "G001",
+    slackTimestamp: "1724832000.000100",
+    attemptCount: 1,
+  };
+
+  it("marks a bot message as deleted after Slack removes it", async () => {
+    const result = await processClaimedDeletion(deletion, {
+      failedAt: "2026-08-31T02:00:00.000Z",
+      deleteMessage: async () => undefined,
+    });
+
+    expect(result).toEqual({ status: "deleted" });
+  });
+
+  it("retries a failed deletion without losing the Slack message identity", async () => {
+    const result = await processClaimedDeletion(deletion, {
+      failedAt: "2026-08-31T02:00:00.000Z",
+      deleteMessage: async () => {
+        throw new Error("SLACK_API_ERROR:ratelimited");
+      },
+    });
+
+    expect(result).toEqual({
+      status: "failed",
+      error: "SLACK_API_ERROR:ratelimited",
+      nextAttemptAt: "2026-08-31T02:01:00.000Z",
+    });
   });
 });

@@ -8,11 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ArchiveTaskButton } from "@/features/tasks/components/archive-task-button";
+import { DeleteTaskButton } from "@/features/tasks/components/delete-task-button";
 import { TaskComments } from "@/features/tasks/components/task-comments";
 import { TaskForm } from "@/features/tasks/components/task-form";
 import {
   addTaskComment,
   archiveTask,
+  deleteTask,
   updateTask,
 } from "@/features/tasks/actions";
 import { getTaskDetailData } from "@/features/tasks/queries";
@@ -81,6 +83,14 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
                   taskKind={task.kind}
                   archiveTaskAction={archiveTask}
                 />
+                {task.kind === "general" &&
+                (currentUser.role === "admin" ||
+                  task.creatorId === currentUser.id) ? (
+                  <DeleteTaskButton
+                    taskId={task.id}
+                    deleteTaskAction={deleteTask}
+                  />
+                ) : null}
               </div>
             </div>
 

@@ -175,6 +175,16 @@ export function createTaskRepository(
       return mapTaskRow(assertData(data as TaskRow | null, error));
     },
 
+    async deleteOwned(id, actorId) {
+      const { data, error } = await client().rpc("delete_owned_task", {
+        p_task_id: id,
+        p_actor_id: actorId,
+      });
+      if (error || data !== true) {
+        throw new Error(`TASK_DATABASE_ERROR:${error?.message ?? "NO_DATA"}`);
+      }
+    },
+
     async addComment(taskId, body, authorId) {
       const { data, error } = await client()
         .from("task_comments")

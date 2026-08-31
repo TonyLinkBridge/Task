@@ -13,6 +13,7 @@ const migrations = [
   "202608280007_approval_rpcs.sql",
   "202608280008_notifications_audit.sql",
   "202608280009_notification_workflow.sql",
+  "202608310001_owned_deletion.sql",
 ].map((name) =>
   path.resolve(import.meta.dirname, "../../supabase/migrations", name)
 );
@@ -128,5 +129,96 @@ describe("notification workflow", () => {
     expect(first.rows).toHaveLength(1);
     expect(first.rows[0].attempt_count).toBe(1);
     expect(second.rows).toEqual([]);
+  });
+
+  it("queues sent Slack messages and removes unsent ones when an author deletes content", async () => {
+    await database.exec(`
+      select create_scheduled_content(
+        '${contentId}', '准备删除', 'employee', 'employee',
+        '2099-08-29T02:00:00.000Z', array['${platformId}']::uuid[]
+      );
+      select submit_content_for_review(
+        '${contentId}', 'employee', '[{"type":"paragraph"}]'::jsonb, null
+      );
+      update slack_deliveries
+      set status = 'sent', slack_timestamp = '1788141120.601569'
+      where content_id = '${contentId}' and event_type = 'submitted';
+      select enqueue_content_notification(
+        'publish_advance', '${contentId}', null,
+        '2099-08-28T02:00:00.000Z', 'pending-test'
+      );
+      select delete_owned_content('${contentId}', 'employee');
+    `);
+
+    const content = await database.query(`
+      select id from contents where id = '${contentId}'
+    `);
+    const tasks = await database.query(`
+      select id from tasks where linked_content_id = '${contentId}'
+    `);
+    const deliveries = await database.query(`
+      select id from slack_deliveries where content_id = '${contentId}'
+    `);
+    const deletions = await database.query<{
+      channel_id: string;
+      slack_timestamp: string;
+      status: string;
+    }>(`
+      select channel_id, slack_timestamp, status
+      from slack_deletion_requests
+    `);
+
+    expect(content.rows).toEqual([]);
+    expect(tasks.rows).toEqual([]);
+    expect(deliveries.rows).toEqual([]);
+    expect(deletions.rows).toEqual([
+      {
+        channel_id: "G001",
+        slack_timestamp: "1788141120.601569",
+        status: "pending",
+      },
+    ]);
+  });
+
+  it("does not let an employee delete another employee's content", async () => {
+    await database.exec(`
+      insert into profiles (
+        clerk_user_id, role, display_name, slack_team_id, slack_verified_at
+      ) values ('employee-b', 'employee', '员工 B', 'T094DTFCVA8', now());
+      select create_scheduled_content(
+        '${contentId}', '不能乱删', 'employee', 'employee',
+        '2099-08-29T02:00:00.000Z', array['${platformId}']::uuid[]
+      );
+    `);
+
+    await expect(
+      database.exec(
+        `select delete_owned_content('${contentId}', 'employee-b');`
+      )
+    ).rejects.toThrow(/CONTENT_DELETE_FORBIDDEN/);
+  });
+
+  it("lets only the creator or an admin permanently delete a normal task", async () => {
+    const taskId = "33333333-3333-4333-8333-333333333333";
+    await database.exec(`
+      insert into profiles (
+        clerk_user_id, role, display_name, slack_team_id, slack_verified_at
+      ) values ('employee-b', 'employee', '员工 B', 'T094DTFCVA8', now());
+      insert into tasks (
+        id, title, assignee_id, creator_id, due_at
+      ) values (
+        '${taskId}', '普通任务', 'employee', 'employee', now()
+      );
+    `);
+
+    await expect(
+      database.exec(`select delete_owned_task('${taskId}', 'employee-b');`)
+    ).rejects.toThrow(/TASK_DELETE_FORBIDDEN/);
+
+    await database.exec(`select delete_owned_task('${taskId}', 'admin-a');`);
+    const task = await database.query(
+      `select id from tasks where id = '${taskId}'`
+    );
+    expect(task.rows).toEqual([]);
   });
 });

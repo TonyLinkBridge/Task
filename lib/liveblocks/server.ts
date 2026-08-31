@@ -70,3 +70,7 @@ export async function clearResolvedContentThreads(
   );
   return threads.length;
 }
+
+export async function deleteContentRoom(roomId: string): Promise<void> {
+  await getLiveblocksServer().deleteRoom(roomId);
+}

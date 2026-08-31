@@ -282,6 +282,40 @@ export function createContentRepository(
       return data ? mapContentRow(data as ContentRow) : null;
     },
 
+    async removeOwned(
+      contentId: string,
+      actorId: string
+    ): Promise<{ roomId: string; storagePaths: string[] }> {
+      const { data, error } = await client().rpc("delete_owned_content", {
+        p_content_id: contentId,
+        p_actor_id: actorId,
+      });
+      if (error || !data || typeof data !== "object") {
+        throw new Error(`CONTENT_DATABASE_ERROR:${error?.message ?? "NO_DATA"}`);
+      }
+      const result = data as {
+        roomId?: unknown;
+        storagePaths?: unknown;
+      };
+      if (
+        typeof result.roomId !== "string" ||
+        !Array.isArray(result.storagePaths) ||
+        !result.storagePaths.every((path) => typeof path === "string")
+      ) {
+        throw new Error("CONTENT_DATABASE_ERROR:INVALID_DELETE_RESULT");
+      }
+      return {
+        roomId: result.roomId,
+        storagePaths: result.storagePaths as string[],
+      };
+    },
+
+    async removeStorageFiles(paths: string[]): Promise<void> {
+      if (paths.length === 0) return;
+      const { error } = await client().storage.from("content-files").remove(paths);
+      if (error) throw new Error(`CONTENT_STORAGE_ERROR:${error.message}`);
+    },
+
     async findByRoomId(roomId: string): Promise<ContentRecord | null> {
       const { data, error } = await client()
         .from("contents")

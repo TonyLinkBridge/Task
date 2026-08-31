@@ -11,9 +11,13 @@ import { ReviewHistory } from "@/features/approval/components/review-history";
 import { approvalRepository } from "@/features/approval/repository";
 import { canEditBody } from "@/features/approval/rules";
 import { addContentComment } from "@/features/content/actions/comments";
-import { updateScheduledContent } from "@/features/content/actions/content";
+import {
+  deleteScheduledContent,
+  updateScheduledContent,
+} from "@/features/content/actions/content";
 import { Attachments } from "@/features/content/components/attachments";
 import { ContentChat } from "@/features/content/components/content-chat";
+import { DeleteContentButton } from "@/features/content/components/delete-content-button";
 import { ContentEditorReview } from "@/features/content/components/content-editor-review";
 import { ContentRoom } from "@/features/content/components/content-room";
 import { ContentScheduleEditor } from "@/features/content/components/content-schedule-editor";
@@ -113,7 +117,15 @@ export default async function ContentDetailPage({
                   </Badge>
                 ))}
               </div>
-              <h1 className="mt-4 text-2xl font-semibold">{content.title}</h1>
+              <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
+                <h1 className="text-2xl font-semibold">{content.title}</h1>
+                {currentUser.role === "admin" || content.authorId === currentUser.id ? (
+                  <DeleteContentButton
+                    contentId={content.id}
+                    deleteAction={deleteScheduledContent}
+                  />
+                ) : null}
+              </div>
               <dl className="mt-6 grid gap-4 border-t pt-5 sm:grid-cols-2">
                 <div>
                   <dt className="text-xs text-muted-foreground">负责人</dt>

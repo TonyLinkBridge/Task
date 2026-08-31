@@ -11,8 +11,10 @@ const content = {
 };
 
 describe("Slack queue runner", () => {
-  it("schedules reminders, sends claimed messages, and records every result", async () => {
+  it("deletes queued bot messages before sending new notifications", async () => {
     const completed: Array<{ id: string; status: string }> = [];
+    const deleted: Array<{ id: string; status: string }> = [];
+    const operations: string[] = [];
     let scheduledAt = "";
 
     const summary = await runSlackQueue({
@@ -20,6 +22,20 @@ describe("Slack queue runner", () => {
       appUrl: "https://tasklb.vercel.app",
       scheduleDueContent: async (now) => {
         scheduledAt = now;
+      },
+      claimDeletions: async () => [
+        {
+          id: "deletion-1",
+          channelId: "G001",
+          slackTimestamp: "1724831000.000099",
+          attemptCount: 1,
+        },
+      ],
+      deleteMessage: async ({ channel, timestamp }) => {
+        operations.push(`delete:${channel}:${timestamp}`);
+      },
+      completeDeletion: async (id, result) => {
+        deleted.push({ id, status: result.status });
       },
       claimDeliveries: async () => [
         {
@@ -36,6 +52,7 @@ describe("Slack queue runner", () => {
         },
       ],
       postMessage: async ({ text }) => {
+        operations.push(`post:${text}`);
         if (text.includes("到达发布时间")) throw new Error("ratelimited");
         return { timestamp: "1724832000.000100" };
       },
@@ -49,6 +66,15 @@ describe("Slack queue runner", () => {
       { id: "delivery-1", status: "sent" },
       { id: "delivery-2", status: "failed" },
     ]);
-    expect(summary).toEqual({ claimed: 2, sent: 1, failed: 1 });
+    expect(deleted).toEqual([{ id: "deletion-1", status: "deleted" }]);
+    expect(operations[0]).toBe("delete:G001:1724831000.000099");
+    expect(summary).toEqual({
+      deletionsClaimed: 1,
+      deleted: 1,
+      deletionFailed: 0,
+      claimed: 2,
+      sent: 1,
+      failed: 1,
+    });
   });
 });
