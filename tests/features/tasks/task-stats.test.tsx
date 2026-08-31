@@ -71,5 +71,23 @@ describe("StatsCards", () => {
     expect(cardValue("已经逾期")).toHaveTextContent("1");
     expect(cardValue("正在处理")).toHaveTextContent("1");
     expect(cardValue("本周完成")).toHaveTextContent("1");
+    expect(
+      screen.getByRole("article", { name: "每月新增任务比较" })
+    ).toHaveTextContent("本月 0");
+    expect(
+      screen.getByRole("article", { name: "每月新增任务比较" })
+    ).toHaveTextContent("上月 5");
+    expect(
+      screen.getByRole("article", { name: "每月新增任务比较" })
+    ).toHaveTextContent("比上个月少 5 项");
+    expect(
+      screen.getByRole("article", { name: "每月完成任务比较" })
+    ).toHaveTextContent("本月 1");
+    expect(
+      screen.getByRole("article", { name: "每月完成任务比较" })
+    ).toHaveTextContent("上月 1");
+    expect(
+      screen.getByRole("article", { name: "每月完成任务比较" })
+    ).toHaveTextContent("和上个月一样");
   });
 });
