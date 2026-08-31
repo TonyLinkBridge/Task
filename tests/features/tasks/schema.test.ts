@@ -11,6 +11,7 @@ const validInput = {
   description: "整理最新进度",
   assigneeId: "user_employee",
   priority: "medium",
+  status: "draft",
   dueAt: "2026-08-29T02:00:00.000Z",
 };
 

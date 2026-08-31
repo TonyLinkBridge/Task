@@ -1,4 +1,10 @@
-export const TASK_STATUSES = ["todo", "in_progress", "review", "done"] as const;
+export const TASK_STATUSES = [
+  "draft",
+  "todo",
+  "in_progress",
+  "review",
+  "done",
+] as const;
 export const TASK_PRIORITIES = ["low", "medium", "urgent"] as const;
 export const TASK_KINDS = ["general", "content_publish"] as const;
 

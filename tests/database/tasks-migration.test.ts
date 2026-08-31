@@ -9,6 +9,7 @@ const migrations = [
   "202608280002_tasks.sql",
   "202608310002_task_project.sql",
   "202608310003_task_multi_assignees.sql",
+  "202608310004_task_draft_status.sql",
 ].map((name) =>
   path.resolve(import.meta.dirname, "../../supabase/migrations", name)
 );
@@ -49,6 +50,7 @@ describe("tasks migration", () => {
     );
 
     expect(statuses.rows.map(({ enumlabel }) => enumlabel)).toEqual([
+      "draft",
       "todo",
       "in_progress",
       "review",

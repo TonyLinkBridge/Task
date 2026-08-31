@@ -57,6 +57,7 @@ describe("TaskForm", () => {
     await user.selectOptions(screen.getByLabelText("负责人"), "user_employee");
     await user.click(screen.getByLabelText("共同负责人 Admin"));
     await user.selectOptions(screen.getByLabelText("优先级"), "urgent");
+    await user.selectOptions(screen.getByLabelText("开始状态"), "draft");
     fireEvent.change(screen.getByLabelText("完成时间"), {
       target: { value: "2026-08-29T10:00" },
     });
@@ -73,6 +74,7 @@ describe("TaskForm", () => {
       assigneeId: "user_employee",
       assigneeIds: ["user_employee", "user_admin"],
       priority: "urgent",
+      status: "draft",
     });
     expect(receivedInput?.dueAt).toBe("2026-08-29T02:00:00.000Z");
   });

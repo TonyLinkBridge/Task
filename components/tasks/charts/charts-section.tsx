@@ -6,6 +6,7 @@ import type { TaskRecord, TaskStatus } from "@/features/tasks/types";
 const MALAYSIA_OFFSET_MS = 8 * 60 * 60 * 1000;
 
 const statusLabels: Record<TaskStatus, string> = {
+  draft: "草稿",
   todo: "还没开始",
   in_progress: "正在做",
   review: "等人检查",
@@ -13,6 +14,7 @@ const statusLabels: Record<TaskStatus, string> = {
 };
 
 const statusColors: Record<TaskStatus, string> = {
+  draft: "bg-zinc-400",
   todo: "bg-slate-400",
   in_progress: "bg-blue-500",
   review: "bg-amber-500",

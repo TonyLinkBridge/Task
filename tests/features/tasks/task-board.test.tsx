@@ -27,10 +27,10 @@ const task: TaskRecord = {
 };
 
 describe("TaskBoard", () => {
-  it("renders the four workflow columns", () => {
+  it("renders the five workflow columns including drafts", () => {
     render(<TaskBoard initialTasks={[]} assignees={[]} />);
 
-    for (const name of ["还没开始", "正在做", "等人检查", "已经完成"]) {
+    for (const name of ["草稿", "还没开始", "正在做", "等人检查", "已经完成"]) {
       expect(screen.getByRole("region", { name })).toBeInTheDocument();
     }
   });

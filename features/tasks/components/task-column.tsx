@@ -11,6 +11,7 @@ export const TASK_COLUMN_META: Record<
   TaskStatus,
   { label: string; color: string }
 > = {
+  draft: { label: "草稿", color: "bg-zinc-400" },
   todo: { label: "还没开始", color: "bg-slate-500" },
   in_progress: { label: "正在做", color: "bg-blue-500" },
   review: { label: "等人检查", color: "bg-amber-500" },

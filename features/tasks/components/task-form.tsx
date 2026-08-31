@@ -83,6 +83,9 @@ export function TaskForm({
   const [priority, setPriority] = useState<TaskRecord["priority"]>(
     initialTask?.priority ?? "medium"
   );
+  const [status, setStatus] = useState<TaskRecord["status"]>(
+    initialTask?.status ?? "todo"
+  );
   const [dueAt, setDueAt] = useState(
     initialTask ? malaysiaDateTimeInput(initialTask.dueAt) : defaultDueAt()
   );
@@ -109,6 +112,7 @@ export function TaskForm({
         ...additionalAssigneeIds.filter((id) => id !== assigneeId),
       ],
       priority,
+      status,
       dueAt: new Date(`${dueAt}:00+08:00`).toISOString(),
     };
 
@@ -130,6 +134,7 @@ export function TaskForm({
       setProject("一般");
       setDescription("");
       setPriority("medium");
+      setStatus("todo");
       setDueAt(defaultDueAt());
     }
   }
@@ -221,6 +226,23 @@ export function TaskForm({
                 <option value="urgent">紧急</option>
               </select>
             </div>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="task-status">开始状态</Label>
+            <select
+              id="task-status"
+              value={status}
+              onChange={(event) =>
+                setStatus(event.target.value as TaskRecord["status"])
+              }
+              className="h-9 rounded-md border border-input bg-background px-2.5 text-sm"
+            >
+              <option value="draft">草稿</option>
+              <option value="todo">还没开始</option>
+              <option value="in_progress">正在做</option>
+              <option value="review">等人检查</option>
+              <option value="done">已经完成</option>
+            </select>
           </div>
           <fieldset className="grid gap-2 rounded-lg border p-3">
             <legend className="px-1 text-sm font-medium">共同负责人（可不选）</legend>

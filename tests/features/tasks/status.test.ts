@@ -26,8 +26,9 @@ function task(
 }
 
 describe("groupTasksByStatus", () => {
-  it("always returns the four workflow columns", () => {
+  it("always returns the five workflow columns", () => {
     expect(groupTasksByStatus([])).toEqual({
+      draft: [],
       todo: [],
       in_progress: [],
       review: [],

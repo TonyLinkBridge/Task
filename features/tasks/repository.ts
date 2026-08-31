@@ -36,6 +36,7 @@ function taskWrite(input: TaskInput) {
     project: input.project,
     description: input.description,
     priority: input.priority,
+    ...(input.status ? { status: input.status } : {}),
     assignee_id: input.assigneeId,
     assignee_ids: assigneeIds,
     due_at: input.dueAt,

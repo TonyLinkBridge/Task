@@ -20,6 +20,7 @@ import {
 import { getTaskDetailData } from "@/features/tasks/queries";
 
 const statusLabels = {
+  draft: "草稿",
   todo: "还没开始",
   in_progress: "正在做",
   review: "等人检查",

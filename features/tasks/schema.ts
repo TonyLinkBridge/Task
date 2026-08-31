@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { TASK_PRIORITIES } from "@/features/tasks/types";
+import { TASK_PRIORITIES, TASK_STATUSES } from "@/features/tasks/types";
 import type { TaskFilters } from "@/features/tasks/types";
 
 export const taskInputSchema = z.object({
@@ -10,6 +10,7 @@ export const taskInputSchema = z.object({
   assigneeId: z.string().trim().min(1),
   assigneeIds: z.array(z.string().trim().min(1)).min(1).max(10).optional(),
   priority: z.enum(TASK_PRIORITIES),
+  status: z.enum(TASK_STATUSES).optional(),
   dueAt: z.iso.datetime({ offset: true }),
 }).refine(
   (input) => !input.assigneeIds || input.assigneeIds.includes(input.assigneeId),
