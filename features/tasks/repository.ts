@@ -97,7 +97,7 @@ export function createTaskRepository(
     async list(filters = {}) {
       let query = client()
         .from("tasks")
-        .select("*")
+        .select("*, task_comments(count)")
         .is("archived_at", null)
         .order("status")
         .order("position")

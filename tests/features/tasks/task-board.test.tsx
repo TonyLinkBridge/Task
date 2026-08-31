@@ -24,6 +24,7 @@ const task: TaskRecord = {
   archivedAt: null,
   createdAt: "2026-08-28T02:00:00.000Z",
   updatedAt: "2026-08-28T02:00:00.000Z",
+  commentCount: 3,
 };
 
 describe("TaskBoard", () => {
@@ -53,6 +54,7 @@ describe("TaskBoard", () => {
     ).not.toBeInTheDocument();
     expect(screen.getByText("内容运营")).toBeInTheDocument();
     expect(screen.getByText("Employee、Admin")).toBeInTheDocument();
+    expect(screen.getByLabelText("3 条留言")).toBeInTheDocument();
   });
 
   it("does not show drag or edit controls for a linked publish task", () => {

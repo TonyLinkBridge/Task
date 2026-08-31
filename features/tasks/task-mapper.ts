@@ -21,6 +21,7 @@ export type TaskRow = {
   archived_at: string | null;
   created_at: string;
   updated_at: string;
+  task_comments?: { count: number }[];
 };
 
 export function mapTaskRow(row: TaskRow): TaskRecord {
@@ -41,6 +42,9 @@ export function mapTaskRow(row: TaskRow): TaskRecord {
     archivedAt: row.archived_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    ...(row.task_comments
+      ? { commentCount: row.task_comments[0]?.count ?? 0 }
+      : {}),
   };
 }
 

@@ -29,6 +29,7 @@ export type TaskRecord = {
   archivedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  commentCount?: number;
 };
 
 export type AssignableUser = {

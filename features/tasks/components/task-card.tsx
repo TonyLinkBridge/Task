@@ -1,6 +1,10 @@
 "use client";
 
-import { Calendar03Icon, DragDropVerticalIcon } from "@hugeicons/core-free-icons";
+import {
+  BubbleChatIcon,
+  Calendar03Icon,
+  DragDropVerticalIcon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -106,11 +110,20 @@ export function TaskCard({
             {assignees.length ? assignees.map(({ name }) => name).join("、") : "未找到负责人"}
           </span>
         </div>
-        {onEdit && task.kind === "general" ? (
-          <Button variant="ghost" size="xs" onClick={() => onEdit(task)}>
-            编辑
-          </Button>
-        ) : null}
+        <div className="flex shrink-0 items-center gap-1">
+          <span
+            aria-label={`${task.commentCount ?? 0} 条留言`}
+            className="flex items-center gap-1 text-xs text-muted-foreground"
+          >
+            <HugeiconsIcon icon={BubbleChatIcon} className="size-4" />
+            {task.commentCount ?? 0}
+          </span>
+          {onEdit && task.kind === "general" ? (
+            <Button variant="ghost" size="xs" onClick={() => onEdit(task)}>
+              编辑
+            </Button>
+          ) : null}
+        </div>
       </div>
     </article>
   );
