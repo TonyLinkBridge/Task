@@ -1,9 +1,15 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { act, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { blockNoteOptions } = vi.hoisted(() => ({
+const { blockNoteOptions, liveThreads, roomThreads } = vi.hoisted(() => ({
   blockNoteOptions: {
     current: null as null | Record<string, unknown>,
+  },
+  liveThreads: {
+    current: [] as Array<{ id: string; resolved: boolean }>,
+  },
+  roomThreads: {
+    current: [] as Array<{ id: string; resolved: boolean }>,
   },
 }));
 
@@ -29,11 +35,23 @@ vi.mock("@liveblocks/react-blocknote", () => ({
 vi.mock("@liveblocks/react/suspense", () => ({
   useStatus: () => "connected",
   useSyncStatus: () => "synchronized",
-  useThreads: () => ({ threads: [] }),
+  useThreads: () => ({ threads: liveThreads.current }),
+  useRoom: () => ({
+    getThreads: async () => ({
+      threads: roomThreads.current,
+      inboxNotifications: [],
+      subscriptions: [],
+      requestedAt: new Date("2026-09-02T03:00:00.000Z"),
+      nextCursor: null,
+      permissionHints: {},
+    }),
+  }),
 }));
 
 vi.mock("@/features/content/components/inline-threads", () => ({
-  InlineThreads: () => <div data-testid="inline-threads" />,
+  InlineThreads: ({ threads }: { threads: Array<{ id: string }> }) => (
+    <div data-testid="inline-threads">{threads.length}</div>
+  ),
 }));
 
 import {
@@ -62,6 +80,12 @@ describe("EditorSyncStatus", () => {
 });
 
 describe("BlockNoteEditor", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    liveThreads.current = [];
+    roomThreads.current = [];
+  });
+
   it("keeps every pasted social-post line as a separate paragraph", () => {
     render(<BlockNoteEditor contentId="content-1" editable />);
 
@@ -115,5 +139,19 @@ describe("BlockNoteEditor", () => {
     expect(screen.getByTestId("inline-threads").parentElement).toHaveClass(
       "min-w-0"
     );
+  });
+
+  it("shows a remote inline comment without a page refresh", async () => {
+    vi.useFakeTimers();
+    render(<BlockNoteEditor contentId="content-1" editable />);
+
+    expect(screen.getByTestId("inline-threads")).toHaveTextContent("0");
+    roomThreads.current = [{ id: "thread-1", resolved: false }];
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_000);
+    });
+
+    expect(screen.getByTestId("inline-threads")).toHaveTextContent("1");
   });
 });

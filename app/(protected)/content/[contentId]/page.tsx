@@ -10,7 +10,10 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { ReviewHistory } from "@/features/approval/components/review-history";
 import { approvalRepository } from "@/features/approval/repository";
 import { canEditBody } from "@/features/approval/rules";
-import { addContentComment } from "@/features/content/actions/comments";
+import {
+  addContentComment,
+  refreshContentComments,
+} from "@/features/content/actions/comments";
 import {
   deleteScheduledContent,
   updateScheduledContent,
@@ -166,6 +169,7 @@ export default async function ContentDetailPage({
                   comments={comments}
                   currentUser={currentUser}
                   addCommentAction={addContentComment}
+                  refreshCommentsAction={refreshContentComments}
                 />
               </div>
               <div className="space-y-5">

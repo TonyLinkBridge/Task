@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,25 @@ import type { VerifiedUser } from "@/lib/auth/types";
 type AddCommentResult =
   | { ok: true; data: ContentComment }
   | { ok: false; message: string };
+
+type RefreshCommentsResult =
+  | { ok: true; data: ContentCommentView[] }
+  | { ok: false; message: string };
+
+const commentRefreshIntervalMs = 3_000;
+
+function mergeComments(
+  current: ContentCommentView[],
+  incoming: ContentCommentView[]
+) {
+  const commentsById = new Map(
+    current.map((comment) => [comment.id, comment] as const)
+  );
+  for (const comment of incoming) commentsById.set(comment.id, comment);
+  return Array.from(commentsById.values()).sort((left, right) =>
+    left.createdAt.localeCompare(right.createdAt)
+  );
+}
 
 const timeFormatter = new Intl.DateTimeFormat("zh-MY", {
   timeZone: "Asia/Kuala_Lumpur",
@@ -28,6 +47,7 @@ export function ContentChat({
     ok: false,
     message: "暂时无法留言，请稍后再试。",
   }),
+  refreshCommentsAction,
 }: {
   contentId: string;
   comments: ContentCommentView[];
@@ -36,11 +56,37 @@ export function ContentChat({
     contentId: string,
     body: string
   ) => Promise<AddCommentResult>;
+  refreshCommentsAction?: (
+    contentId: string
+  ) => Promise<RefreshCommentsResult>;
 }) {
   const [comments, setComments] = useState(initialComments);
   const [body, setBody] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const refreshAction = refreshCommentsAction;
+    if (!refreshAction) return;
+    let cancelled = false;
+
+    async function refreshComments() {
+      if (!refreshAction || document.visibilityState === "hidden") return;
+      const result = await refreshAction(contentId);
+      if (!cancelled && result.ok) {
+        setComments((current) => mergeComments(current, result.data));
+      }
+    }
+
+    const interval = window.setInterval(
+      () => void refreshComments(),
+      commentRefreshIntervalMs
+    );
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [contentId, refreshCommentsAction]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -56,14 +102,15 @@ export function ContentChat({
       return;
     }
 
-    setComments((current) => [
-      ...current,
-      {
-        ...result.data,
-        authorName: currentUser.name,
-        authorImageUrl: currentUser.imageUrl,
-      },
-    ]);
+    setComments((current) =>
+      mergeComments(current, [
+        {
+          ...result.data,
+          authorName: currentUser.name,
+          authorImageUrl: currentUser.imageUrl,
+        },
+      ])
+    );
     setBody("");
   }
 

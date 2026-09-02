@@ -1,18 +1,37 @@
 "use client";
 
 import { BlockNoteView } from "@blocknote/mantine";
+import type { ThreadData } from "@liveblocks/client";
 import {
   FloatingComposer,
   useCreateBlockNoteWithLiveblocks,
   useIsEditorReady,
 } from "@liveblocks/react-blocknote";
-import { useStatus, useSyncStatus, useThreads } from "@liveblocks/react/suspense";
+import {
+  useRoom,
+  useStatus,
+  useSyncStatus,
+  useThreads,
+} from "@liveblocks/react/suspense";
 import { useTheme } from "next-themes";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { InlineThreads } from "@/features/content/components/inline-threads";
 
 type ConnectionStatus = ReturnType<typeof useStatus>;
+
+const threadRefreshIntervalMs = 3_000;
+
+function mergeThreads(
+  liveThreads: ThreadData[],
+  polledThreads: ThreadData[]
+) {
+  const threadsById = new Map(
+    polledThreads.map((thread) => [thread.id, thread] as const)
+  );
+  for (const thread of liveThreads) threadsById.set(thread.id, thread);
+  return Array.from(threadsById.values());
+}
 
 type PasteHandlerContext = {
   event: ClipboardEvent;
@@ -107,6 +126,9 @@ export function BlockNoteEditor({
   const status = useStatus();
   const syncStatus = useSyncStatus();
   const { threads } = useThreads();
+  const room = useRoom();
+  const [polledThreads, setPolledThreads] = useState<ThreadData[]>([]);
+  const visibleThreads = mergeThreads(threads, polledThreads);
   const { resolvedTheme } = useTheme();
   const blockNoteTheme = resolvedTheme === "dark" ? "dark" : "light";
 
@@ -116,6 +138,28 @@ export function BlockNoteEditor({
   useEffect(() => {
     onSyncChange?.(ready && syncStatus === "synchronized");
   }, [onSyncChange, ready, syncStatus]);
+  useEffect(() => {
+    let cancelled = false;
+
+    async function refreshThreads() {
+      if (document.visibilityState === "hidden") return;
+      try {
+        const result = await room.getThreads();
+        if (!cancelled) setPolledThreads(result.threads);
+      } catch {
+        // Keep the last known threads; Liveblocks will retry its connection.
+      }
+    }
+
+    const interval = window.setInterval(
+      () => void refreshThreads(),
+      threadRefreshIntervalMs
+    );
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [room]);
 
   if (!ready) {
     return <EditorSyncStatus ready={false} status={status} />;
@@ -143,7 +187,7 @@ export function BlockNoteEditor({
           canClearResolved={canClearResolved}
           editor={editor}
           onClearResolved={onClearResolved}
-          threads={threads}
+          threads={visibleThreads}
         />
       </div>
       <EditorSyncStatus ready status={status} />
