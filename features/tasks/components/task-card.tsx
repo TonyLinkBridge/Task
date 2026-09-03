@@ -1,6 +1,10 @@
 "use client";
 
-import { Calendar03Icon, DragDropVerticalIcon } from "@hugeicons/core-free-icons";
+import {
+  BubbleChatIcon,
+  Calendar03Icon,
+  DragDropVerticalIcon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -34,11 +38,11 @@ const dateFormatter = new Intl.DateTimeFormat("zh-MY", {
 
 export function TaskCard({
   task,
-  assignee,
+  assignees = [],
   onEdit,
 }: {
   task: TaskRecord;
-  assignee?: AssignableUser;
+  assignees?: AssignableUser[];
   onEdit?: (task: TaskRecord) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
@@ -75,9 +79,15 @@ export function TaskCard({
       >
         {task.title}
       </Link>
+      <p className="mt-1 text-xs text-muted-foreground">{task.project}</p>
       {task.description ? (
         <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
           {task.description}
+        </p>
+      ) : null}
+      {task.kind === "content_publish" ? (
+        <p className="mt-2 rounded-md bg-muted px-2.5 py-2 text-xs leading-5 text-muted-foreground">
+          由内容排期控制，不能手动拖动
         </p>
       ) : null}
 
@@ -88,19 +98,32 @@ export function TaskCard({
 
       <div className="mt-4 flex items-center justify-between border-t pt-3">
         <div className="flex min-w-0 items-center gap-2">
-          <Avatar className="size-7">
-            {assignee?.imageUrl ? (
-              <AvatarImage src={assignee.imageUrl} alt={assignee.name} />
-            ) : null}
-            <AvatarFallback>{assignee?.name.slice(0, 1) ?? "?"}</AvatarFallback>
-          </Avatar>
-          <span className="truncate text-xs">{assignee?.name ?? "未找到负责人"}</span>
+          <div className="flex -space-x-2">
+            {assignees.slice(0, 3).map((assignee) => (
+              <Avatar key={assignee.id} className="size-7 border-2 border-background">
+                {assignee.imageUrl ? <AvatarImage src={assignee.imageUrl} alt={assignee.name} /> : null}
+                <AvatarFallback>{assignee.name.slice(0, 1)}</AvatarFallback>
+              </Avatar>
+            ))}
+          </div>
+          <span className="truncate text-xs">
+            {assignees.length ? assignees.map(({ name }) => name).join("、") : "未找到负责人"}
+          </span>
         </div>
-        {onEdit && task.kind === "general" ? (
-          <Button variant="ghost" size="xs" onClick={() => onEdit(task)}>
-            编辑
-          </Button>
-        ) : null}
+        <div className="flex shrink-0 items-center gap-1">
+          <span
+            aria-label={`${task.commentCount ?? 0} 条留言`}
+            className="flex items-center gap-1 text-xs text-muted-foreground"
+          >
+            <HugeiconsIcon icon={BubbleChatIcon} className="size-4" />
+            {task.commentCount ?? 0}
+          </span>
+          {onEdit && task.kind === "general" ? (
+            <Button variant="ghost" size="xs" onClick={() => onEdit(task)}>
+              编辑
+            </Button>
+          ) : null}
+        </div>
       </div>
     </article>
   );

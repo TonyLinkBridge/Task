@@ -39,6 +39,24 @@ type ContentCommentRow = {
   author: { display_name: string; avatar_url: string | null };
 };
 
+export type PlatformRow = {
+  id: string;
+  name: string;
+  color: string;
+  archived_at: string | null;
+  created_at: string;
+};
+
+export function mapPlatformRow(row: PlatformRow): ContentPlatform {
+  return {
+    id: row.id,
+    name: row.name,
+    color: row.color,
+    archivedAt: row.archived_at,
+    createdAt: row.created_at,
+  };
+}
+
 export function mapContentCommentRow(
   row: ContentCommentRow
 ): ContentCommentView {
@@ -146,13 +164,54 @@ export function createContentRepository(
         .is("archived_at", null)
         .order("name");
       if (error) throw new Error(`CONTENT_DATABASE_ERROR:${error.message}`);
-      return (data ?? []).map((row) => ({
-        id: row.id,
-        name: row.name,
-        color: row.color,
-        archivedAt: row.archived_at,
-        createdAt: row.created_at,
-      }));
+      return (data ?? []).map((row) => mapPlatformRow(row as PlatformRow));
+    },
+
+    async listAllPlatforms(): Promise<ContentPlatform[]> {
+      const { data, error } = await client()
+        .from("platforms")
+        .select("*")
+        .order("name");
+      if (error) throw new Error(`CONTENT_DATABASE_ERROR:${error.message}`);
+      return (data ?? []).map((row) => mapPlatformRow(row as PlatformRow));
+    },
+
+    async createPlatform(input: {
+      name: string;
+      color: string;
+    }): Promise<ContentPlatform> {
+      const { data, error } = await client()
+        .from("platforms")
+        .insert({ name: input.name, color: input.color })
+        .select("*")
+        .single();
+      return mapPlatformRow(assertData(data as PlatformRow | null, error));
+    },
+
+    async updatePlatform(
+      id: string,
+      input: { name: string; color: string }
+    ): Promise<ContentPlatform> {
+      const { data, error } = await client()
+        .from("platforms")
+        .update({ name: input.name, color: input.color })
+        .eq("id", id)
+        .select("*")
+        .single();
+      return mapPlatformRow(assertData(data as PlatformRow | null, error));
+    },
+
+    async setPlatformArchived(
+      id: string,
+      archived: boolean
+    ): Promise<ContentPlatform> {
+      const { data, error } = await client()
+        .from("platforms")
+        .update({ archived_at: archived ? new Date().toISOString() : null })
+        .eq("id", id)
+        .select("*")
+        .single();
+      return mapPlatformRow(assertData(data as PlatformRow | null, error));
     },
 
     async listPlatformIds(contentId: string): Promise<string[]> {
@@ -196,6 +255,22 @@ export function createContentRepository(
       return mapContentRow(assertData(data as ContentRow | null, error));
     },
 
+    async updateSchedule(
+      contentId: string,
+      input: ContentInput,
+      actorId: string
+    ): Promise<ContentRecord> {
+      const { data, error } = await client().rpc("update_scheduled_content", {
+        p_content_id: contentId,
+        p_actor_id: actorId,
+        p_title: input.title,
+        p_assignee_id: input.assigneeId,
+        p_publish_at: input.publishAt,
+        p_platform_ids: input.platformIds,
+      });
+      return mapContentRow(assertData(data as ContentRow | null, error));
+    },
+
     async find(id: string): Promise<ContentRecord | null> {
       const { data, error } = await client()
         .from("contents")
@@ -205,6 +280,40 @@ export function createContentRepository(
         .maybeSingle();
       if (error) throw new Error(`CONTENT_DATABASE_ERROR:${error.message}`);
       return data ? mapContentRow(data as ContentRow) : null;
+    },
+
+    async removeOwned(
+      contentId: string,
+      actorId: string
+    ): Promise<{ roomId: string; storagePaths: string[] }> {
+      const { data, error } = await client().rpc("delete_owned_content", {
+        p_content_id: contentId,
+        p_actor_id: actorId,
+      });
+      if (error || !data || typeof data !== "object") {
+        throw new Error(`CONTENT_DATABASE_ERROR:${error?.message ?? "NO_DATA"}`);
+      }
+      const result = data as {
+        roomId?: unknown;
+        storagePaths?: unknown;
+      };
+      if (
+        typeof result.roomId !== "string" ||
+        !Array.isArray(result.storagePaths) ||
+        !result.storagePaths.every((path) => typeof path === "string")
+      ) {
+        throw new Error("CONTENT_DATABASE_ERROR:INVALID_DELETE_RESULT");
+      }
+      return {
+        roomId: result.roomId,
+        storagePaths: result.storagePaths as string[],
+      };
+    },
+
+    async removeStorageFiles(paths: string[]): Promise<void> {
+      if (paths.length === 0) return;
+      const { error } = await client().storage.from("content-files").remove(paths);
+      if (error) throw new Error(`CONTENT_STORAGE_ERROR:${error.message}`);
     },
 
     async findByRoomId(roomId: string): Promise<ContentRecord | null> {

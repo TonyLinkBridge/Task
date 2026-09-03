@@ -7,11 +7,13 @@ import type {
 export type TaskRow = {
   id: string;
   title: string;
+  project: string;
   description: string;
   status: TaskRecord["status"];
   priority: TaskRecord["priority"];
   kind: TaskRecord["kind"];
   assignee_id: string;
+  assignee_ids?: string[] | null;
   creator_id: string;
   due_at: string;
   position: string | number;
@@ -19,17 +21,20 @@ export type TaskRow = {
   archived_at: string | null;
   created_at: string;
   updated_at: string;
+  task_comments?: { count: number }[];
 };
 
 export function mapTaskRow(row: TaskRow): TaskRecord {
   return {
     id: row.id,
     title: row.title,
+    project: row.project,
     description: row.description,
     status: row.status,
     priority: row.priority,
     kind: row.kind,
     assigneeId: row.assignee_id,
+    assigneeIds: row.assignee_ids?.length ? row.assignee_ids : [row.assignee_id],
     creatorId: row.creator_id,
     dueAt: row.due_at,
     position: Number(row.position),
@@ -37,6 +42,9 @@ export function mapTaskRow(row: TaskRow): TaskRecord {
     archivedAt: row.archived_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    ...(row.task_comments
+      ? { commentCount: row.task_comments[0]?.count ?? 0 }
+      : {}),
   };
 }
 

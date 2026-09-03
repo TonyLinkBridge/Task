@@ -4,6 +4,7 @@ import {
   createContentRepository,
   mapContentCommentRow,
   mapContentRow,
+  mapPlatformRow,
 } from "@/features/content/repository";
 
 const contentId = "22222222-2222-4222-8222-222222222222";
@@ -95,6 +96,62 @@ describe("createContentRepository", () => {
     expect(content.liveblocksRoomId).toBe(`content:${contentId}`);
     expect(rpcNames).toEqual(["create_scheduled_content"]);
   });
+
+  it("updates schedule fields through the protected RPC", async () => {
+    const calls: { name: string; input: Record<string, unknown> }[] = [];
+    const client = {
+      rpc: async (name: string, input: Record<string, unknown>) => {
+        calls.push({ name, input });
+        return {
+          data: {
+            id: contentId,
+            title: "修改后的标题",
+            status: "draft",
+            author_id: "user_admin",
+            assignee_id: "user_employee_2",
+            publish_at: "2026-08-30T04:30:00.000Z",
+            liveblocks_room_id: `content:${contentId}`,
+            current_version: 0,
+            required_approvals: 1,
+            requested_reviewer_id: null,
+            published_by: null,
+            published_at: null,
+            linked_task_id: "33333333-3333-4333-8333-333333333333",
+            archived_at: null,
+            created_at: "2026-08-28T02:00:00.000Z",
+            updated_at: "2026-08-28T06:00:00.000Z",
+          },
+          error: null,
+        };
+      },
+    };
+    const repository = createContentRepository(client as never);
+
+    await repository.updateSchedule(
+      contentId,
+      {
+        title: "修改后的标题",
+        platformIds: ["44444444-4444-4444-8444-444444444444"],
+        assigneeId: "user_employee_2",
+        publishAt: "2026-08-30T04:30:00.000Z",
+      },
+      "user_admin"
+    );
+
+    expect(calls).toEqual([
+      {
+        name: "update_scheduled_content",
+        input: {
+          p_content_id: contentId,
+          p_actor_id: "user_admin",
+          p_title: "修改后的标题",
+          p_assignee_id: "user_employee_2",
+          p_publish_at: "2026-08-30T04:30:00.000Z",
+          p_platform_ids: ["44444444-4444-4444-8444-444444444444"],
+        },
+      },
+    ]);
+  });
 });
 
 describe("mapContentCommentRow", () => {
@@ -116,6 +173,26 @@ describe("mapContentCommentRow", () => {
       createdAt: "2026-08-28T03:00:00.000Z",
       authorName: "上司",
       authorImageUrl: null,
+    });
+  });
+});
+
+describe("mapPlatformRow", () => {
+  it("keeps the active or stopped state for administrator settings", () => {
+    expect(
+      mapPlatformRow({
+        id: "11111111-1111-4111-8111-111111111111",
+        name: "Instagram",
+        color: "#ec4899",
+        archived_at: "2026-08-28T04:00:00.000Z",
+        created_at: "2026-08-28T02:00:00.000Z",
+      })
+    ).toEqual({
+      id: "11111111-1111-4111-8111-111111111111",
+      name: "Instagram",
+      color: "#ec4899",
+      archivedAt: "2026-08-28T04:00:00.000Z",
+      createdAt: "2026-08-28T02:00:00.000Z",
     });
   });
 });

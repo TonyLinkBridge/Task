@@ -1,28 +1,37 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAccountMenu } from "@/components/auth/user-account-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationCenter } from "@/features/notifications/components/notification-center";
+import { PrivateMessages } from "@/features/messages/components/private-messages";
+import { GlobalSearch } from "@/features/search/components/global-search";
 import type { VerifiedUser } from "@/lib/auth/types";
 
-export function ContentHeader({ currentUser }: { currentUser: VerifiedUser }) {
+export function ContentHeader({
+  currentUser,
+  title = "内容排期",
+  description = "准备、检查和安排发布内容",
+}: {
+  currentUser: VerifiedUser;
+  title?: string;
+  description?: string;
+}) {
   return (
-    <header className="flex h-[72px] items-center justify-between border-b px-4 sm:px-6">
-      <div className="flex items-center gap-3">
+    <header className="flex h-[72px] min-w-0 items-center justify-between gap-2 border-b px-3 sm:px-6">
+      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
         <SidebarTrigger />
-        <div>
-          <h1 className="font-medium">内容排期</h1>
-          <p className="text-xs text-muted-foreground">准备、检查和安排发布内容</p>
+        <div className="min-w-0">
+          <h1 className="truncate font-medium">{title}</h1>
+          <p className="hidden truncate text-xs text-muted-foreground sm:block">{description}</p>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+        <GlobalSearch />
+        <PrivateMessages />
+        <NotificationCenter />
         <ThemeToggle />
-        <Avatar className="size-8">
-          {currentUser.imageUrl ? (
-            <AvatarImage src={currentUser.imageUrl} alt={currentUser.name} />
-          ) : null}
-          <AvatarFallback>{currentUser.name.slice(0, 1)}</AvatarFallback>
-        </Avatar>
+        <UserAccountMenu currentUser={currentUser} />
       </div>
     </header>
   );

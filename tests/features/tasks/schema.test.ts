@@ -7,9 +7,11 @@ import {
 
 const validInput = {
   title: "准备下周会议资料",
+  project: "内容运营",
   description: "整理最新进度",
   assigneeId: "user_employee",
   priority: "medium",
+  status: "draft",
   dueAt: "2026-08-29T02:00:00.000Z",
 };
 
@@ -42,11 +44,13 @@ describe("taskFiltersFromSearchParams", () => {
     expect(
       taskFiltersFromSearchParams({
         search: "  周报  ",
+        project: "  内容运营  ",
         priority: "urgent",
         assignee: "user_employee",
       })
     ).toEqual({
       search: "周报",
+      project: "内容运营",
       priority: "urgent",
       assigneeId: "user_employee",
     });

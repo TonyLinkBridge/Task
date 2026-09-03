@@ -54,3 +54,23 @@ export async function setContentRoomEditable(
     create: { defaultAccesses: permissions },
   });
 }
+
+export async function clearResolvedContentThreads(
+  roomId: string
+): Promise<number> {
+  const client = getLiveblocksServer();
+  const { data: threads } = await client.getThreads({
+    roomId,
+    query: { resolved: true },
+  });
+  await Promise.all(
+    threads.map((thread) =>
+      client.deleteThread({ roomId, threadId: thread.id })
+    )
+  );
+  return threads.length;
+}
+
+export async function deleteContentRoom(roomId: string): Promise<void> {
+  await getLiveblocksServer().deleteRoom(roomId);
+}

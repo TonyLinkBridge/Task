@@ -1,6 +1,7 @@
 import type { VerifiedUser } from "@/lib/auth/types";
 import type {
   AssignableUser,
+  TaskAttachment,
   TaskCommentView,
   TaskFilters,
   TaskRecord,
@@ -12,6 +13,7 @@ type Dependencies = {
   listAssignees?: () => Promise<AssignableUser[]>;
   getTask?: (id: string) => Promise<TaskRecord | null>;
   listComments?: (taskId: string) => Promise<TaskCommentView[]>;
+  listAttachments?: (taskId: string) => Promise<TaskAttachment[]>;
 };
 
 export function makeTaskQueries(dependencies: Dependencies) {
@@ -32,12 +34,13 @@ export function makeTaskQueries(dependencies: Dependencies) {
 
     async getTaskDetailData(taskId: string) {
       const currentUser = await dependencies.getVerifiedUser();
-      const [task, comments, assignees] = await Promise.all([
+      const [task, comments, attachments, assignees] = await Promise.all([
         dependencies.getTask?.(taskId) ?? Promise.resolve(null),
         dependencies.listComments?.(taskId) ?? Promise.resolve([]),
+        dependencies.listAttachments?.(taskId) ?? Promise.resolve([]),
         dependencies.listAssignees?.() ?? Promise.resolve([]),
       ]);
-      return { currentUser, task, comments, assignees };
+      return { currentUser, task, comments, attachments, assignees };
     },
   };
 }

@@ -4,6 +4,7 @@ import { groupTasksByStatus } from "@/features/tasks/status";
 import type { TaskRecord } from "@/features/tasks/types";
 
 const baseTask: Omit<TaskRecord, "id" | "title" | "status" | "position"> = {
+  project: "内容运营",
   description: "",
   priority: "medium",
   kind: "general",
@@ -25,8 +26,9 @@ function task(
 }
 
 describe("groupTasksByStatus", () => {
-  it("always returns the four workflow columns", () => {
+  it("always returns the five workflow columns", () => {
     expect(groupTasksByStatus([])).toEqual({
+      draft: [],
       todo: [],
       in_progress: [],
       review: [],

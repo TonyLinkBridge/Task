@@ -13,6 +13,13 @@ const employee: AssignableUser = {
   imageUrl: null,
 };
 
+const admin: AssignableUser = {
+  id: "user_admin",
+  role: "admin",
+  name: "Admin",
+  imageUrl: null,
+};
+
 describe("TaskForm", () => {
   it("creates a task with the selected assignee and priority", async () => {
     const user = userEvent.setup();
@@ -20,7 +27,7 @@ describe("TaskForm", () => {
     const savedTasks: TaskRecord[] = [];
     render(
       <TaskForm
-        assignees={[employee]}
+        assignees={[employee, admin]}
         createTaskAction={async (input) => {
           receivedInput = input as TaskInput;
           return {
@@ -45,8 +52,12 @@ describe("TaskForm", () => {
 
     await user.click(screen.getByRole("button", { name: "新增任务" }));
     await user.type(screen.getByLabelText("标题"), "准备周报");
+    await user.clear(screen.getByLabelText("项目／分类"));
+    await user.type(screen.getByLabelText("项目／分类"), "内容运营");
     await user.selectOptions(screen.getByLabelText("负责人"), "user_employee");
+    await user.click(screen.getByLabelText("共同负责人 Admin"));
     await user.selectOptions(screen.getByLabelText("优先级"), "urgent");
+    await user.selectOptions(screen.getByLabelText("开始状态"), "draft");
     fireEvent.change(screen.getByLabelText("完成时间"), {
       target: { value: "2026-08-29T10:00" },
     });
@@ -59,8 +70,11 @@ describe("TaskForm", () => {
     await waitFor(() => expect(savedTasks).toHaveLength(1));
     expect(receivedInput).toMatchObject({
       title: "准备周报",
+      project: "内容运营",
       assigneeId: "user_employee",
+      assigneeIds: ["user_employee", "user_admin"],
       priority: "urgent",
+      status: "draft",
     });
     expect(receivedInput?.dueAt).toBe("2026-08-29T02:00:00.000Z");
   });
@@ -72,6 +86,7 @@ describe("TaskForm", () => {
         initialTask={{
           id: "11111111-1111-4111-8111-111111111111",
           title: "准备周报",
+          project: "内容运营",
           description: "",
           status: "todo",
           priority: "medium",

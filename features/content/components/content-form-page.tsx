@@ -21,7 +21,7 @@ export function ContentFormPage({
     <ContentForm
       platforms={platforms}
       assignees={assignees}
-      createContentAction={createContentAction}
+      saveContentAction={createContentAction}
       onSaved={(content) => router.push(`/content/${content.id}`)}
     />
   );

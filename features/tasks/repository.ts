@@ -13,6 +13,7 @@ import {
 import type { TaskCommentRow, TaskRow } from "@/features/tasks/task-mapper";
 import type {
   AssignableUser,
+  TaskAttachment,
   TaskFilters,
   TaskCommentView,
   TaskRecord,
@@ -25,14 +26,44 @@ export type TaskRepository = TaskActionRepository & {
   listAssignees(): Promise<AssignableUser[]>;
   get(id: string): Promise<TaskRecord | null>;
   listComments(taskId: string): Promise<TaskCommentView[]>;
+  listAttachments(taskId: string): Promise<TaskAttachment[]>;
+  findAttachment(id: string): Promise<TaskAttachment | null>;
 };
 
+function mapTaskAttachment(row: {
+  id: string;
+  task_id: string;
+  storage_path: string;
+  file_name: string;
+  mime_type: string;
+  byte_size: string | number;
+  uploader_id: string;
+  created_at: string;
+}): TaskAttachment {
+  return {
+    id: row.id,
+    taskId: row.task_id,
+    storagePath: row.storage_path,
+    fileName: row.file_name,
+    mimeType: row.mime_type,
+    byteSize: Number(row.byte_size),
+    uploaderId: row.uploader_id,
+    createdAt: row.created_at,
+  };
+}
+
 function taskWrite(input: TaskInput) {
+  const assigneeIds = Array.from(
+    new Set([input.assigneeId, ...(input.assigneeIds ?? [])])
+  );
   return {
     title: input.title,
+    project: input.project,
     description: input.description,
     priority: input.priority,
+    ...(input.status ? { status: input.status } : {}),
     assignee_id: input.assigneeId,
+    assignee_ids: assigneeIds,
     due_at: input.dueAt,
   };
 }
@@ -66,15 +97,21 @@ export function createTaskRepository(
     async list(filters = {}) {
       let query = client()
         .from("tasks")
-        .select("*")
+        .select("*, task_comments(count)")
         .is("archived_at", null)
         .order("status")
         .order("position")
         .order("created_at");
 
-      if (filters.search) query = query.ilike("title", `%${filters.search}%`);
+      if (filters.search) {
+        const safeSearch = filters.search.replaceAll(",", " ");
+        query = query.or(
+          `title.ilike.%${safeSearch}%,project.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%`
+        );
+      }
+      if (filters.project) query = query.ilike("project", filters.project);
       if (filters.priority) query = query.eq("priority", filters.priority);
-      if (filters.assigneeId) query = query.eq("assignee_id", filters.assigneeId);
+      if (filters.assigneeId) query = query.contains("assignee_ids", [filters.assigneeId]);
 
       const { data, error } = await query;
       if (error) throw new Error(`TASK_DATABASE_ERROR:${error.message}`);
@@ -116,6 +153,27 @@ export function createTaskRepository(
       return (data ?? []).map((row) =>
         mapTaskCommentRow(row as unknown as TaskCommentRow)
       );
+    },
+
+    async listAttachments(taskId) {
+      const { data, error } = await client()
+        .from("task_attachments")
+        .select("*")
+        .eq("task_id", taskId)
+        .order("created_at");
+      if (error) throw new Error(`TASK_DATABASE_ERROR:${error.message}`);
+      return (data ?? []).map((row) => mapTaskAttachment(row));
+    },
+
+    async findAttachment(id) {
+      const { data, error } = await client()
+        .from("task_attachments")
+        .select("*, task:tasks!inner(archived_at)")
+        .eq("id", id)
+        .is("task.archived_at", null)
+        .maybeSingle();
+      if (error) throw new Error(`TASK_DATABASE_ERROR:${error.message}`);
+      return data ? mapTaskAttachment(data) : null;
     },
 
     async create(input, creatorId) {
@@ -173,6 +231,16 @@ export function createTaskRepository(
         .select("*")
         .single();
       return mapTaskRow(assertData(data as TaskRow | null, error));
+    },
+
+    async deleteOwned(id, actorId) {
+      const { data, error } = await client().rpc("delete_owned_task", {
+        p_task_id: id,
+        p_actor_id: actorId,
+      });
+      if (error || data !== true) {
+        throw new Error(`TASK_DATABASE_ERROR:${error?.message ?? "NO_DATA"}`);
+      }
     },
 
     async addComment(taskId, body, authorId) {

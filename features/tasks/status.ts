@@ -4,6 +4,7 @@ export function groupTasksByStatus(
   tasks: TaskRecord[]
 ): Record<TaskStatus, TaskRecord[]> {
   const grouped: Record<TaskStatus, TaskRecord[]> = {
+    draft: [],
     todo: [],
     in_progress: [],
     review: [],

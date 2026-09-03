@@ -1,4 +1,10 @@
-export const TASK_STATUSES = ["todo", "in_progress", "review", "done"] as const;
+export const TASK_STATUSES = [
+  "draft",
+  "todo",
+  "in_progress",
+  "review",
+  "done",
+] as const;
 export const TASK_PRIORITIES = ["low", "medium", "urgent"] as const;
 export const TASK_KINDS = ["general", "content_publish"] as const;
 
@@ -9,11 +15,13 @@ export type TaskKind = (typeof TASK_KINDS)[number];
 export type TaskRecord = {
   id: string;
   title: string;
+  project: string;
   description: string;
   status: TaskStatus;
   priority: TaskPriority;
   kind: TaskKind;
   assigneeId: string;
+  assigneeIds?: string[];
   creatorId: string;
   dueAt: string;
   position: number;
@@ -21,6 +29,7 @@ export type TaskRecord = {
   archivedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  commentCount?: number;
 };
 
 export type AssignableUser = {
@@ -32,6 +41,7 @@ export type AssignableUser = {
 
 export type TaskFilters = {
   search?: string;
+  project?: string;
   priority?: TaskPriority;
   assigneeId?: string;
 };
@@ -47,4 +57,15 @@ export type TaskCommentRecord = {
 export type TaskCommentView = TaskCommentRecord & {
   authorName: string;
   authorImageUrl: string | null;
+};
+
+export type TaskAttachment = {
+  id: string;
+  taskId: string;
+  storagePath: string;
+  fileName: string;
+  mimeType: string;
+  byteSize: number;
+  uploaderId: string;
+  createdAt: string;
 };

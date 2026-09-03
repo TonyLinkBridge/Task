@@ -10,11 +10,13 @@ import type { TaskRecord } from "@/features/tasks/types";
 const task: TaskRecord = {
   id: "11111111-1111-4111-8111-111111111111",
   title: "准备周报",
+  project: "内容运营",
   description: "汇总本周进度",
   status: "todo",
   priority: "medium",
   kind: "general",
   assigneeId: "user_employee",
+  assigneeIds: ["user_employee", "user_admin"],
   creatorId: "user_admin",
   dueAt: "2026-08-29T02:00:00.000Z",
   position: 1000,
@@ -22,19 +24,23 @@ const task: TaskRecord = {
   archivedAt: null,
   createdAt: "2026-08-28T02:00:00.000Z",
   updatedAt: "2026-08-28T02:00:00.000Z",
+  commentCount: 3,
 };
 
 describe("TaskBoard", () => {
-  it("renders the four workflow columns", () => {
+  it("renders the five workflow columns including drafts", () => {
     render(<TaskBoard initialTasks={[]} assignees={[]} />);
 
-    for (const name of ["还没开始", "正在做", "等人检查", "已经完成"]) {
+    for (const name of ["草稿", "还没开始", "正在做", "等人检查", "已经完成"]) {
       expect(screen.getByRole("region", { name })).toBeInTheDocument();
     }
   });
 
   it("shows each task inside its workflow column", () => {
-    render(<TaskBoard initialTasks={[task]} assignees={[]} />);
+    render(<TaskBoard initialTasks={[task]} assignees={[
+      { id: "user_employee", role: "employee", name: "Employee", imageUrl: null },
+      { id: "user_admin", role: "admin", name: "Admin", imageUrl: null },
+    ]} />);
 
     expect(
       within(screen.getByRole("region", { name: "还没开始" })).getByText(
@@ -46,6 +52,9 @@ describe("TaskBoard", () => {
         "准备周报"
       )
     ).not.toBeInTheDocument();
+    expect(screen.getByText("内容运营")).toBeInTheDocument();
+    expect(screen.getByText("Employee、Admin")).toBeInTheDocument();
+    expect(screen.getByLabelText("3 条留言")).toBeInTheDocument();
   });
 
   it("does not show drag or edit controls for a linked publish task", () => {
@@ -58,6 +67,9 @@ describe("TaskBoard", () => {
 
     expect(screen.queryByRole("button", { name: /拖动/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "编辑" })).not.toBeInTheDocument();
+    expect(
+      screen.getByText("由内容排期控制，不能手动拖动")
+    ).toBeInTheDocument();
   });
 });
 

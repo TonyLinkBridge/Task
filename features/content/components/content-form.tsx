@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ type ContentActionResult =
   | { ok: true; data: ContentRecord }
   | { ok: false; message: string };
 
-function defaultPublishAt() {
+function malaysiaDateTimeInputValue(date: Date) {
   return new Intl.DateTimeFormat("sv-SE", {
     timeZone: "Asia/Kuala_Lumpur",
     year: "numeric",
@@ -22,31 +22,63 @@ function defaultPublishAt() {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-  })
-    .format(new Date(Date.now() + 24 * 60 * 60 * 1000))
-    .replace(" ", "T");
+  }).format(date).replace(" ", "T");
+}
+
+function defaultPublishAt() {
+  return malaysiaDateTimeInputValue(
+    new Date(Date.now() + 24 * 60 * 60 * 1000)
+  );
 }
 
 export function ContentForm({
   platforms,
   assignees,
-  createContentAction = async () => ({
+  initialValues,
+  saveContentAction = async () => ({
     ok: false,
     message: "暂时无法保存，请稍后再试。",
   }),
+  submitLabel = "建立内容",
+  savingLabel = "正在建立…",
+  helperText = "建立后会马上产生发布任务。正文和文件会在下一页填写及上传。",
   onSaved,
 }: {
   platforms: ContentPlatform[];
   assignees: AssignableUser[];
-  createContentAction?: (input: unknown) => Promise<ContentActionResult>;
+  initialValues?: ContentInput;
+  saveContentAction?: (input: unknown) => Promise<ContentActionResult>;
+  submitLabel?: string;
+  savingLabel?: string;
+  helperText?: string;
   onSaved?: (content: ContentRecord) => void;
 }) {
-  const [title, setTitle] = useState("");
-  const [platformIds, setPlatformIds] = useState<string[]>([]);
-  const [assigneeId, setAssigneeId] = useState(assignees[0]?.id ?? "");
-  const [publishAt, setPublishAt] = useState(defaultPublishAt);
+  const [title, setTitle] = useState(initialValues?.title ?? "");
+  const [platformIds, setPlatformIds] = useState<string[]>(
+    initialValues?.platformIds ?? []
+  );
+  const [platformSearch, setPlatformSearch] = useState("");
+  const [assigneeId, setAssigneeId] = useState(
+    initialValues?.assigneeId ?? assignees[0]?.id ?? ""
+  );
+  const [publishAt, setPublishAt] = useState(() =>
+    initialValues
+      ? malaysiaDateTimeInputValue(new Date(initialValues.publishAt))
+      : defaultPublishAt()
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const filteredPlatforms = useMemo(() => {
+    const query = platformSearch.trim().toLocaleLowerCase();
+    return query
+      ? platforms.filter((platform) =>
+          platform.name.toLocaleLowerCase().includes(query)
+        )
+      : platforms;
+  }, [platformSearch, platforms]);
+  const selectedPlatforms = platforms.filter((platform) =>
+    platformIds.includes(platform.id)
+  );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -58,7 +90,7 @@ export function ContentForm({
     };
     setIsSaving(true);
     setMessage(null);
-    const result = await createContentAction(input);
+    const result = await saveContentAction(input);
     setIsSaving(false);
     if (!result.ok) {
       setMessage(result.message);
@@ -86,11 +118,45 @@ export function ContentForm({
         />
       </div>
 
-      <fieldset className="grid gap-2">
-        <legend className="text-sm font-medium">发布平台</legend>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {platforms.map((platform) => (
-            <label key={platform.id} className="flex items-center gap-2 rounded-lg border p-3 text-sm">
+      <fieldset className="grid gap-4 rounded-xl border p-4">
+        <legend className="px-1 text-sm font-medium">发布平台</legend>
+        <div className="grid gap-2">
+          <Label htmlFor="platform-search" className="sr-only">
+            搜索发布平台
+          </Label>
+          <Input
+            id="platform-search"
+            type="search"
+            value={platformSearch}
+            onChange={(event) => setPlatformSearch(event.target.value)}
+            placeholder="搜索平台名称"
+          />
+        </div>
+
+        <div className="flex min-h-7 flex-wrap items-center gap-2">
+          <span className="text-xs text-muted-foreground">
+            已选择 {selectedPlatforms.length} 个平台
+          </span>
+          {selectedPlatforms.map((platform) => (
+            <span
+              key={platform.id}
+              className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs"
+            >
+              <span
+                className="size-2 rounded-full"
+                style={{ backgroundColor: platform.color }}
+              />
+              <span>{platform.name}</span>
+            </span>
+          ))}
+        </div>
+
+        <div className="grid max-h-64 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+          {filteredPlatforms.map((platform) => (
+            <label
+              key={platform.id}
+              className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm transition-colors hover:bg-muted/50"
+            >
               <input
                 type="checkbox"
                 checked={platformIds.includes(platform.id)}
@@ -101,12 +167,18 @@ export function ContentForm({
             </label>
           ))}
         </div>
+        {platforms.length > 0 && filteredPlatforms.length === 0 ? (
+          <p className="text-sm text-muted-foreground">找不到这个平台。</p>
+        ) : null}
         {platforms.length === 0 ? (
           <p className="text-sm text-destructive">请先让管理员建立至少一个发布平台。</p>
         ) : null}
       </fieldset>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div
+        data-testid="content-scheduling-fields"
+        className="grid items-start gap-4 sm:grid-cols-2"
+      >
         <div className="grid gap-2">
           <Label htmlFor="content-assignee">负责人</Label>
           <select
@@ -136,16 +208,17 @@ export function ContentForm({
         </div>
       </div>
 
-      <div className="rounded-lg bg-muted/60 p-3 text-sm text-muted-foreground">
-        建立后会马上产生发布任务。正文和文件会在下一页填写及上传。
-      </div>
       {message ? <p role="alert" className="text-sm text-destructive">{message}</p> : null}
-      <div className="flex justify-end">
+      <div className="flex flex-col gap-4 rounded-lg bg-muted/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-muted-foreground">
+          {helperText}
+        </p>
         <Button
           type="submit"
+          className="self-end sm:self-auto"
           disabled={isSaving || !title.trim() || platformIds.length === 0 || !assigneeId}
         >
-          {isSaving ? "正在建立…" : "建立内容"}
+          {isSaving ? savingLabel : submitLabel}
         </Button>
       </div>
     </form>

@@ -116,7 +116,7 @@ it("rejects notification changes from an employee", async () => {
 
 后台使用 `conversations.list` 分页读取公开频道和 App 已加入的私人频道。保存前调用 `conversations.info`；返回 `channel_not_found` 或 `not_in_channel` 时显示“请先把 Slack App 加进这个频道”。
 
-`.env.example` 新增 `SLACK_BOT_TOKEN`、`SLACK_SIGNING_SECRET`、`NEXT_PUBLIC_APP_URL` 和 `SUPABASE_EDGE_FUNCTION_SECRET`，全部真实秘密只放在 Vercel、Supabase Vault 或 Edge Function Secrets。
+`.env.example` 新增 `SLACK_BOT_TOKEN`、`SLACK_SIGNING_SECRET`、`NEXT_PUBLIC_APP_URL` 和 `EDGE_FUNCTION_SECRET`，全部真实秘密只放在 Vercel、Supabase Vault 或 Edge Function Secrets。
 
 - [ ] **Step 3: 实现管理员设置**
 

@@ -9,6 +9,7 @@ const taskQueries = makeTaskQueries({
   listAssignees: () => taskRepository.listAssignees(),
   getTask: (id) => taskRepository.get(id),
   listComments: (taskId) => taskRepository.listComments(taskId),
+  listAttachments: (taskId) => taskRepository.listAttachments(taskId),
 });
 
 export async function listTasks(filters: TaskFilters = {}) {

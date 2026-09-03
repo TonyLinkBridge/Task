@@ -1,0 +1,49 @@
+.help-document {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.help-document iframe,
+.help-document img,
+.help-document svg,
+.help-document video {
+  max-width: 100%;
+}
+
+.help-document table,
+.help-document pre {
+  max-width: 100%;
+}
+
+.help-document > :first-child {
+  margin-top: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .help-document *,
+  .help-document *::before,
+  .help-document *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+.help-document .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 0.5rem;
+}
+
+@media print {
+  .help-document button,
+  .help-document [role="tablist"] {
+    display: none !important;
+  }
+
+  .help-document [role="tabpanel"] {
+    display: block !important;
+    border: 1px solid #ddd;
+  }
+}

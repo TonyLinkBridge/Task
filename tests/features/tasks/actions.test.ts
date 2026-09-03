@@ -10,13 +10,17 @@ import type { TaskRecord, TaskStatus } from "@/features/tasks/types";
 
 const validInput: TaskInput = {
   title: "准备周报",
+  project: "内容运营",
   description: "汇总本周进度",
   assigneeId: "user_employee",
   priority: "medium",
   dueAt: "2026-08-29T02:00:00.000Z",
 };
 
-function createHarness(options?: { authenticated?: boolean }) {
+function createHarness(options?: {
+  authenticated?: boolean;
+  user?: { id: string; role: "employee" | "admin"; name: string; imageUrl: null };
+}) {
   const tasks: TaskRecord[] = [];
   const comments: TaskCommentRecord[] = [];
   const revalidatedPaths: string[] = [];
@@ -62,6 +66,19 @@ function createHarness(options?: { authenticated?: boolean }) {
       tasks[index] = { ...tasks[index], archivedAt };
       return tasks[index];
     },
+    async deleteOwned(id, actorId) {
+      const index = tasks.findIndex((task) => task.id === id);
+      if (tasks[index]?.kind === "content_publish") {
+        throw new Error("CONTENT_PUBLISH_TASK_CANNOT_DELETE");
+      }
+      if (
+        options?.user?.role !== "admin" &&
+        tasks[index]?.creatorId !== actorId
+      ) {
+        throw new Error("TASK_DELETE_FORBIDDEN");
+      }
+      tasks.splice(index, 1);
+    },
     async addComment(taskId, body, authorId) {
       const comment: TaskCommentRecord = {
         id: "22222222-2222-4222-8222-222222222222",
@@ -80,7 +97,7 @@ function createHarness(options?: { authenticated?: boolean }) {
       if (options?.authenticated === false) {
         throw new Error("UNAUTHENTICATED");
       }
-      return {
+      return options?.user ?? {
         id: "user_admin",
         role: "admin",
         name: "Admin",
@@ -173,6 +190,35 @@ describe("task actions", () => {
     await expect(actions.moveTask(tasks[0].id, "done", 1000)).resolves.toEqual({
       ok: false,
       message: "发布任务要从内容排期里处理。",
+    });
+  });
+
+  it("lets an employee permanently delete a task they created", async () => {
+    const { actions, tasks, revalidatedPaths } = createHarness({
+      user: {
+        id: "user_employee",
+        role: "employee",
+        name: "员工",
+        imageUrl: null,
+      },
+    });
+    await actions.createTask(validInput);
+
+    const result = await actions.deleteTask(tasks[0].id);
+
+    expect(result).toEqual({ ok: true });
+    expect(tasks).toEqual([]);
+    expect(revalidatedPaths).toEqual(["/tasks", "/tasks"]);
+  });
+
+  it("does not delete the task controlled by content scheduling", async () => {
+    const { actions, tasks } = createHarness();
+    await actions.createTask(validInput);
+    tasks[0] = { ...tasks[0], kind: "content_publish" };
+
+    await expect(actions.deleteTask(tasks[0].id)).resolves.toEqual({
+      ok: false,
+      message: "发布任务要从内容排期里删除。",
     });
   });
 });

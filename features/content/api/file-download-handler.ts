@@ -1,11 +1,10 @@
 import { z } from "zod";
 
-import type { ContentAttachment } from "@/features/content/types";
 import type { VerifiedUser } from "@/lib/auth/types";
 
 type Dependencies = {
   getVerifiedUser: () => Promise<VerifiedUser>;
-  findAttachment: (id: string) => Promise<ContentAttachment | null>;
+  findAttachment: (id: string) => Promise<{ storagePath: string } | null>;
   createSignedUrl: (path: string, expiresIn: number) => Promise<string>;
 };
 

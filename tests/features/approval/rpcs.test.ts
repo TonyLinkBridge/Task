@@ -17,6 +17,7 @@ const migrations = [
 
 const employeeContentId = "22222222-2222-4222-8222-222222222222";
 const adminContentId = "33333333-3333-4333-8333-333333333333";
+const adminSelfContentId = "44444444-4444-4444-8444-444444444444";
 const platformId = "11111111-1111-4111-8111-111111111111";
 
 describe("approval workflow RPCs", () => {
@@ -162,6 +163,35 @@ describe("approval workflow RPCs", () => {
       select approve_content_version('${employeeContentId}', 1, 'admin-a');
       select approve_content_version('${employeeContentId}', 1, 'admin-b');
       select unlock_approved_content('${employeeContentId}', 'employee');
+    `);
+
+    const reopened = await database.query<{
+      status: string;
+      current_version: number;
+      active_approvals: number;
+      invalid_approvals: number;
+      invalidation_events: number;
+    }>(`
+      select c.status::text, c.current_version,
+        count(a.id) filter (where a.invalidated_at is null)::integer as active_approvals,
+        count(a.id) filter (where a.invalidated_at is not null)::integer as invalid_approvals,
+        (select count(*)::integer from content_review_events e
+         where e.content_id = c.id and e.event_type = 'approval_invalidated')
+          as invalidation_events
+      from contents c
+      left join content_approvals a on a.content_id = c.id
+      where c.id = '${employeeContentId}'
+      group by c.id
+    `);
+    expect(reopened.rows[0]).toEqual({
+      status: "changes_requested",
+      current_version: 1,
+      active_approvals: 0,
+      invalid_approvals: 2,
+      invalidation_events: 1,
+    });
+
+    await database.exec(`
       select submit_content_for_review(
         '${employeeContentId}', 'employee', '[{"version":2}]'::jsonb, null
       );
@@ -178,10 +208,18 @@ describe("approval workflow RPCs", () => {
       status: string;
       active_approvals: number;
       invalid_approvals: number;
+      invalidation_events: number;
+      invalidated_by: string;
     }>(`
       select c.current_version, c.status::text,
         count(a.id) filter (where a.invalidated_at is null)::integer as active_approvals,
-        count(a.id) filter (where a.invalidated_at is not null)::integer as invalid_approvals
+        count(a.id) filter (where a.invalidated_at is not null)::integer as invalid_approvals,
+        (select count(*)::integer from content_review_events e
+         where e.content_id = c.id and e.event_type = 'approval_invalidated')
+          as invalidation_events,
+        (select e.actor_id from content_review_events e
+         where e.content_id = c.id and e.event_type = 'approval_invalidated'
+         order by e.created_at desc limit 1) as invalidated_by
       from contents c
       left join content_approvals a on a.content_id = c.id
       where c.id = '${employeeContentId}'
@@ -192,6 +230,8 @@ describe("approval workflow RPCs", () => {
       status: "in_review",
       active_approvals: 0,
       invalid_approvals: 2,
+      invalidation_events: 1,
+      invalidated_by: "employee",
     });
   });
 
@@ -220,11 +260,19 @@ describe("approval workflow RPCs", () => {
       current_version: number;
       active_approvals: number;
       change_requests: number;
+      change_actor: string;
+      change_message: string;
     }>(`
       select c.status::text, c.current_version,
         count(distinct a.admin_id) filter (where a.invalidated_at is null)::integer as active_approvals,
         (select count(*)::integer from content_review_events e
-         where e.content_id = c.id and e.event_type = 'changes_requested') as change_requests
+         where e.content_id = c.id and e.event_type = 'changes_requested') as change_requests,
+        (select e.actor_id from content_review_events e
+         where e.content_id = c.id and e.event_type = 'changes_requested'
+         order by e.created_at desc limit 1) as change_actor,
+        (select e.message from content_review_events e
+         where e.content_id = c.id and e.event_type = 'changes_requested'
+         order by e.created_at desc limit 1) as change_message
       from contents c
       left join content_approvals a on a.content_id = c.id
       where c.id = '${employeeContentId}'
@@ -235,6 +283,8 @@ describe("approval workflow RPCs", () => {
       current_version: 2,
       active_approvals: 2,
       change_requests: 1,
+      change_actor: "admin-b",
+      change_message: "请修改开头",
     });
   });
 
@@ -285,6 +335,42 @@ describe("approval workflow RPCs", () => {
       required_approvals: 1,
       published_by: "employee",
       task_status: "done",
+    });
+  });
+
+  it("lets an admin author choose and complete self approval", async () => {
+    await database.exec(`
+      select create_scheduled_content(
+        '${adminSelfContentId}', '管理员自己审核', 'admin-a', 'employee',
+        '2026-08-29T02:00:00.000Z', array['${platformId}']::uuid[]
+      );
+      select submit_content_for_review(
+        '${adminSelfContentId}', 'admin-a',
+        '[{"type":"paragraph"}]'::jsonb, 'admin-a'
+      );
+      select approve_content_version('${adminSelfContentId}', 1, 'admin-a');
+    `);
+
+    const state = await database.query<{
+      status: string;
+      required_approvals: number;
+      requested_reviewer_id: string;
+      approval_count: number;
+    }>(`
+      select c.status::text, c.required_approvals, c.requested_reviewer_id,
+        count(a.id)::integer as approval_count
+      from contents c
+      left join content_approvals a
+        on a.content_id = c.id and a.invalidated_at is null
+      where c.id = '${adminSelfContentId}'
+      group by c.id
+    `);
+
+    expect(state.rows[0]).toEqual({
+      status: "approved",
+      required_approvals: 1,
+      requested_reviewer_id: "admin-a",
+      approval_count: 1,
     });
   });
 });

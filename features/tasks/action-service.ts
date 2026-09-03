@@ -16,6 +16,7 @@ export type TaskActionRepository = {
   update(id: string, input: TaskInput): Promise<TaskRecord>;
   move(id: string, status: TaskStatus, position: number): Promise<TaskRecord>;
   archive(id: string, archivedAt: string): Promise<TaskRecord>;
+  deleteOwned(id: string, actorId: string): Promise<void>;
   addComment(
     taskId: string,
     body: string,
@@ -32,6 +33,10 @@ type Dependencies = {
 
 export type ActionResult<T> =
   | { ok: true; data: T }
+  | { ok: false; message: string };
+
+export type DeleteTaskResult =
+  | { ok: true }
   | { ok: false; message: string };
 
 const taskIdSchema = z.uuid();
@@ -131,6 +136,34 @@ export function makeTaskActions(dependencies: Dependencies) {
           dependencies.now().toISOString()
         )
       );
+    },
+
+    async deleteTask(id: string): Promise<DeleteTaskResult> {
+      const user = await dependencies.getVerifiedUser();
+      const parsedId = taskIdSchema.safeParse(id);
+      if (!parsedId.success) {
+        return { ok: false, message: "找不到这个任务。" };
+      }
+
+      try {
+        await dependencies.repository.deleteOwned(parsedId.data, user.id);
+        dependencies.revalidatePath("/tasks");
+        return { ok: true };
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message.includes("CONTENT_PUBLISH_TASK_CANNOT_DELETE")
+        ) {
+          return { ok: false, message: "发布任务要从内容排期里删除。" };
+        }
+        if (
+          error instanceof Error &&
+          error.message.includes("TASK_DELETE_FORBIDDEN")
+        ) {
+          return { ok: false, message: "你只能删除自己建立的任务。" };
+        }
+        return { ok: false, message: "暂时无法删除，请稍后再试。" };
+      }
     },
 
     async addTaskComment(

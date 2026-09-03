@@ -141,6 +141,27 @@ describe("content approval actions", () => {
     expect(revalidatedPaths).toEqual(["/content", `/content/${contentId}`]);
   });
 
+  it("locks the body when an employee submits content for review", async () => {
+    const { actions, calls, roomCalls } = createHarness({
+      role: "employee",
+      record: content({ status: "draft", currentVersion: 0 }),
+    });
+
+    await expect(
+      actions.submitForReview(contentId, [
+        { type: "paragraph", content: "员工准备好的内容" },
+      ])
+    ).resolves.toMatchObject({
+      ok: true,
+      data: { status: "in_review", currentVersion: 1 },
+    });
+    expect(calls).toEqual(["submit:user_employee:none"]);
+    expect(roomCalls).toEqual([
+      `content:${contentId}:read`,
+      `content:${contentId}:read`,
+    ]);
+  });
+
   it("opens the room for editing after changes are requested", async () => {
     const { actions, roomCalls } = createHarness();
 
@@ -157,6 +178,20 @@ describe("content approval actions", () => {
       actions.requestChanges(contentId, 4, "   ")
     ).resolves.toEqual({ ok: false, message: "请写下需要修改的地方。" });
     expect(calls).toEqual([]);
+  });
+
+  it("reopens approved content and restores body editing", async () => {
+    const { actions, calls, roomCalls } = createHarness({
+      role: "employee",
+      record: content({ status: "approved" }),
+    });
+
+    await expect(actions.unlockApprovedContent(contentId)).resolves.toMatchObject({
+      ok: true,
+      data: { status: "changes_requested" },
+    });
+    expect(calls).toEqual(["unlock:user_employee"]);
+    expect(roomCalls).toEqual([`content:${contentId}:write`]);
   });
 
   it("only lets an admin archive content", async () => {

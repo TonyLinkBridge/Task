@@ -8,16 +8,24 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ArchiveTaskButton } from "@/features/tasks/components/archive-task-button";
+import { DeleteTaskButton } from "@/features/tasks/components/delete-task-button";
 import { TaskComments } from "@/features/tasks/components/task-comments";
+import { TaskAttachments } from "@/features/tasks/components/task-attachments";
 import { TaskForm } from "@/features/tasks/components/task-form";
+import {
+  finishTaskUpload,
+  requestTaskUpload,
+} from "@/features/tasks/files/actions";
 import {
   addTaskComment,
   archiveTask,
+  deleteTask,
   updateTask,
 } from "@/features/tasks/actions";
 import { getTaskDetailData } from "@/features/tasks/queries";
 
 const statusLabels = {
+  draft: "草稿",
   todo: "还没开始",
   in_progress: "正在做",
   review: "等人检查",
@@ -44,11 +52,13 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
   const { taskId } = await params;
   if (!z.uuid().safeParse(taskId).success) notFound();
 
-  const { task, comments, currentUser, assignees } =
+  const { task, comments, attachments, currentUser, assignees } =
     await getTaskDetailData(taskId);
   if (!task) notFound();
 
-  const assignee = assignees.find(({ id }) => id === task.assigneeId);
+  const taskAssignees = assignees.filter(({ id }) =>
+    (task.assigneeIds ?? [task.assigneeId]).includes(id)
+  );
 
   return (
     <SidebarProvider>
@@ -81,6 +91,14 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
                   taskKind={task.kind}
                   archiveTaskAction={archiveTask}
                 />
+                {task.kind === "general" &&
+                (currentUser.role === "admin" ||
+                  task.creatorId === currentUser.id) ? (
+                  <DeleteTaskButton
+                    taskId={task.id}
+                    deleteTaskAction={deleteTask}
+                  />
+                ) : null}
               </div>
             </div>
 
@@ -96,9 +114,15 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
 
               <dl className="mt-6 grid gap-4 border-t pt-5 sm:grid-cols-2">
                 <div>
+                  <dt className="text-xs text-muted-foreground">项目／分类</dt>
+                  <dd className="mt-1 text-sm font-medium">{task.project}</dd>
+                </div>
+                <div>
                   <dt className="text-xs text-muted-foreground">负责人</dt>
                   <dd className="mt-1 text-sm font-medium">
-                    {assignee?.name ?? "未找到负责人"}
+                    {taskAssignees.length
+                      ? taskAssignees.map(({ name }) => name).join("、")
+                      : "未找到负责人"}
                   </dd>
                 </div>
                 <div>
@@ -116,6 +140,14 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
               currentUser={currentUser}
               addCommentAction={addTaskComment}
             />
+            {task.kind === "general" ? (
+              <TaskAttachments
+                taskId={task.id}
+                attachments={attachments}
+                requestUploadAction={requestTaskUpload}
+                finishUploadAction={finishTaskUpload}
+              />
+            ) : null}
           </div>
         </main>
       </div>

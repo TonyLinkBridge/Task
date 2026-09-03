@@ -24,7 +24,7 @@ export function ThemeToggle() {
         icon={Moon01Icon}
         className="absolute size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
       />
-      <span className="sr-only">Toggle theme</span>
+      <span className="sr-only">切换显示模式</span>
     </Button>
   );
 }

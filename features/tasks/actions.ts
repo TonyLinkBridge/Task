@@ -32,6 +32,11 @@ export async function archiveTask(id: string) {
   return taskActions.archiveTask(id);
 }
 
+export async function deleteTask(id: string) {
+  "use server";
+  return taskActions.deleteTask(id);
+}
+
 export async function addTaskComment(taskId: string, body: string) {
   "use server";
   return taskActions.addTaskComment(taskId, body);

@@ -1,5 +1,6 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
 
 import { ContentBoard, contentBoardMoveMessage } from "@/features/schedule/components/content-board";
 import { ContentCalendar } from "@/features/schedule/components/content-calendar";
@@ -20,13 +21,42 @@ const scheduled: ScheduledContent = {
 
 describe("schedule views", () => {
   it("shows the same content in the calendar and list", () => {
-    const { rerender } = render(<ContentCalendar contents={[scheduled]} />);
-    expect(screen.getByText("2026年8月29日")).toBeInTheDocument();
+    const { rerender } = render(
+      <ContentCalendar contents={[scheduled]} initialMonth="2026-08" />
+    );
+    expect(screen.getByRole("heading", { name: "2026年8月" })).toBeInTheDocument();
+    expect(screen.getAllByRole("gridcell")).toHaveLength(42);
+    const scheduledDay = screen.getByRole("gridcell", { name: "2026年8月29日" });
+    expect(within(scheduledDay).getByText("新品贴文")).toBeInTheDocument();
     expect(screen.getByText("新品贴文")).toBeInTheDocument();
 
     rerender(<ContentList contents={[scheduled]} />);
     expect(screen.getByText("新品贴文")).toBeInTheDocument();
     expect(screen.getByText("已批准 1/2")).toBeInTheDocument();
+  });
+
+  it("moves between complete calendar months", () => {
+    render(<ContentCalendar contents={[scheduled]} initialMonth="2026-08" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "下个月" }));
+
+    expect(screen.getByRole("heading", { name: "2026年9月" })).toBeInTheDocument();
+    expect(screen.getAllByRole("gridcell")).toHaveLength(42);
+    expect(screen.queryByText("新品贴文")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "上个月" }));
+    expect(screen.getByRole("heading", { name: "2026年8月" })).toBeInTheDocument();
+    expect(screen.getByText("新品贴文")).toBeInTheDocument();
+  });
+
+  it("shows zero approvals after old approvals are removed from the current version", () => {
+    render(
+      <ContentList
+        contents={[{ ...scheduled, approvalAdminIds: [], status: "in_review" }]}
+      />
+    );
+
+    expect(screen.getByText("已批准 0/2")).toBeInTheDocument();
   });
 
   it("always shows all six board columns", () => {
@@ -57,5 +87,63 @@ describe("schedule views", () => {
       "必须使用已发布按钮，不能直接拖到这里。"
     );
     expect(contentBoardMoveMessage("changes_requested", "draft")).toBeNull();
+  });
+
+  it("shows the reason and keeps the card in draft after an invalid drop", () => {
+    const moveAction = vi.fn(async () => ({ ok: true as const }));
+    const draftContent = {
+      ...scheduled,
+      status: "draft" as const,
+      storedStatus: "draft" as const,
+      approvalAdminIds: [],
+    };
+    render(
+      <ContentBoard
+        initialContents={[draftContent]}
+        moveAction={moveAction}
+      />
+    );
+
+    const draftColumn = screen.getByRole("region", { name: "草稿" });
+    const approvedColumn = screen.getByRole("region", { name: "已经批准" });
+    const card = within(draftColumn).getByText("新品贴文").closest("article");
+
+    expect(card).not.toBeNull();
+    fireEvent.dragStart(card!);
+    fireEvent.drop(approvedColumn);
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "必须使用批准按钮，不能直接拖到这里。"
+    );
+    expect(within(draftColumn).getByText("新品贴文")).toBeInTheDocument();
+    expect(moveAction).not.toHaveBeenCalled();
+  });
+
+  it("lets a keyboard user move editable content without dragging", async () => {
+    const user = userEvent.setup();
+    const moveAction = vi.fn(async () => ({ ok: true as const }));
+    const onMoved = vi.fn();
+    const draftContent = {
+      ...scheduled,
+      status: "draft" as const,
+      storedStatus: "draft" as const,
+      approvalAdminIds: [],
+    };
+    render(
+      <ContentBoard
+        initialContents={[draftContent]}
+        moveAction={moveAction}
+        onMoved={onMoved}
+      />
+    );
+
+    const moveButton = screen.getByRole("button", {
+      name: "把新品贴文移动到需要修改",
+    });
+    moveButton.focus();
+    await user.keyboard("{Enter}");
+
+    expect(moveAction).toHaveBeenCalledWith(draftContent.id, "changes_requested");
+    expect(onMoved).toHaveBeenCalledOnce();
   });
 });

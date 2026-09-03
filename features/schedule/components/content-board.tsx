@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { contentBoardMoveMessage } from "@/features/schedule/board-rules";
 import { malaysiaDateTimeFormatter } from "@/features/schedule/date";
 import type { ScheduledContent } from "@/features/schedule/types";
@@ -38,13 +39,12 @@ export function ContentBoard({
   onMoved?: () => void;
 }) {
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [movingId, setMovingId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const contents = initialContents;
 
-  async function handleDrop(target: BoardStatus) {
-    const current = contents.find(({ id }) => id === draggedId);
+  async function moveContent(current: ScheduledContent, target: BoardStatus) {
     setDraggedId(null);
-    if (!current) return;
     const blocked = contentBoardMoveMessage(current.status, target);
     if (blocked) {
       setMessage(blocked);
@@ -53,13 +53,21 @@ export function ContentBoard({
     if (current.status === target) return;
     if (target !== "draft" && target !== "changes_requested") return;
 
+    setMovingId(current.id);
     const result = await moveAction(current.id, target);
+    setMovingId(null);
     if (!result.ok) {
       setMessage(result.message);
     } else {
       setMessage(null);
       onMoved?.();
     }
+  }
+
+  async function handleDrop(target: BoardStatus) {
+    const current = contents.find(({ id }) => id === draggedId);
+    if (!current) return;
+    await moveContent(current, target);
   }
 
   return (
@@ -105,6 +113,32 @@ export function ContentBoard({
                     <p className="mt-2 text-xs text-muted-foreground">
                       已批准 {new Set(content.approvalAdminIds).size}/{content.requiredApprovals}
                     </p>
+                    {content.status === "draft" || content.status === "changes_requested" ? (
+                      <Button
+                        aria-label={
+                          content.status === "draft"
+                            ? `把${content.title}移动到需要修改`
+                            : `把${content.title}移回草稿`
+                        }
+                        className="mt-3 w-full"
+                        disabled={movingId === content.id}
+                        onClick={() =>
+                          void moveContent(
+                            content,
+                            content.status === "draft" ? "changes_requested" : "draft"
+                          )
+                        }
+                        size="xs"
+                        type="button"
+                        variant="outline"
+                      >
+                        {movingId === content.id
+                          ? "正在移动…"
+                          : content.status === "draft"
+                            ? "移动到需要修改"
+                            : "移回草稿"}
+                      </Button>
+                    ) : null}
                   </article>
                 ))}
                 {items.length === 0 ? (

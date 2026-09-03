@@ -14,6 +14,7 @@ import {
 import { ReviewActions } from "@/features/approval/components/review-actions";
 import type { ContentApproval } from "@/features/approval/types";
 import { BlockNoteEditor } from "@/features/content/components/blocknote-editor";
+import { clearResolvedComments } from "@/features/content/actions/inline-threads";
 import { SnapshotViewer } from "@/features/content/components/snapshot-viewer";
 import { documentForReview } from "@/features/content/review-document";
 import type { ContentRecord } from "@/features/content/types";
@@ -53,8 +54,10 @@ export function ContentEditorReview({
         </div>
         {editable ? (
           <BlockNoteEditor
+            canClearResolved={currentUser.role === "admin"}
             contentId={content.id}
             editable
+            onClearResolved={() => clearResolvedComments(content.id)}
             onDocumentChange={setDocument}
             onSyncChange={setSynchronized}
           />
@@ -68,7 +71,12 @@ export function ContentEditorReview({
           <p className="mb-4 mt-2 text-xs text-muted-foreground">
             这里的同步副本只用来查看、回复或新增指定文字留言，不能修改正文。
           </p>
-          <BlockNoteEditor contentId={content.id} editable={false} />
+          <BlockNoteEditor
+            canClearResolved={currentUser.role === "admin"}
+            contentId={content.id}
+            editable={false}
+            onClearResolved={() => clearResolvedComments(content.id)}
+          />
         </details>
       ) : null}
       <ReviewActions

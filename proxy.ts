@@ -3,7 +3,12 @@ import { NextResponse } from "next/server";
 
 import { buildLoginUrl } from "@/lib/auth/redirect";
 
-const publicRoutePrefixes = ["/login", "/sso-callback", "/access-denied"];
+const publicRoutePrefixes = [
+  "/login",
+  "/sso-callback",
+  "/access-denied",
+  "/api/liveblocks-webhook",
+];
 
 function isPublicPath(pathname: string) {
   return publicRoutePrefixes.some(
@@ -11,20 +16,24 @@ function isPublicPath(pathname: string) {
   );
 }
 
-export default clerkMiddleware(async (auth, request) => {
-  if (isPublicPath(request.nextUrl.pathname)) {
-    return;
-  }
+export default clerkMiddleware(
+  async (auth, request) => {
+    if (isPublicPath(request.nextUrl.pathname)) {
+      return;
+    }
 
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.redirect(buildLoginUrl(request.url));
-  }
-});
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.redirect(buildLoginUrl(request.url));
+    }
+  },
+  { frontendApiProxy: { enabled: true } }
+);
 
 export const config = {
   matcher: [
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
     "/(api|trpc)(.*)",
+    "/__clerk/(.*)",
   ],
 };

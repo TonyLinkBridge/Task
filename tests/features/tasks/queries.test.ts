@@ -6,6 +6,7 @@ import type { TaskRecord } from "@/features/tasks/types";
 const task: TaskRecord = {
   id: "11111111-1111-4111-8111-111111111111",
   title: "准备周报",
+  project: "内容运营",
   description: "",
   status: "todo",
   priority: "medium",
@@ -110,11 +111,22 @@ describe("task queries", () => {
         imageUrl: null,
       },
     ];
+    const attachment = {
+      id: "33333333-3333-4333-8333-333333333333",
+      taskId: task.id,
+      storagePath: `${task.id}/brief.pdf`,
+      fileName: "brief.pdf",
+      mimeType: "application/pdf",
+      byteSize: 1024,
+      uploaderId: currentUser.id,
+      createdAt: "2026-08-28T02:00:00.000Z",
+    };
     const queries = makeTaskQueries({
       getVerifiedUser: async () => currentUser,
       list: async () => [task],
       getTask: async () => task,
       listComments: async () => [comment],
+      listAttachments: async () => [attachment],
       listAssignees: async () => assignees,
     });
 
@@ -122,6 +134,7 @@ describe("task queries", () => {
       currentUser,
       task,
       comments: [comment],
+      attachments: [attachment],
       assignees,
     });
   });

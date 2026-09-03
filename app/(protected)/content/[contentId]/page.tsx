@@ -10,13 +10,23 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { ReviewHistory } from "@/features/approval/components/review-history";
 import { approvalRepository } from "@/features/approval/repository";
 import { canEditBody } from "@/features/approval/rules";
-import { addContentComment } from "@/features/content/actions/comments";
+import {
+  addContentComment,
+  refreshContentComments,
+} from "@/features/content/actions/comments";
+import {
+  deleteScheduledContent,
+  updateScheduledContent,
+} from "@/features/content/actions/content";
 import { Attachments } from "@/features/content/components/attachments";
 import { ContentChat } from "@/features/content/components/content-chat";
+import { DeleteContentButton } from "@/features/content/components/delete-content-button";
 import { ContentEditorReview } from "@/features/content/components/content-editor-review";
 import { ContentRoom } from "@/features/content/components/content-room";
+import { ContentScheduleEditor } from "@/features/content/components/content-schedule-editor";
 import { finishUpload, requestUpload } from "@/features/content/files/actions";
 import { contentRepository } from "@/features/content/repository";
+import { canEditContentSchedule } from "@/features/content/schedule-edit-permission";
 import { taskRepository } from "@/features/tasks/repository";
 import { effectiveContentStatus } from "@/features/schedule/query-service";
 import { getVerifiedUser } from "@/lib/auth/get-verified-user";
@@ -87,6 +97,7 @@ export default async function ContentDetailPage({
   const assignee = assignees.find(({ id }) => id === content.assigneeId);
   const admins = assignees.filter(({ role }) => role === "admin");
   const editable = canEditBody(content.status);
+  const canEditSchedule = canEditContentSchedule(content, currentUser);
 
   return (
     <SidebarProvider>
@@ -109,7 +120,15 @@ export default async function ContentDetailPage({
                   </Badge>
                 ))}
               </div>
-              <h1 className="mt-4 text-2xl font-semibold">{content.title}</h1>
+              <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
+                <h1 className="text-2xl font-semibold">{content.title}</h1>
+                {currentUser.role === "admin" || content.authorId === currentUser.id ? (
+                  <DeleteContentButton
+                    contentId={content.id}
+                    deleteAction={deleteScheduledContent}
+                  />
+                ) : null}
+              </div>
               <dl className="mt-6 grid gap-4 border-t pt-5 sm:grid-cols-2">
                 <div>
                   <dt className="text-xs text-muted-foreground">负责人</dt>
@@ -123,6 +142,16 @@ export default async function ContentDetailPage({
                 </div>
               </dl>
             </section>
+
+            {canEditSchedule ? (
+              <ContentScheduleEditor
+                content={content}
+                platformIds={platformIds}
+                platforms={platforms}
+                assignees={assignees}
+                updateAction={updateScheduledContent}
+              />
+            ) : null}
 
             <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
               <div className="space-y-5">
@@ -140,6 +169,7 @@ export default async function ContentDetailPage({
                   comments={comments}
                   currentUser={currentUser}
                   addCommentAction={addContentComment}
+                  refreshCommentsAction={refreshContentComments}
                 />
               </div>
               <div className="space-y-5">
