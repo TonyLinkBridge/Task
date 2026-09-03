@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -42,6 +44,45 @@ describe("help article document view", () => {
     expect(screen.getByRole("tabpanel")).toHaveTextContent("员工步骤");
     fireEvent.click(screen.getByRole("tab", { name: "管理员" }));
     expect(screen.getByRole("tabpanel")).toHaveTextContent("管理员步骤");
+  });
+
+  it("keeps tab labels when they cross the MDX boundary as text", () => {
+    render(
+      <HelpTabs labels="员工|管理员">
+        <p>员工步骤</p>
+        <p>管理员步骤</p>
+      </HelpTabs>
+    );
+
+    expect(screen.getByRole("tab", { name: "员工" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "管理员" }));
+    expect(screen.getByRole("tabpanel")).toHaveTextContent("管理员步骤");
+  });
+
+  it("uses safe fallback labels instead of crashing an article", () => {
+    render(
+      <HelpTabs>
+        <p>第一段</p>
+        <p>第二段</p>
+      </HelpTabs>
+    );
+
+    expect(screen.getByRole("tab", { name: "分页 1" })).toBeInTheDocument();
+  });
+
+  it("renders the complete submit-review MDX article", async () => {
+    const source = await readFile(
+      "content/help/content-review/submit-review.mdx",
+      "utf8"
+    );
+    const view = await HelpDocumentView({ source });
+    render(view);
+
+    expect(screen.getByRole("tab", { name: "员工" })).toBeInTheDocument();
+    expect(screen.getByLabelText("流程图")).toBeInTheDocument();
+    expect(screen.getByRole("table")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "下载发布检查清单" }))
+      .toBeInTheDocument();
   });
 
   it("copies code and renders formula and diagram fallbacks", async () => {
