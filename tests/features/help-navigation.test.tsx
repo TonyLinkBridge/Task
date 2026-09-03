@@ -98,12 +98,22 @@ describe("help article navigation", () => {
       .toHaveAttribute("href", "#选择平台");
   });
 
-  it("scrolls back to the top", () => {
-    const scrollTo = vi.fn();
-    Object.defineProperty(window, "scrollTo", { value: scrollTo, writable: true });
-    render(<HelpScrollToTop />);
+  it("scrolls the article main area back to the top", () => {
+    const mainScrollTo = vi.fn();
+    render(
+      <main>
+        <div>
+          <HelpScrollToTop />
+        </div>
+      </main>
+    );
+    const main = screen.getByRole("main");
+    Object.defineProperty(main, "scrollTo", {
+      value: mainScrollTo,
+      writable: true,
+    });
 
     fireEvent.click(screen.getByRole("button", { name: "回到顶部" }));
-    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
+    expect(mainScrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
   });
 });
