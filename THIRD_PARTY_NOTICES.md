@@ -44,5 +44,9 @@
 - `packages/gitbook/src/components/Search/SearchPageResultItem.tsx`
 - `packages/gitbook/src/components/Search/HighlightQuery.tsx`
 - `packages/gitbook/src/components/PageFeedback/PageFeedbackForm.tsx`
+- `packages/gitbook/src/components/PDF/PDFRootLayout.tsx`
+- `packages/gitbook/src/components/PDF/PDFPrintControls.tsx`
+- `packages/gitbook/src/components/PDF/PrintButton.tsx`
+- `packages/gitbook/src/components/PDF/pdf.css`
 
 完整 GPLv3 文本位于 `licenses/GitBook-GPL-3.0.txt`。

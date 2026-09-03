@@ -1,0 +1,42 @@
+.help-pdf-document {
+  min-height: 100vh;
+}
+
+.help-pdf-controls {
+  margin-bottom: 2rem;
+}
+
+@media print {
+  @page {
+    margin: 18mm 16mm;
+    size: A4;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  .help-pdf-controls {
+    display: none !important;
+  }
+
+  .help-pdf-document {
+    max-width: none !important;
+    min-height: 0;
+    padding: 0 !important;
+  }
+
+  .help-pdf-document img,
+  .help-pdf-document table,
+  .help-pdf-document pre,
+  .help-pdf-document blockquote {
+    break-inside: avoid;
+  }
+
+  .help-pdf-document a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+}

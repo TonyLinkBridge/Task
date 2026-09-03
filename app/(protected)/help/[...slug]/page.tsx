@@ -17,6 +17,8 @@ import { HelpPageCover } from "@/features/help-center/gitbook/page-cover";
 import { HelpPageFooterNavigation } from "@/features/help-center/gitbook/page-footer-navigation";
 import { HelpPageTags } from "@/features/help-center/gitbook/page-tags";
 import { HelpPageFeedback } from "@/features/help-center/gitbook/page-feedback";
+import { HelpPdfPrintControls } from "@/features/help-center/gitbook/pdf-print-controls";
+import { HelpPdfRootLayout } from "@/features/help-center/gitbook/pdf-root-layout";
 import { HelpScrollToTop } from "@/features/help-center/gitbook/scroll-to-top";
 import { HelpTableOfContents } from "@/features/help-center/gitbook/table-of-contents";
 
@@ -26,8 +28,23 @@ export default async function HelpArticlePage({
   params: Promise<{ slug: string[] }>;
 }) {
   const { slug } = await params;
-  const article = await loadHelpArticle(slug.join("/"));
+  const isPdfPage = slug.at(-1) === "pdf";
+  const articleSlug = (isPdfPage ? slug.slice(0, -1) : slug).join("/");
+  const article = await loadHelpArticle(articleSlug);
   if (!article) notFound();
+
+  if (isPdfPage) {
+    return (
+      <HelpPdfRootLayout
+        title={article.title}
+        category={article.category}
+        updatedAt={article.updatedAt}
+      >
+        <HelpPdfPrintControls articleHref={`/help/${article.slug}`} />
+        <HelpDocumentView source={article.source} />
+      </HelpPdfRootLayout>
+    );
+  }
 
   const navigation = getHelpNavigation();
   const headings = extractHelpHeadings(article.source);
@@ -62,6 +79,14 @@ export default async function HelpArticlePage({
         </div>
         <div className="mt-8">
           <HelpDocumentView source={article.source} />
+        </div>
+        <div className="mt-8 rounded-xl border bg-muted/30 p-4">
+          <a
+            className="font-medium underline underline-offset-4"
+            href={`/help/${article.slug}/pdf`}
+          >
+            打开 PDF / 打印版本
+          </a>
         </div>
         <HelpPageFooterNavigation
           previous={adjacent.previous}
