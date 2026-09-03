@@ -1,0 +1,25 @@
+.help-document {
+  overflow-wrap: anywhere;
+}
+
+.help-document > :first-child {
+  margin-top: 0;
+}
+
+.help-document .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 0.5rem;
+}
+
+@media print {
+  .help-document button,
+  .help-document [role="tablist"] {
+    display: none !important;
+  }
+
+  .help-document [role="tabpanel"] {
+    display: block !important;
+    border: 1px solid #ddd;
+  }
+}

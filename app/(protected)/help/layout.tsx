@@ -3,6 +3,9 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { HelpHeader } from "@/features/help-center/components/help-header";
 import { getVerifiedUser } from "@/lib/auth/get-verified-user";
 
+import "katex/dist/katex.min.css";
+import "@/features/help-center/gitbook/document.css";
+
 export default async function HelpCenterLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {

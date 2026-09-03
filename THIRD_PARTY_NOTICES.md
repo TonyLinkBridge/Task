@@ -27,5 +27,17 @@
 - `packages/gitbook/src/components/TableOfContents/TableOfContents.tsx`
 - `packages/gitbook/src/components/TableOfContents/PagesList.tsx`
 - `packages/gitbook/src/components/TableOfContents/PageLinkItem.tsx`
+- `packages/gitbook/src/components/DocumentView/DocumentView.tsx`
+- `packages/gitbook/src/components/DocumentView/Block.tsx`
+- `packages/gitbook/src/components/DocumentView/Hint.tsx`
+- `packages/gitbook/src/components/DocumentView/Images.tsx`
+- `packages/gitbook/src/components/DocumentView/Embed.tsx`
+- `packages/gitbook/src/components/DocumentView/File.tsx`
+- `packages/gitbook/src/components/DocumentView/Math.tsx`
+- `packages/gitbook/src/components/DocumentView/Tabs/Tabs.tsx`
+- `packages/gitbook/src/components/DocumentView/Tabs/DynamicTabs.tsx`
+- `packages/gitbook/src/components/DocumentView/CodeBlock/CodeBlock.tsx`
+- `packages/gitbook/src/components/DocumentView/CodeBlock/CopyCodeButton.tsx`
+- `packages/gitbook/src/components/DocumentView/CodeBlock/MermaidCodeBlock.tsx`
 
 完整 GPLv3 文本位于 `licenses/GitBook-GPL-3.0.txt`。

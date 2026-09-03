@@ -8,6 +8,7 @@ import {
   getHelpNavigation,
 } from "@/features/help-center/content/registry";
 import { HelpBreadcrumbs } from "@/features/help-center/gitbook/breadcrumbs";
+import { HelpDocumentView } from "@/features/help-center/gitbook/document-view";
 import { HelpFooter } from "@/features/help-center/gitbook/footer";
 import { HelpMobileNavigation } from "@/features/help-center/gitbook/mobile-navigation";
 import { HelpPageAside } from "@/features/help-center/gitbook/page-aside";
@@ -57,8 +58,8 @@ export default async function HelpArticlePage({
         <div className="mt-5">
           <HelpPageTags tags={article.tags} />
         </div>
-        <div className="mt-8 whitespace-pre-wrap leading-7 text-foreground/90">
-          {article.source}
+        <div className="mt-8">
+          <HelpDocumentView source={article.source} />
         </div>
         <HelpPageFooterNavigation
           previous={adjacent.previous}
