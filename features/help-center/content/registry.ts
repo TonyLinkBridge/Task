@@ -99,7 +99,14 @@ export function getHelpArticles(): HelpArticle[] {
 }
 
 export function getHelpArticle(slug: string): HelpArticle | null {
-  return articles.find((article) => article.slug === slug) ?? null;
+  let normalizedSlug = slug;
+  try {
+    normalizedSlug = decodeURIComponent(slug);
+  } catch {
+    // Keep the original value so an invalid URL simply returns no article.
+  }
+
+  return articles.find((article) => article.slug === normalizedSlug) ?? null;
 }
 
 export function getHelpNavigation(): HelpCategory[] {

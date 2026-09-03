@@ -23,6 +23,14 @@ describe("help content registry", () => {
     );
   });
 
+  it("opens an article when the browser encodes its Chinese URL", () => {
+    expect(
+      getHelpArticle(
+        "%E5%93%81%E7%89%8C%E4%B8%8E%E6%96%87%E6%A1%88%E8%A7%84%E8%8C%83/telegram-content-logic"
+      )?.title
+    ).toBe("Telegram 大群内容底层逻辑");
+  });
+
   it("returns adjacent articles in navigation order", () => {
     const adjacent = getAdjacentArticles("内容排期/建立内容");
 
