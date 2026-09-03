@@ -19,5 +19,13 @@
 - `packages/gitbook/src/components/PageBody/PageBody.tsx`
 - `packages/gitbook/src/components/PageBody/PageCover.tsx`
 - `packages/gitbook/src/components/PageBody/PageTags.tsx`
+- `packages/gitbook/src/components/PageBody/BreadcrumbItemDropdown.tsx`
+- `packages/gitbook/src/components/PageBody/PageFooterNavigation.tsx`
+- `packages/gitbook/src/components/PageAside/PageAside.tsx`
+- `packages/gitbook/src/components/PageAside/ScrollSectionsList.tsx`
+- `packages/gitbook/src/components/PageAside/ScrollToTopButton.tsx`
+- `packages/gitbook/src/components/TableOfContents/TableOfContents.tsx`
+- `packages/gitbook/src/components/TableOfContents/PagesList.tsx`
+- `packages/gitbook/src/components/TableOfContents/PageLinkItem.tsx`
 
 完整 GPLv3 文本位于 `licenses/GitBook-GPL-3.0.txt`。
