@@ -125,4 +125,30 @@ describe("help article document view", () => {
       .toHaveAttribute("href", "/help/sample-checklist.txt");
     expect(screen.getByTitle("示范 PDF")).toBeInTheDocument();
   });
+
+  it("renders the complete live help component article", async () => {
+    const source = await readFile(
+      "content/help/platforms/help-content-components.mdx",
+      "utf8"
+    );
+    const view = await HelpDocumentView({ source });
+    render(view);
+
+    expect(
+      screen.getByRole("img", { name: "帮助中心文章封面示范" })
+    ).toBeInTheDocument();
+    expect(screen.getByTitle("帮助中心影片示范")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "下载发布检查清单文字版" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("table")).toBeInTheDocument();
+    expect(screen.getByRole("note", { name: "提示" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "员工" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "复制代码" }))
+      .toBeInTheDocument();
+    expect(screen.getByLabelText("数学公式")).toBeInTheDocument();
+    expect(screen.getByLabelText("流程图")).toBeInTheDocument();
+    expect(screen.getByTitle("内容发布检查清单 PDF"))
+      .toBeInTheDocument();
+  });
 });

@@ -43,6 +43,12 @@ describe("help content registry", () => {
     expect(getHelpArticle("不存在/文章")).toBeNull();
   });
 
+  it("registers the complete help component article", () => {
+    expect(getHelpArticle("平台操作/帮助中心内容示范")?.title).toBe(
+      "帮助中心内容组件示范"
+    );
+  });
+
   it("lists the Telegram content guides in their intended reading order", () => {
     const brandGuides = getHelpNavigation().find(
       (group) => group.title === "品牌与文案规范"

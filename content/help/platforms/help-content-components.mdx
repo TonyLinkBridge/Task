@@ -1,0 +1,50 @@
+这篇文章集中展示帮助中心支持的内容格式，方便团队确认文章在电脑和手机上都能正常阅读。
+
+<Hint type="info" title="这是一篇功能验收文章">
+这里的图片、影片、文件、表格、提示框、分页、代码、数学公式、流程图和 PDF 都是真正可以使用的内容，不是空白示意图。
+</Hint>
+
+## 图片和影片
+
+<Image
+  src="/mascots/chiikawa-peek.png"
+  alt="帮助中心文章封面示范"
+  caption="图片和图片说明示范"
+/>
+
+<Video
+  src="https://www.youtube-nocookie.com/embed/M7lc1UVf-VE"
+  title="帮助中心影片示范"
+/>
+
+## 文件、表格和 PDF
+
+<File href="/help/sample-checklist.txt" name="发布检查清单文字版" size="1KB" />
+
+| 检查项目 | 结果 |
+| --- | --- |
+| 标题、平台和负责人正确 | 待确认 |
+| 正文已经同步 | 待确认 |
+| 两位管理员已经批准 | 待确认 |
+
+<Pdf src="/help/content-publishing-checklist.pdf" title="内容发布检查清单 PDF" />
+
+## 提示、代码和分页
+
+<Tabs labels="员工|管理员">
+  <div>员工可以建立内容、同步正文、提交审核，并在发布完成后标记为“已经发布”。</div>
+  <div>管理员可以留言、要求修改或批准内容；内容需要两位管理员批准。</div>
+</Tabs>
+
+```text
+草稿 → 等待审核 → 已经批准 → 等待发布 → 已经发布
+```
+
+## 数学公式和流程图
+
+两位管理员都批准，才算完成审核：
+
+<Math formula="1 + 1 = 2" />
+
+<Mermaid chart="flowchart LR; A[完成正文] --> B[两位管理员批准] --> C[等待发布] --> D[已经发布]" />
+

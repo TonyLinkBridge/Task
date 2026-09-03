@@ -69,6 +69,17 @@ const articles: HelpArticle[] = [
     sourcePath: "platforms/manage-platforms.mdx",
   },
   {
+    slug: "平台操作/帮助中心内容示范",
+    title: "帮助中心内容组件示范",
+    description: "查看图片、影片、文件、表格、提示框、分页、代码、数学公式、流程图和 PDF 的实际显示方式。",
+    category: "平台操作",
+    order: 20,
+    cover: "/mascots/chiikawa-peek.png",
+    tags: ["帮助中心", "内容格式", "功能示范"],
+    updatedAt: "2026-09-03",
+    sourcePath: "platforms/help-content-components.mdx",
+  },
+  {
     slug: "品牌与文案规范/telegram-content-logic",
     title: "Telegram 大群内容底层逻辑",
     description: "先帮助用户理解市场、建立判断和降低风险，再承接已经成熟的真实需求。",
