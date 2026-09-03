@@ -33,4 +33,17 @@ describe("help content registry", () => {
   it("returns no article for an unknown slug", () => {
     expect(getHelpArticle("不存在/文章")).toBeNull();
   });
+
+  it("lists the Telegram content guides in their intended reading order", () => {
+    const brandGuides = getHelpNavigation().find(
+      (group) => group.title === "品牌与文案规范"
+    );
+
+    expect(brandGuides?.articles.map((article) => article.title)).toEqual([
+      "Telegram 大群内容底层逻辑",
+      "六大内容栏目与审核标准",
+      "CTA Level 使用规则",
+      "每周栏目与 CTA 对应表",
+    ]);
+  });
 });
