@@ -10,11 +10,13 @@ import {
 import { HelpBreadcrumbs } from "@/features/help-center/gitbook/breadcrumbs";
 import { HelpDocumentView } from "@/features/help-center/gitbook/document-view";
 import { HelpFooter } from "@/features/help-center/gitbook/footer";
+import { saveHelpFeedback } from "@/features/help-center/feedback/actions";
 import { HelpMobileNavigation } from "@/features/help-center/gitbook/mobile-navigation";
 import { HelpPageAside } from "@/features/help-center/gitbook/page-aside";
 import { HelpPageCover } from "@/features/help-center/gitbook/page-cover";
 import { HelpPageFooterNavigation } from "@/features/help-center/gitbook/page-footer-navigation";
 import { HelpPageTags } from "@/features/help-center/gitbook/page-tags";
+import { HelpPageFeedback } from "@/features/help-center/gitbook/page-feedback";
 import { HelpScrollToTop } from "@/features/help-center/gitbook/scroll-to-top";
 import { HelpTableOfContents } from "@/features/help-center/gitbook/table-of-contents";
 
@@ -64,6 +66,10 @@ export default async function HelpArticlePage({
         <HelpPageFooterNavigation
           previous={adjacent.previous}
           next={adjacent.next}
+        />
+        <HelpPageFeedback
+          articleSlug={article.slug}
+          saveAction={saveHelpFeedback}
         />
         <HelpFooter />
       </article>

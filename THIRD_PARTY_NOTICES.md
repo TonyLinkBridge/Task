@@ -43,5 +43,6 @@
 - `packages/gitbook/src/components/Search/SearchResults.tsx`
 - `packages/gitbook/src/components/Search/SearchPageResultItem.tsx`
 - `packages/gitbook/src/components/Search/HighlightQuery.tsx`
+- `packages/gitbook/src/components/PageFeedback/PageFeedbackForm.tsx`
 
 完整 GPLv3 文本位于 `licenses/GitBook-GPL-3.0.txt`。
