@@ -19,7 +19,7 @@ export function HelpTabs({ labels, children }: { labels: string[]; children: Rea
             id={`${id}-tab-${index}`}
             aria-controls={`${id}-panel-${index}`}
             aria-selected={active === index}
-            className={active === index ? "rounded-lg bg-background px-3 py-2 text-sm font-medium shadow-sm" : "rounded-lg px-3 py-2 text-sm text-muted-foreground"}
+            className={active === index ? "min-h-11 rounded-lg bg-background px-3 py-2 text-sm font-medium shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" : "min-h-11 rounded-lg px-3 py-2 text-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"}
             onClick={() => setActive(index)}
           >
             {label}

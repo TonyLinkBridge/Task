@@ -26,8 +26,8 @@ export function HelpTableOfContents({
                     aria-current={active ? "page" : undefined}
                     className={
                       active
-                        ? "-ml-[13px] border-l-2 border-primary py-1.5 pl-[11px] font-medium text-foreground"
-                        : "py-1.5 text-muted-foreground transition-colors hover:text-foreground"
+                        ? "-ml-[13px] flex min-h-11 items-center border-l-2 border-primary py-2 pl-[11px] font-medium text-foreground"
+                        : "flex min-h-11 items-center py-2 text-muted-foreground transition-colors hover:text-foreground"
                     }
                   >
                     {article.title}

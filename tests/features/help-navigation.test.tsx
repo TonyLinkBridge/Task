@@ -5,6 +5,7 @@ import { extractHelpHeadings } from "@/features/help-center/content/headings";
 import { getHelpArticle, getHelpNavigation } from "@/features/help-center/content/registry";
 import { HelpBreadcrumbs } from "@/features/help-center/gitbook/breadcrumbs";
 import { HelpMobileNavigation } from "@/features/help-center/gitbook/mobile-navigation";
+import { HelpMobilePageOutline } from "@/features/help-center/gitbook/mobile-page-outline";
 import { HelpPageAside } from "@/features/help-center/gitbook/page-aside";
 import { HelpPageFooterNavigation } from "@/features/help-center/gitbook/page-footer-navigation";
 import { HelpScrollToTop } from "@/features/help-center/gitbook/scroll-to-top";
@@ -78,6 +79,23 @@ describe("help article navigation", () => {
     fireEvent.click(screen.getByRole("button", { name: "打开文章目录" }));
     expect(screen.getByRole("dialog")).toHaveTextContent("文章目录");
     expect(screen.getByRole("dialog")).toHaveTextContent(article.title);
+  });
+
+  it("shows the current article outline on mobile", () => {
+    render(
+      <HelpMobilePageOutline
+        headings={[
+          { id: "填写资料", text: "填写资料", level: 2 },
+          { id: "选择平台", text: "选择平台", level: 3 },
+        ]}
+      />
+    );
+
+    expect(screen.getByText("本页内容")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "填写资料" }))
+      .toHaveAttribute("href", "#填写资料");
+    expect(screen.getByRole("link", { name: "选择平台" }))
+      .toHaveAttribute("href", "#选择平台");
   });
 
   it("scrolls back to the top", () => {

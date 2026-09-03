@@ -12,6 +12,7 @@ import { HelpDocumentView } from "@/features/help-center/gitbook/document-view";
 import { HelpFooter } from "@/features/help-center/gitbook/footer";
 import { saveHelpFeedback } from "@/features/help-center/feedback/actions";
 import { HelpMobileNavigation } from "@/features/help-center/gitbook/mobile-navigation";
+import { HelpMobilePageOutline } from "@/features/help-center/gitbook/mobile-page-outline";
 import { HelpPageAside } from "@/features/help-center/gitbook/page-aside";
 import { HelpPageCover } from "@/features/help-center/gitbook/page-cover";
 import { HelpPageFooterNavigation } from "@/features/help-center/gitbook/page-footer-navigation";
@@ -70,6 +71,7 @@ export default async function HelpArticlePage({
           navigation={navigation}
           currentSlug={article.slug}
         />
+        <HelpMobilePageOutline headings={headings} />
         <HelpPageCover src={article.cover} title={article.category} />
         <HelpBreadcrumbs article={article} />
         <h1 className="mt-3 text-3xl font-semibold tracking-tight">{article.title}</h1>

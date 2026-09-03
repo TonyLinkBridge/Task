@@ -38,8 +38,8 @@ export function HelpPageAside({ headings }: { headings: HelpHeading[] }) {
             aria-current={activeId === heading.id ? "location" : undefined}
             className={
               activeId === heading.id
-                ? `${heading.level === 3 ? "pl-3 " : ""}font-medium text-foreground`
-                : `${heading.level === 3 ? "pl-3 " : ""}text-muted-foreground hover:text-foreground`
+                ? `${heading.level === 3 ? "pl-3 " : ""}flex min-h-9 items-center rounded-md font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`
+                : `${heading.level === 3 ? "pl-3 " : ""}flex min-h-9 items-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`
             }
           >
             {heading.text}
