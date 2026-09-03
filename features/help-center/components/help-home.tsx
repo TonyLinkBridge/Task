@@ -7,9 +7,11 @@ import type { HelpArticle, HelpCategory } from "../content/types";
 
 export function HelpHome({
   articles,
+  recentArticles,
   navigation,
 }: {
   articles: HelpArticle[];
+  recentArticles: HelpArticle[];
   navigation: HelpCategory[];
 }) {
   return (
@@ -24,6 +26,24 @@ export function HelpHome({
             搜索工作流程、内容审核规则和平台操作说明。
           </p>
           <div className="mx-auto mt-7 max-w-2xl"><HelpSearchInput large /></div>
+        </section>
+
+        <section className="mt-12">
+          <h2 className="text-lg font-semibold">最近更新</h2>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {recentArticles.map((article) => (
+              <Link
+                key={article.slug}
+                href={`/help/${article.slug}`}
+                className="rounded-xl border bg-card p-4 transition-colors hover:bg-muted/50"
+              >
+                <p className="text-xs text-muted-foreground">
+                  {article.category} · {article.updatedAt}
+                </p>
+                <p className="mt-2 font-medium">{article.title}</p>
+              </Link>
+            ))}
+          </div>
         </section>
 
         <section className="mt-12">

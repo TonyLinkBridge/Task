@@ -10,7 +10,14 @@ export function HelpScrollToTop() {
       variant="outline"
       size="sm"
       className="mt-6 w-full"
-      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      onClick={(event) => {
+        const main = event.currentTarget.closest("main");
+        if (main) {
+          main.scrollTo({ top: 0, behavior: "smooth" });
+          return;
+        }
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }}
     >
       回到顶部
     </Button>

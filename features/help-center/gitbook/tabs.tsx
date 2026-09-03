@@ -3,15 +3,29 @@
 import { Children, type ReactNode, useId, useState } from "react";
 
 // Adapted from GitBook's Tabs and DynamicTabs components.
-export function HelpTabs({ labels, children }: { labels: string[]; children: ReactNode }) {
+export function HelpTabs({
+  labels,
+  children,
+}: {
+  labels?: string[] | string;
+  children: ReactNode;
+}) {
   const panels = Children.toArray(children);
+  const parsedLabels = Array.isArray(labels)
+    ? labels
+    : typeof labels === "string"
+      ? labels.split("|").map((label) => label.trim()).filter(Boolean)
+      : [];
+  const safeLabels = panels.map(
+    (_, index) => parsedLabels[index] || `分页 ${index + 1}`
+  );
   const [active, setActive] = useState(0);
   const id = useId();
 
   return (
     <div className="my-5 overflow-hidden rounded-xl border">
       <div role="tablist" aria-label="分页内容" className="flex overflow-x-auto border-b bg-muted/40 p-1">
-        {labels.map((label, index) => (
+        {safeLabels.map((label, index) => (
           <button
             key={label}
             type="button"

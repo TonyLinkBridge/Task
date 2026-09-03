@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -44,6 +46,45 @@ describe("help article document view", () => {
     expect(screen.getByRole("tabpanel")).toHaveTextContent("管理员步骤");
   });
 
+  it("keeps tab labels when they cross the MDX boundary as text", () => {
+    render(
+      <HelpTabs labels="员工|管理员">
+        <p>员工步骤</p>
+        <p>管理员步骤</p>
+      </HelpTabs>
+    );
+
+    expect(screen.getByRole("tab", { name: "员工" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "管理员" }));
+    expect(screen.getByRole("tabpanel")).toHaveTextContent("管理员步骤");
+  });
+
+  it("uses safe fallback labels instead of crashing an article", () => {
+    render(
+      <HelpTabs>
+        <p>第一段</p>
+        <p>第二段</p>
+      </HelpTabs>
+    );
+
+    expect(screen.getByRole("tab", { name: "分页 1" })).toBeInTheDocument();
+  });
+
+  it("renders the complete submit-review MDX article", async () => {
+    const source = await readFile(
+      "content/help/content-review/submit-review.mdx",
+      "utf8"
+    );
+    const view = await HelpDocumentView({ source });
+    render(view);
+
+    expect(screen.getByRole("tab", { name: "员工" })).toBeInTheDocument();
+    expect(screen.getByLabelText("流程图")).toBeInTheDocument();
+    expect(screen.getByRole("table")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "下载发布检查清单" }))
+      .toBeInTheDocument();
+  });
+
   it("copies code and renders formula and diagram fallbacks", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", {
@@ -83,5 +124,31 @@ describe("help article document view", () => {
     expect(screen.getByRole("link", { name: /下载发布检查清单/ }))
       .toHaveAttribute("href", "/help/sample-checklist.txt");
     expect(screen.getByTitle("示范 PDF")).toBeInTheDocument();
+  });
+
+  it("renders the complete live help component article", async () => {
+    const source = await readFile(
+      "content/help/platforms/help-content-components.mdx",
+      "utf8"
+    );
+    const view = await HelpDocumentView({ source });
+    render(view);
+
+    expect(
+      screen.getByRole("img", { name: "帮助中心文章封面示范" })
+    ).toBeInTheDocument();
+    expect(screen.getByTitle("帮助中心影片示范")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "下载发布检查清单文字版" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("table")).toBeInTheDocument();
+    expect(screen.getByRole("note", { name: "提示" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "员工" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "复制代码" }))
+      .toBeInTheDocument();
+    expect(screen.getByLabelText("数学公式")).toBeInTheDocument();
+    expect(screen.getByLabelText("流程图")).toBeInTheDocument();
+    expect(screen.getByTitle("内容发布检查清单 PDF"))
+      .toBeInTheDocument();
   });
 });

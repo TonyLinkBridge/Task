@@ -57,4 +57,36 @@ describe("help article feedback", () => {
       },
     ]);
   });
+
+  it("keeps only the latest feedback from the same member and article", async () => {
+    const stored = new Map<string, { helpful: boolean; comment: string | null }>();
+    const actions = makeHelpFeedbackActions({
+      getVerifiedUser: async () => ({
+        id: "employee",
+        role: "employee",
+        name: "员工",
+        imageUrl: null,
+      }),
+      saveFeedback: async (input) => {
+        stored.set(`${input.articleSlug}:${input.clerkUserId}`, {
+          helpful: input.helpful,
+          comment: input.comment,
+        });
+      },
+    });
+
+    await actions.saveHelpFeedback({
+      articleSlug: "内容审核/提交审核",
+      helpful: true,
+    });
+    await actions.saveHelpFeedback({
+      articleSlug: "内容审核/提交审核",
+      helpful: false,
+      comment: "需要补充截图",
+    });
+
+    expect([...stored.values()]).toEqual([
+      { helpful: false, comment: "需要补充截图" },
+    ]);
+  });
 });

@@ -20,6 +20,16 @@ describe("help article search", () => {
     await expect(searchHelpArticles("火星办公室")).resolves.toEqual([]);
   });
 
+  it("finds the Telegram CTA guide by its rules", async () => {
+    const results = await searchHelpArticles("Level 3");
+
+    expect(results[0]).toMatchObject({
+      slug: "品牌与文案规范/cta-level",
+      title: "CTA Level 使用规则",
+      category: "品牌与文案规范",
+    });
+  });
+
   it("shows highlighted results without creating HTML from the query", () => {
     render(
       <HelpSearchResults
