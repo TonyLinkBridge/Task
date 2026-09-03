@@ -16,7 +16,7 @@ import {
 
 type SearchResult = {
   id: string;
-  type: "task" | "content";
+  type: "task" | "content" | "help";
   title: string;
   subtitle: string;
   href: string;
@@ -81,11 +81,11 @@ export function GlobalSearch() {
           <DialogTitle>搜索整个工作台</DialogTitle>
         </DialogHeader>
         <label className="grid gap-2 text-sm">
-          <span className="sr-only">搜索任务和内容</span>
+          <span className="sr-only">搜索任务、内容和帮助文章</span>
           <div className="flex items-center gap-2 rounded-lg border px-3">
             <HugeiconsIcon icon={Search01Icon} className="size-4 text-muted-foreground" />
             <input
-              aria-label="搜索任务和内容"
+              aria-label="搜索任务、内容和帮助文章"
               autoFocus
               value={query}
               onChange={(event) => changeQuery(event.target.value)}
@@ -109,7 +109,7 @@ export function GlobalSearch() {
                 </p>
               </div>
               <span className="shrink-0 text-xs text-muted-foreground">
-                {result.type === "task" ? "任务" : "内容"}
+                {result.type === "task" ? "任务" : result.type === "content" ? "内容" : "帮助文章"}
               </span>
             </Link>
           ))}

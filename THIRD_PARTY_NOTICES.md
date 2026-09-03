@@ -39,5 +39,9 @@
 - `packages/gitbook/src/components/DocumentView/CodeBlock/CodeBlock.tsx`
 - `packages/gitbook/src/components/DocumentView/CodeBlock/CopyCodeButton.tsx`
 - `packages/gitbook/src/components/DocumentView/CodeBlock/MermaidCodeBlock.tsx`
+- `packages/gitbook/src/components/Search/SearchInput.tsx`
+- `packages/gitbook/src/components/Search/SearchResults.tsx`
+- `packages/gitbook/src/components/Search/SearchPageResultItem.tsx`
+- `packages/gitbook/src/components/Search/HighlightQuery.tsx`
 
 完整 GPLv3 文本位于 `licenses/GitBook-GPL-3.0.txt`。

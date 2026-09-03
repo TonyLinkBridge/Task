@@ -6,6 +6,7 @@ type Dependencies = {
   getVerifiedUser: () => Promise<VerifiedUser>;
   searchTasks: (query: string) => Promise<SearchRow[]>;
   searchContents: (query: string) => Promise<SearchRow[]>;
+  searchHelpArticles: (query: string) => Promise<SearchRow[]>;
 };
 
 export function makeGlobalSearchHandler(dependencies: Dependencies) {
@@ -16,9 +17,10 @@ export function makeGlobalSearchHandler(dependencies: Dependencies) {
       if (query.length < 2 || query.length > 100) {
         return Response.json({ error: "invalid_query" }, { status: 400 });
       }
-      const [tasks, contents] = await Promise.all([
+      const [tasks, contents, helpArticles] = await Promise.all([
         dependencies.searchTasks(query),
         dependencies.searchContents(query),
+        dependencies.searchHelpArticles(query),
       ]);
       return Response.json({
         results: [
@@ -31,6 +33,11 @@ export function makeGlobalSearchHandler(dependencies: Dependencies) {
             ...row,
             type: "content" as const,
             href: `/content/${row.id}`,
+          })),
+          ...helpArticles.map((row) => ({
+            ...row,
+            type: "help" as const,
+            href: `/help/${row.id}`,
           })),
         ],
       });

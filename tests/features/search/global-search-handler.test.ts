@@ -17,6 +17,9 @@ describe("global search handler", () => {
       searchContents: async () => [
         { id: "content-1", title: "周报内容", subtitle: "草稿" },
       ],
+      searchHelpArticles: async () => [
+        { id: "内容排期/周报", title: "如何建立周报", subtitle: "帮助文章" },
+      ],
     });
 
     const response = await handler(
@@ -40,6 +43,13 @@ describe("global search handler", () => {
           subtitle: "草稿",
           href: "/content/content-1",
         },
+        {
+          id: "内容排期/周报",
+          type: "help",
+          title: "如何建立周报",
+          subtitle: "帮助文章",
+          href: "/help/内容排期/周报",
+        },
       ],
     });
   });
@@ -54,6 +64,7 @@ describe("global search handler", () => {
       }),
       searchTasks: async () => [],
       searchContents: async () => [],
+      searchHelpArticles: async () => [],
     });
 
     const response = await handler(new Request("http://localhost/api/search?q=a"));

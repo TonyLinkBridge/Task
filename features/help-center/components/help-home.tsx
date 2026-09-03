@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { HelpAnnouncement } from "../gitbook/announcement";
 import { HelpFooter } from "../gitbook/footer";
+import { HelpSearchInput } from "../gitbook/search-input";
 import type { HelpArticle, HelpCategory } from "../content/types";
 
 export function HelpHome({
@@ -22,12 +23,7 @@ export function HelpHome({
           <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
             搜索工作流程、内容审核规则和平台操作说明。
           </p>
-          <Link
-            href="/help/search"
-            className="mx-auto mt-7 flex h-14 max-w-2xl items-center rounded-xl border bg-card px-5 text-left text-muted-foreground shadow-sm transition-colors hover:bg-muted/40"
-          >
-            搜索文章、流程和常见问题……
-          </Link>
+          <div className="mx-auto mt-7 max-w-2xl"><HelpSearchInput large /></div>
         </section>
 
         <section className="mt-12">

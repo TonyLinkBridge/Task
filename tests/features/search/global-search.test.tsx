@@ -13,6 +13,6 @@ describe("GlobalSearch", () => {
     fireEvent.keyDown(window, { key: "k", metaKey: true });
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByLabelText("搜索任务和内容")).toBeInTheDocument();
+    expect(screen.getByLabelText("搜索任务、内容和帮助文章")).toBeInTheDocument();
   });
 });
