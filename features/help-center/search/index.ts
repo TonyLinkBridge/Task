@@ -36,6 +36,7 @@ export async function searchHelpArticles(query: string): Promise<HelpSearchResul
       const document = await loadHelpArticle(article.slug);
       const body = plainText(document?.source ?? "");
       const title = article.title.toLocaleLowerCase("zh");
+      const slug = article.slug.toLocaleLowerCase("zh");
       const description = article.description.toLocaleLowerCase("zh");
       const tags = article.tags.join(" ").toLocaleLowerCase("zh");
       const bodyLower = body.toLocaleLowerCase("zh");
@@ -44,6 +45,8 @@ export async function searchHelpArticles(query: string): Promise<HelpSearchResul
       if (title === needle) score += 120;
       else if (title.startsWith(needle)) score += 90;
       else if (title.includes(needle)) score += 70;
+      if (slug.endsWith(needle)) score += 80;
+      else if (slug.includes(needle)) score += 60;
       if (tags.includes(needle)) score += 50;
       if (description.includes(needle)) score += 35;
       if (bodyLower.includes(needle)) score += 20;
