@@ -3,13 +3,18 @@ import { describe, expect, it } from "vitest";
 
 import { HelpHome } from "@/features/help-center/components/help-home";
 import { HelpLayout } from "@/features/help-center/components/help-layout";
-import { getHelpArticles, getHelpNavigation } from "@/features/help-center/content/registry";
+import {
+  getHelpArticles,
+  getHelpNavigation,
+  getRecentlyUpdatedHelpArticles,
+} from "@/features/help-center/content/registry";
 
 describe("help center pages", () => {
   it("shows the announcement, search introduction and article categories", () => {
     render(
       <HelpHome
         articles={getHelpArticles()}
+        recentArticles={getRecentlyUpdatedHelpArticles()}
         navigation={getHelpNavigation()}
       />
     );
@@ -21,8 +26,11 @@ describe("help center pages", () => {
     );
     expect(screen.getByRole("heading", { name: "内容排期" }))
       .toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "最近更新" }))
+      .toBeInTheDocument();
     expect(screen.getByRole("link", { name: "如何建立内容排期" }))
       .toHaveAttribute("href", "/help/内容排期/建立内容");
+    expect(screen.queryByText("文章准备中")).not.toBeInTheDocument();
   });
 
   it("provides the three-column article reading layout", () => {

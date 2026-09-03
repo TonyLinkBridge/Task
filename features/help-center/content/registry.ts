@@ -14,6 +14,17 @@ const articles: HelpArticle[] = [
     sourcePath: "getting-started/welcome.mdx",
   },
   {
+    slug: "任务管理/建立与跟进任务",
+    title: "如何建立与跟进任务",
+    description: "建立任务、分派负责人、移动进度，并在完成后留下清楚记录。",
+    category: "任务管理",
+    order: 10,
+    cover: "/mascots/chiikawa-peek.png",
+    tags: ["任务", "负责人", "进度"],
+    updatedAt: "2026-09-03",
+    sourcePath: "task-management/manage-tasks.mdx",
+  },
+  {
     slug: "内容排期/建立内容",
     title: "如何建立内容排期",
     description: "填写标题、平台、负责人和发布时间，再开始准备正文。",
@@ -34,6 +45,28 @@ const articles: HelpArticle[] = [
     tags: ["审核", "管理员批准"],
     updatedAt: "2026-09-03",
     sourcePath: "content-review/submit-review.mdx",
+  },
+  {
+    slug: "发布流程/从批准到发布",
+    title: "从批准到正式发布",
+    description: "了解两位管理员批准后，内容怎样进入等待发布并由员工完成发布。",
+    category: "发布流程",
+    order: 10,
+    cover: "/mascots/chiikawa-peek.png",
+    tags: ["发布", "提醒", "已经发布"],
+    updatedAt: "2026-09-03",
+    sourcePath: "publishing/publish-content.mdx",
+  },
+  {
+    slug: "平台操作/管理发布平台",
+    title: "如何管理发布平台",
+    description: "管理员可以建立、修改、停用和恢复团队使用的自定义发布平台。",
+    category: "平台操作",
+    order: 10,
+    cover: "/mascots/chiikawa-peek.png",
+    tags: ["平台", "管理员", "自定义"],
+    updatedAt: "2026-09-03",
+    sourcePath: "platforms/manage-platforms.mdx",
   },
   {
     slug: "品牌与文案规范/telegram-content-logic",
@@ -79,6 +112,17 @@ const articles: HelpArticle[] = [
     updatedAt: "2026-09-03",
     sourcePath: "brand-copy/weekly-cta.mdx",
   },
+  {
+    slug: "常见问题/权限与内容状态",
+    title: "权限、审核和内容状态常见问题",
+    description: "快速查看员工与管理员权限、两人批准、Slack 通知和内容状态规则。",
+    category: "常见问题",
+    order: 10,
+    cover: "/mascots/chiikawa-peek.png",
+    tags: ["权限", "审核", "Slack", "状态"],
+    updatedAt: "2026-09-03",
+    sourcePath: "faq/common-questions.mdx",
+  },
 ];
 
 function validateArticles(items: HelpArticle[]) {
@@ -96,6 +140,17 @@ validateArticles(articles);
 
 export function getHelpArticles(): HelpArticle[] {
   return [...articles];
+}
+
+export function getRecentlyUpdatedHelpArticles(limit = 4): HelpArticle[] {
+  return getHelpArticles()
+    .sort(
+      (left, right) =>
+        right.updatedAt.localeCompare(left.updatedAt) ||
+        left.order - right.order ||
+        left.title.localeCompare(right.title, "zh")
+    )
+    .slice(0, Math.max(0, limit));
 }
 
 export function getHelpArticle(slug: string): HelpArticle | null {

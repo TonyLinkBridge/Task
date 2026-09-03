@@ -4,6 +4,7 @@ import {
   getAdjacentArticles,
   getHelpArticle,
   getHelpNavigation,
+  getRecentlyUpdatedHelpArticles,
 } from "@/features/help-center/content/registry";
 
 describe("help content registry", () => {
@@ -34,7 +35,7 @@ describe("help content registry", () => {
   it("returns adjacent articles in navigation order", () => {
     const adjacent = getAdjacentArticles("内容排期/建立内容");
 
-    expect(adjacent.previous?.slug).toBe("新员工入门/欢迎");
+    expect(adjacent.previous?.slug).toBe("任务管理/建立与跟进任务");
     expect(adjacent.next?.slug).toBe("内容审核/提交审核");
   });
 
@@ -53,5 +54,19 @@ describe("help content registry", () => {
       "CTA Level 使用规则",
       "每周栏目与 CTA 对应表",
     ]);
+  });
+
+  it("has at least one real article in every help category", () => {
+    expect(
+      getHelpNavigation().every((category) => category.articles.length > 0)
+    ).toBe(true);
+  });
+
+  it("returns recently updated articles in stable date order", () => {
+    const recent = getRecentlyUpdatedHelpArticles(4);
+    const dates = recent.map((article) => article.updatedAt);
+
+    expect(recent).toHaveLength(4);
+    expect(dates).toEqual([...dates].sort().reverse());
   });
 });
