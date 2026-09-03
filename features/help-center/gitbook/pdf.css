@@ -22,10 +22,30 @@
     display: none !important;
   }
 
+  .help-pdf-document,
+  .help-pdf-document .help-document {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
   .help-pdf-document {
     max-width: none !important;
     min-height: 0;
     padding: 0 !important;
+  }
+
+  .help-pdf-document .help-document table,
+  .help-pdf-document .help-document th,
+  .help-pdf-document .help-document td,
+  .help-pdf-document .help-document pre,
+  .help-pdf-document .help-document code,
+  .help-pdf-document .help-document blockquote,
+  .help-pdf-document .help-document aside,
+  .help-pdf-document .help-document [role="tabpanel"],
+  .help-pdf-document .help-document [aria-label="流程图"] {
+    background: #fff !important;
+    border-color: #ccc !important;
+    color: #111 !important;
   }
 
   .help-pdf-document img,

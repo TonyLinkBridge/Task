@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import { loadHelpArticle } from "@/features/help-center/content/loader";
 import {
   getAdjacentArticles,
   getHelpArticle,
+  getHelpArticles,
   getHelpNavigation,
   getRecentlyUpdatedHelpArticles,
 } from "@/features/help-center/content/registry";
@@ -74,5 +76,13 @@ describe("help content registry", () => {
 
     expect(recent).toHaveLength(4);
     expect(dates).toEqual([...dates].sort().reverse());
+  });
+
+  it("loads every registered article source", async () => {
+    for (const article of getHelpArticles()) {
+      const document = await loadHelpArticle(article.slug);
+
+      expect(document?.source.trim().length, article.slug).toBeGreaterThan(20);
+    }
   });
 });
