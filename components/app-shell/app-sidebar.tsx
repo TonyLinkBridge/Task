@@ -80,9 +80,7 @@ export function AppSidebar({ currentUser }: { currentUser: VerifiedUser }) {
             <SidebarMenuButton
               render={
                 <Link
-                  href="https://juyu-help-centre.vercel.app"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="/help"
                 />
               }
             >

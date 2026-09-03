@@ -11,4 +11,13 @@
 
 采用范围只限内部帮助中心的目录、文章显示、搜索、移动目录、面包屑、页尾导航、主题、公告、页脚、封面、标签、反馈、PDF、丰富内容、数学公式、流程图和响应式显示。
 
-实际采用的源文件会在开发完成前逐项补充到这里。完整 GPLv3 文本位于 `licenses/GitBook-GPL-3.0.txt`。
+目前已经采用和修改的 GitBook 源文件：
+
+- `packages/gitbook/src/components/Announcement/Announcement.tsx`
+- `packages/gitbook/src/components/Announcement/AnnouncementBanner.tsx`
+- `packages/gitbook/src/components/Footer/Footer.tsx`
+- `packages/gitbook/src/components/PageBody/PageBody.tsx`
+- `packages/gitbook/src/components/PageBody/PageCover.tsx`
+- `packages/gitbook/src/components/PageBody/PageTags.tsx`
+
+完整 GPLv3 文本位于 `licenses/GitBook-GPL-3.0.txt`。
