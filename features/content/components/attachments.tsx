@@ -1,8 +1,17 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   fileSchema,
   type ContentFileMeta,
@@ -43,6 +52,8 @@ export function Attachments({
   editable?: boolean;
 }) {
   const [attachments, setAttachments] = useState(initialAttachments);
+  const [previewAttachment, setPreviewAttachment] =
+    useState<ContentAttachment | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -122,22 +133,55 @@ export function Attachments({
       </div>
 
       <div className="mt-4 space-y-2">
-        {attachments.map((attachment) => (
-          <div
-            key={attachment.id}
-            className="flex items-center justify-between gap-3 rounded-lg bg-muted/50 px-3 py-2"
-          >
-            <a
-              className="min-w-0 truncate text-sm font-medium underline-offset-4 hover:underline"
-              href={`/api/files/${attachment.id}`}
+        {attachments.map((attachment) => {
+          const canPreview = attachment.mimeType.startsWith("image/");
+          const downloadHref = `/api/files/${attachment.id}?mode=download`;
+
+          return (
+            <div
+              key={attachment.id}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-muted/50 px-3 py-2"
             >
-              {attachment.fileName}
-            </a>
-            <span className="shrink-0 text-xs text-muted-foreground">
-              {(attachment.byteSize / 1024 / 1024).toFixed(1)} MB
-            </span>
-          </div>
-        ))}
+              {canPreview ? (
+                <button
+                  type="button"
+                  className="min-w-0 truncate text-left text-sm font-medium underline-offset-4 hover:underline"
+                  aria-label={`打开 ${attachment.fileName} 预览`}
+                  onClick={() => setPreviewAttachment(attachment)}
+                >
+                  {attachment.fileName}
+                </button>
+              ) : (
+                <span className="min-w-0 truncate text-sm font-medium">
+                  {attachment.fileName}
+                </span>
+              )}
+              <div className="ml-auto flex shrink-0 items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {(attachment.byteSize / 1024 / 1024).toFixed(1)} MB
+                </span>
+                {canPreview ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    aria-label={`预览 ${attachment.fileName}`}
+                    onClick={() => setPreviewAttachment(attachment)}
+                  >
+                    预览
+                  </Button>
+                ) : null}
+                <a
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
+                  href={downloadHref}
+                  aria-label={`下载 ${attachment.fileName}`}
+                >
+                  下载
+                </a>
+              </div>
+            </div>
+          );
+        })}
         {attachments.length === 0 ? (
           <p className="py-3 text-center text-sm text-muted-foreground">
             还没有文件
@@ -149,6 +193,45 @@ export function Attachments({
           {message}
         </p>
       ) : null}
+
+      <Dialog
+        open={previewAttachment !== null}
+        onOpenChange={(open) => {
+          if (!open) setPreviewAttachment(null);
+        }}
+      >
+        <DialogContent className="max-h-[90vh] overflow-hidden sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>{previewAttachment?.fileName ?? "照片预览"}</DialogTitle>
+            <DialogDescription>
+              先查看照片，需要保存时再点击下载原图。
+            </DialogDescription>
+          </DialogHeader>
+          {previewAttachment ? (
+            <div className="flex max-h-[65vh] items-center justify-center overflow-auto rounded-lg bg-muted/50 p-2">
+              <Image
+                unoptimized
+                src={`/api/files/${previewAttachment.id}?mode=preview`}
+                alt={`${previewAttachment.fileName} 预览`}
+                width={1600}
+                height={1200}
+                className="h-auto max-h-[62vh] w-auto max-w-full object-contain"
+              />
+            </div>
+          ) : null}
+          <DialogFooter showCloseButton>
+            {previewAttachment ? (
+              <a
+                className={buttonVariants()}
+                href={`/api/files/${previewAttachment.id}?mode=download`}
+                aria-label={`下载 ${previewAttachment.fileName}`}
+              >
+                下载原图
+              </a>
+            ) : null}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

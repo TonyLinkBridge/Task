@@ -5,12 +5,16 @@ import type { VerifiedUser } from "@/lib/auth/types";
 type Dependencies = {
   getVerifiedUser: () => Promise<VerifiedUser>;
   findAttachment: (id: string) => Promise<{ storagePath: string } | null>;
-  createSignedUrl: (path: string, expiresIn: number) => Promise<string>;
+  createSignedUrl: (
+    path: string,
+    expiresIn: number,
+    download: boolean
+  ) => Promise<string>;
 };
 
 export function makeFileDownloadHandler(dependencies: Dependencies) {
   return async function GET(
-    _request: Request,
+    request: Request,
     context: { params: Promise<{ attachmentId: string }> }
   ) {
     try {
@@ -28,7 +32,8 @@ export function makeFileDownloadHandler(dependencies: Dependencies) {
 
     const signedUrl = await dependencies.createSignedUrl(
       attachment.storagePath,
-      60
+      60,
+      new URL(request.url).searchParams.get("mode") !== "preview"
     );
     return new Response(null, {
       status: 302,

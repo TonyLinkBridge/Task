@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import { makeFileDownloadHandler } from "@/features/content/api/file-download-handler";
 
 describe("GET /api/files/:attachmentId", () => {
-  it("redirects a verified member to a 60-second private link", async () => {
+  it("redirects a verified member to a forced download link", async () => {
+    let requestedDownload: boolean | undefined;
     const handler = makeFileDownloadHandler({
       getVerifiedUser: async () => ({
         id: "user_employee",
@@ -21,11 +22,13 @@ describe("GET /api/files/:attachmentId", () => {
         uploaderId: "user_employee",
         createdAt: "2026-08-28T03:00:00.000Z",
       }),
-      createSignedUrl: async (_path, expiresIn) =>
-        expiresIn === 60 ? "https://storage.example/private" : "wrong",
+      createSignedUrl: async (_path, expiresIn, download) => {
+        requestedDownload = download;
+        return expiresIn === 60 ? "https://storage.example/private" : "wrong";
+      },
     });
 
-    const response = await handler(new Request("http://localhost"), {
+    const response = await handler(new Request("http://localhost?mode=download"), {
       params: Promise.resolve({
         attachmentId: "33333333-3333-4333-8333-333333333333",
       }),
@@ -35,6 +38,42 @@ describe("GET /api/files/:attachmentId", () => {
     expect(response.headers.get("location")).toBe(
       "https://storage.example/private"
     );
+    expect(requestedDownload).toBe(true);
+  });
+
+  it("creates an inline private link when a verified member previews an image", async () => {
+    let requestedDownload: boolean | undefined;
+    const handler = makeFileDownloadHandler({
+      getVerifiedUser: async () => ({
+        id: "user_employee",
+        role: "employee",
+        name: "Employee",
+        imageUrl: null,
+      }),
+      findAttachment: async () => ({
+        storagePath: "222/post.png",
+        mimeType: "image/png",
+      }),
+      createSignedUrl: async (_path, _expiresIn, download) => {
+        requestedDownload = download;
+        return "https://storage.example/private-preview";
+      },
+    });
+
+    const response = await handler(
+      new Request("http://localhost?mode=preview"),
+      {
+        params: Promise.resolve({
+          attachmentId: "33333333-3333-4333-8333-333333333333",
+        }),
+      }
+    );
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toBe(
+      "https://storage.example/private-preview"
+    );
+    expect(requestedDownload).toBe(false);
   });
 
   it("does not reveal a missing or archived attachment", async () => {
