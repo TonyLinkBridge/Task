@@ -160,7 +160,7 @@ describe("update_scheduled_content", () => {
 
       select update_scheduled_content(
         '${contentId}', 'author', '新标题', 'new-assignee',
-        '2026-09-02T02:00:00.000Z',
+        now() + interval '3 days',
         array['${platformA}', '${platformB}']::uuid[]
       );
     `);
@@ -169,18 +169,21 @@ describe("update_scheduled_content", () => {
       event_type: string;
       status: string;
       is_new_time: boolean;
-      payload_publish_at: string;
+      payload_matches_current_time: boolean;
     }>(`
-      select event_type, status,
-        scheduled_for = '2026-09-02T01:00:00.000Z'::timestamptz as is_new_time,
-        payload #>> '{content,publishAt}' as payload_publish_at
-      from slack_deliveries
-      order by case status
+      select d.event_type, d.status,
+        d.scheduled_for = c.publish_at - interval '60 minutes' as is_new_time,
+        (d.payload #>> '{content,publishAt}')::timestamptz = c.publish_at
+          as payload_matches_current_time
+      from slack_deliveries d
+      cross join contents c
+      where c.id = '${contentId}'
+      order by case d.status
         when 'cancelled' then 1
         when 'pending' then 2
         when 'sent' then 3
         else 4
-      end, event_type
+      end, d.event_type
     `);
 
     expect(deliveries.rows).toEqual([
@@ -188,25 +191,25 @@ describe("update_scheduled_content", () => {
         event_type: "publish_advance",
         status: "cancelled",
         is_new_time: false,
-        payload_publish_at: "2026-08-29T10:00:00+08:00",
+        payload_matches_current_time: false,
       },
       {
         event_type: "publish_due_unapproved",
         status: "cancelled",
         is_new_time: false,
-        payload_publish_at: "2026-08-29T10:00:00+08:00",
+        payload_matches_current_time: false,
       },
       {
         event_type: "publish_advance",
         status: "pending",
         is_new_time: true,
-        payload_publish_at: "2026-09-02T10:00:00+08:00",
+        payload_matches_current_time: true,
       },
       {
         event_type: "publish_advance",
         status: "sent",
         is_new_time: false,
-        payload_publish_at: "2026-08-29T10:00:00+08:00",
+        payload_matches_current_time: false,
       },
     ]);
   });

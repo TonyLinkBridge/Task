@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { ContentForm } from "@/features/content/components/content-form";
 import type { ContentInput } from "@/features/content/schema";
@@ -35,6 +35,24 @@ const otherEmployee: AssignableUser = {
 };
 
 describe("ContentForm", () => {
+  it("defaults a new content schedule to 30 minutes from now in Malaysia", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-09T04:56:00.000Z"));
+
+    try {
+      render(
+        <ContentForm
+          platforms={[platform]}
+          assignees={[employee]}
+        />
+      );
+
+      expect(screen.getByLabelText("发布时间")).toHaveValue("2026-09-09T13:26");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("only asks for the fixed scheduling fields", async () => {
     const user = userEvent.setup();
     let received: ContentInput | undefined;

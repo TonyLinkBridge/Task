@@ -27,7 +27,7 @@ function malaysiaDateTimeInputValue(date: Date) {
 
 function defaultPublishAt() {
   return malaysiaDateTimeInputValue(
-    new Date(Date.now() + 24 * 60 * 60 * 1000)
+    new Date(Date.now() + 30 * 60 * 1000)
   );
 }
 
