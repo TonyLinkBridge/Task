@@ -16,9 +16,23 @@ import {
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { InlineThreads } from "@/features/content/components/inline-threads";
 
 type ConnectionStatus = ReturnType<typeof useStatus>;
+
+type PendingCommentEditor = {
+  _tiptapEditor: {
+    chain: () => {
+      addPendingComment: () => { run: () => void };
+      focus: () => {
+        addPendingComment: () => { run: () => void };
+      };
+    };
+    commands: Record<string, unknown>;
+    state: { selection: { empty: boolean } };
+  };
+};
 
 const threadRefreshIntervalMs = 3_000;
 
@@ -127,6 +141,7 @@ export function BlockNoteEditor({
   const syncStatus = useSyncStatus();
   const { threads } = useThreads();
   const room = useRoom();
+  const [hasCommentSelection, setHasCommentSelection] = useState(false);
   const [polledThreads, setPolledThreads] = useState<ThreadData[]>([]);
   const visibleThreads = mergeThreads(threads, polledThreads);
   const { resolvedTheme } = useTheme();
@@ -161,6 +176,24 @@ export function BlockNoteEditor({
     };
   }, [room]);
 
+  function updateCommentSelection() {
+    if (editable) return;
+    const tiptapEditor = (editor as unknown as PendingCommentEditor)
+      ._tiptapEditor;
+    setHasCommentSelection(
+      !tiptapEditor.state.selection.empty &&
+        "addPendingComment" in tiptapEditor.commands
+    );
+  }
+
+  function startInlineComment() {
+    const tiptapEditor = (editor as unknown as PendingCommentEditor)
+      ._tiptapEditor;
+    if (!("addPendingComment" in tiptapEditor.commands)) return;
+    tiptapEditor.chain().focus().addPendingComment().run();
+    setHasCommentSelection(false);
+  }
+
   if (!ready) {
     return <EditorSyncStatus ready={false} status={status} />;
   }
@@ -171,17 +204,33 @@ export function BlockNoteEditor({
         data-testid="editor-and-comments-layout"
         className="flex min-w-0 flex-col items-stretch gap-4 lg:flex-row lg:items-start"
       >
-        <div className="min-h-72 w-full min-w-0 flex-1 overflow-hidden rounded-xl border bg-background py-4">
-          <BlockNoteView
-            editor={editor}
-            editable={editable}
-            theme={blockNoteTheme}
-            onChange={() => onDocumentChange?.(editor.document)}
-          />
-          <FloatingComposer
-            editor={editor}
-            className="max-w-[calc(100vw-3rem)] sm:w-[22rem]"
-          />
+        <div className="w-full min-w-0 flex-1">
+          {!editable && hasCommentSelection ? (
+            <div className="pointer-events-none sticky top-3 z-30 flex h-0 justify-end pr-3">
+              <Button
+                className="pointer-events-auto translate-y-3 shadow-lg"
+                onClick={startInlineComment}
+                onMouseDown={(event) => event.preventDefault()}
+                size="sm"
+                type="button"
+              >
+                留言这段文字
+              </Button>
+            </div>
+          ) : null}
+          <div className="min-h-72 overflow-hidden rounded-xl border bg-background py-4">
+            <BlockNoteView
+              editor={editor}
+              editable={editable}
+              theme={blockNoteTheme}
+              onChange={() => onDocumentChange?.(editor.document)}
+              onSelectionChange={updateCommentSelection}
+            />
+            <FloatingComposer
+              editor={editor}
+              className="max-w-[calc(100vw-3rem)] sm:w-[22rem]"
+            />
+          </div>
         </div>
         <InlineThreads
           canClearResolved={canClearResolved}
