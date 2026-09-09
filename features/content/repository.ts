@@ -228,6 +228,7 @@ export function createContentRepository(
         .from("content_attachments")
         .select("*")
         .eq("content_id", contentId)
+        .is("archived_at", null)
         .order("created_at");
       if (error) throw new Error(`CONTENT_DATABASE_ERROR:${error.message}`);
       return (data ?? []).map((row) => ({

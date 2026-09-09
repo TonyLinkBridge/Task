@@ -11,6 +11,7 @@ const migrations = [
   "202608280004_inline_comment_events.sql",
   "202608280006_approval_workflow.sql",
   "202608280007_approval_rpcs.sql",
+  "202609090001_content_attachment_current_removal.sql",
 ].map((name) =>
   path.resolve(import.meta.dirname, "../../../supabase/migrations", name)
 );
@@ -88,6 +89,64 @@ describe("approval workflow RPCs", () => {
       where content_id = '${employeeContentId}' order by file_name
     `);
     expect(attachments.rows).toEqual([{ file_name: "draft.png" }]);
+  });
+
+  it("removes an attachment from current content without losing the historical version", async () => {
+    await database.exec(`
+      select create_scheduled_content(
+        '${employeeContentId}', '员工内容', 'employee', 'employee',
+        '2026-08-29T02:00:00.000Z', array['${platformId}']::uuid[]
+      );
+      insert into content_attachments (
+        content_id, storage_path, file_name, mime_type, byte_size, uploader_id
+      ) values (
+        '${employeeContentId}', '${employeeContentId}/history.png', 'history.png',
+        'image/png', 1024, 'employee'
+      );
+      select submit_content_for_review(
+        '${employeeContentId}', 'employee', '[{"version":1}]'::jsonb, null
+      );
+      select request_content_changes(
+        '${employeeContentId}', 1, 'admin-a', '请移除图片'
+      );
+      update content_attachments
+      set archived_at = now()
+      where content_id = '${employeeContentId}';
+      select submit_content_for_review(
+        '${employeeContentId}', 'employee', '[{"version":2}]'::jsonb, null
+      );
+    `);
+
+    const result = await database.query<{
+      active_attachments: number;
+      attachment_rows: number;
+      version_one_attachments: number;
+      version_two_attachments: number;
+    }>(`
+      select
+        (select count(*)::integer from content_attachments
+         where content_id = '${employeeContentId}' and archived_at is null)
+          as active_attachments,
+        (select count(*)::integer from content_attachments
+         where content_id = '${employeeContentId}') as attachment_rows,
+        (select count(*)::integer
+         from content_version_attachments cva
+         join content_versions cv on cv.id = cva.content_version_id
+         where cv.content_id = '${employeeContentId}' and cv.version = 1)
+          as version_one_attachments,
+        (select count(*)::integer
+         from content_version_attachments cva
+         join content_versions cv on cv.id = cva.content_version_id
+         where cv.content_id = '${employeeContentId}' and cv.version = 2)
+          as version_two_attachments
+    `);
+
+    expect(result.rows[0]).toEqual({
+      active_attachments: 0,
+      attachment_rows: 1,
+      version_one_attachments: 1,
+      version_two_attachments: 0,
+    });
   });
 
   it("creates a linked publish task and requires two distinct admins", async () => {
