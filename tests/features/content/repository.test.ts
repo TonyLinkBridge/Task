@@ -52,6 +52,55 @@ describe("mapContentRow", () => {
 });
 
 describe("createContentRepository", () => {
+  it("lists only attachments that still belong to the current content", async () => {
+    let activeOnly = false;
+    const rows = [
+      {
+        id: "33333333-3333-4333-8333-333333333333",
+        content_id: contentId,
+        storage_path: `${contentId}/current.png`,
+        file_name: "current.png",
+        mime_type: "image/png",
+        byte_size: 1024,
+        uploader_id: "user_employee",
+        archived_at: null,
+        created_at: "2026-08-28T03:00:00.000Z",
+      },
+      {
+        id: "44444444-4444-4444-8444-444444444444",
+        content_id: contentId,
+        storage_path: `${contentId}/historical.png`,
+        file_name: "historical.png",
+        mime_type: "image/png",
+        byte_size: 1024,
+        uploader_id: "user_employee",
+        archived_at: "2026-09-09T08:00:00.000Z",
+        created_at: "2026-08-28T03:05:00.000Z",
+      },
+    ];
+    const query = {
+      select: () => query,
+      eq: () => query,
+      is: (column: string, value: unknown) => {
+        activeOnly = column === "archived_at" && value === null;
+        return query;
+      },
+      order: async () => ({
+        data: activeOnly ? rows.filter((row) => row.archived_at === null) : rows,
+        error: null,
+      }),
+    };
+    const repository = createContentRepository(
+      { from: () => query } as never
+    );
+
+    const attachments = await repository.listAttachments(contentId);
+
+    expect(attachments.map((attachment) => attachment.fileName)).toEqual([
+      "current.png",
+    ]);
+  });
+
   it("creates a content with a stable private room id", async () => {
     const rpcNames: string[] = [];
     const client = {

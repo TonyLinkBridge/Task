@@ -8,10 +8,14 @@ const BUCKET = "content-files";
 export const GET = makeFileDownloadHandler({
   getVerifiedUser,
   findAttachment: (id) => contentRepository.findAttachment(id),
-  async createSignedUrl(path, expiresIn) {
+  async createSignedUrl(path, expiresIn, download) {
     const { data, error } = await getSupabaseAdmin()
       .storage.from(BUCKET)
-      .createSignedUrl(path, expiresIn, { download: true });
+      .createSignedUrl(
+        path,
+        expiresIn,
+        download ? { download: true } : undefined
+      );
     if (error || !data) {
       throw new Error(`FILE_SIGNING_FAILED:${error?.message ?? "NO_DATA"}`);
     }

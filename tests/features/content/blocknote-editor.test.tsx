@@ -1,13 +1,24 @@
 import { act, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { blockNoteOptions, liveThreads, roomThreads } = vi.hoisted(() => ({
+const {
+  blockNoteOptions,
+  commentSelection,
+  liveThreads,
+  openPendingComment,
+  roomThreads,
+} = vi.hoisted(() => ({
   blockNoteOptions: {
     current: null as null | Record<string, unknown>,
+  },
+  commentSelection: {
+    current: false,
   },
   liveThreads: {
     current: [] as Array<{ id: string; resolved: boolean }>,
   },
+  openPendingComment: vi.fn(),
   roomThreads: {
     current: [] as Array<{ id: string; resolved: boolean }>,
   },
@@ -18,8 +29,30 @@ vi.mock("next-themes", () => ({
 }));
 
 vi.mock("@blocknote/mantine", () => ({
-  BlockNoteView: ({ theme }: { theme?: string }) => (
-    <div data-testid="blocknote-view" data-theme={theme ?? "unset"} />
+  BlockNoteView: ({
+    editable,
+    onSelectionChange,
+    theme,
+  }: {
+    editable?: boolean;
+    onSelectionChange?: () => void;
+    theme?: string;
+  }) => (
+    <div
+      data-editable={String(editable)}
+      data-testid="blocknote-view"
+      data-theme={theme ?? "unset"}
+    >
+      <button
+        type="button"
+        onClick={() => {
+          commentSelection.current = true;
+          onSelectionChange?.();
+        }}
+      >
+        模拟选中文字
+      </button>
+    </div>
   ),
 }));
 
@@ -27,7 +60,21 @@ vi.mock("@liveblocks/react-blocknote", () => ({
   FloatingComposer: () => null,
   useCreateBlockNoteWithLiveblocks: (options: Record<string, unknown>) => {
     blockNoteOptions.current = options;
-    return { document: [] };
+    const chain = {
+      focus: () => chain,
+      addPendingComment: () => chain,
+      run: openPendingComment,
+    };
+    return {
+      document: [],
+      _tiptapEditor: {
+        get state() {
+          return { selection: { empty: !commentSelection.current } };
+        },
+        chain: () => chain,
+        commands: { addPendingComment: true },
+      },
+    };
   },
   useIsEditorReady: () => true,
 }));
@@ -82,8 +129,28 @@ describe("EditorSyncStatus", () => {
 describe("BlockNoteEditor", () => {
   afterEach(() => {
     vi.useRealTimers();
+    commentSelection.current = false;
     liveThreads.current = [];
+    openPendingComment.mockReset();
     roomThreads.current = [];
+  });
+
+  it("lets a reviewer start an inline comment without unlocking the body", async () => {
+    const user = userEvent.setup();
+    render(<BlockNoteEditor contentId="content-1" editable={false} />);
+
+    expect(
+      screen.queryByRole("button", { name: "留言这段文字" })
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "模拟选中文字" }));
+    expect(screen.getByTestId("blocknote-view")).toHaveAttribute(
+      "data-editable",
+      "false"
+    );
+    await user.click(screen.getByRole("button", { name: "留言这段文字" }));
+
+    expect(openPendingComment).toHaveBeenCalledTimes(1);
   });
 
   it("keeps every pasted social-post line as a separate paragraph", () => {

@@ -62,6 +62,60 @@ describe("buildStoragePath", () => {
 });
 
 describe("content file actions", () => {
+  it("returns a retryable error when profile verification times out", async () => {
+    const actions = makeContentFileActions({
+      getVerifiedUser: async () => {
+        throw new Error("PROFILE_SYNC_FAILED:Gateway Timeout");
+      },
+      findContent: async () => ({ id: "content", status: "draft" as const }),
+      createUploadUrl: async () => ({ token: "unused" }),
+      inspectUpload: async () => null,
+      saveAttachment: async () => {
+        throw new Error("unused");
+      },
+      createId: () => "33333333-3333-4333-8333-333333333333",
+      revalidatePath: () => undefined,
+    });
+
+    await expect(
+      actions.requestUpload("22222222-2222-4222-8222-222222222222", {
+        name: "post.png",
+        type: "image/png",
+        size: 1024,
+      })
+    ).resolves.toEqual({
+      ok: false,
+      message: "服务器刚刚没有回应，请直接重试，不需要刷新页面。",
+    });
+  });
+
+  it("returns a retryable error when verification fails after upload", async () => {
+    const actions = makeContentFileActions({
+      getVerifiedUser: async () => {
+        throw new Error("PROFILE_SYNC_FAILED:Gateway Timeout");
+      },
+      findContent: async () => ({ id: "content", status: "draft" as const }),
+      createUploadUrl: async () => ({ token: "unused" }),
+      inspectUpload: async () => ({ size: 1024, type: "image/png" }),
+      saveAttachment: async () => {
+        throw new Error("unused");
+      },
+      createId: () => "33333333-3333-4333-8333-333333333333",
+      revalidatePath: () => undefined,
+    });
+
+    await expect(
+      actions.finishUpload(
+        "22222222-2222-4222-8222-222222222222",
+        "22222222-2222-4222-8222-222222222222/post.png",
+        { name: "post.png", type: "image/png", size: 1024 }
+      )
+    ).resolves.toEqual({
+      ok: false,
+      message: "服务器刚刚没有回应，请直接重试，不需要刷新页面。",
+    });
+  });
+
   it("does not allow attachments while content is locked for review", async () => {
     const actions = fileHarness("in_review");
 
