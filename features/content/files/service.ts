@@ -6,6 +6,8 @@ import { canEditBody } from "@/features/approval/rules";
 import type { VerifiedUser } from "@/lib/auth/types";
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
+const RETRYABLE_SERVER_MESSAGE =
+  "服务器刚刚没有回应，请直接重试，不需要刷新页面。";
 const officeMimeTypes = new Set([
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -77,7 +79,11 @@ const contentIdSchema = z.uuid();
 export function makeContentFileActions(dependencies: Dependencies) {
   return {
     async requestUpload(contentId: string, fileMeta: unknown) {
-      await dependencies.getVerifiedUser();
+      try {
+        await dependencies.getVerifiedUser();
+      } catch {
+        return { ok: false as const, message: RETRYABLE_SERVER_MESSAGE };
+      }
       const parsedId = contentIdSchema.safeParse(contentId);
       const parsedFile = fileSchema.safeParse(fileMeta);
       if (!parsedId.success || !parsedFile.success) {
@@ -113,7 +119,12 @@ export function makeContentFileActions(dependencies: Dependencies) {
       storagePath: string,
       fileMeta: unknown
     ) {
-      const user = await dependencies.getVerifiedUser();
+      let user: VerifiedUser;
+      try {
+        user = await dependencies.getVerifiedUser();
+      } catch {
+        return { ok: false as const, message: RETRYABLE_SERVER_MESSAGE };
+      }
       const parsedId = contentIdSchema.safeParse(contentId);
       const parsedFile = fileSchema.safeParse(fileMeta);
       if (

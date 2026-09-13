@@ -1,10 +1,56 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { Attachments } from "@/features/content/components/attachments";
 
 describe("Attachments", () => {
+  it("restores the upload button when the server request rejects", async () => {
+    const user = userEvent.setup();
+    render(
+      <Attachments
+        contentId="22222222-2222-4222-8222-222222222222"
+        attachments={[]}
+        requestUploadAction={async () => {
+          throw new Error("Server Components render failed");
+        }}
+      />
+    );
+
+    await user.upload(
+      screen.getByLabelText("上传文件"),
+      new File(["image"], "post.png", { type: "image/png" })
+    );
+
+    expect(
+      await screen.findByText("服务器刚刚没有回应，请直接重试，不需要刷新页面。")
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("上传文件")).toBeEnabled();
+    expect(screen.getByText("上传文件")).toBeInTheDocument();
+  });
+
+  it("allows the same file to be selected again after a failed upload", async () => {
+    const user = userEvent.setup();
+    const requestUploadAction = vi.fn(async () => ({
+      ok: false as const,
+      message: "上传失败，请再试一次。",
+    }));
+    render(
+      <Attachments
+        contentId="22222222-2222-4222-8222-222222222222"
+        attachments={[]}
+        requestUploadAction={requestUploadAction}
+      />
+    );
+    const file = new File(["image"], "post.png", { type: "image/png" });
+
+    await user.upload(screen.getByLabelText("上传文件"), file);
+    await screen.findByText("上传失败，请再试一次。");
+    await user.upload(screen.getByLabelText("上传文件"), file);
+
+    expect(requestUploadAction).toHaveBeenCalledTimes(2);
+  });
+
   it("previews an image before the member chooses to download it", async () => {
     const user = userEvent.setup();
     render(

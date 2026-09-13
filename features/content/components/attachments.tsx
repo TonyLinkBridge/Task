@@ -71,37 +71,40 @@ export function Attachments({
 
     setIsUploading(true);
     setMessage(null);
-    const request = await requestUploadAction(contentId, parsed.data);
-    if (!request.ok) {
+    try {
+      const request = await requestUploadAction(contentId, parsed.data);
+      if (!request.ok) {
+        setMessage(request.message);
+        return;
+      }
+
+      const { error } = await getSupabaseBrowser()
+        .storage.from("content-files")
+        .uploadToSignedUrl(request.data.storagePath, request.data.token, file, {
+          contentType: file.type,
+        });
+      if (error) {
+        setMessage("上传失败，请再试一次。");
+        return;
+      }
+
+      const finish = await finishUploadAction(
+        contentId,
+        request.data.storagePath,
+        parsed.data
+      );
+      if (!finish.ok) {
+        setMessage(finish.message);
+        return;
+      }
+
+      setAttachments((current) => [...current, finish.data]);
+      setMessage("文件已经上传。");
+    } catch {
+      setMessage("服务器刚刚没有回应，请直接重试，不需要刷新页面。");
+    } finally {
       setIsUploading(false);
-      setMessage(request.message);
-      return;
     }
-
-    const { error } = await getSupabaseBrowser()
-      .storage.from("content-files")
-      .uploadToSignedUrl(request.data.storagePath, request.data.token, file, {
-        contentType: file.type,
-      });
-    if (error) {
-      setIsUploading(false);
-      setMessage("上传失败，请再试一次。");
-      return;
-    }
-
-    const finish = await finishUploadAction(
-      contentId,
-      request.data.storagePath,
-      parsed.data
-    );
-    setIsUploading(false);
-    if (!finish.ok) {
-      setMessage(finish.message);
-      return;
-    }
-
-    setAttachments((current) => [...current, finish.data]);
-    setMessage("文件已经上传。");
   }
 
   return (
@@ -126,7 +129,11 @@ export function Attachments({
               className="sr-only"
               accept="image/*,video/*,audio/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
               disabled={isUploading}
-              onChange={(event) => void handleFile(event.target.files?.[0])}
+              onChange={(event) => {
+                const file = event.currentTarget.files?.[0];
+                event.currentTarget.value = "";
+                void handleFile(file);
+              }}
             />
           </label>
         ) : null}
