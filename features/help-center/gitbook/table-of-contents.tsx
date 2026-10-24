@@ -6,9 +6,11 @@ import type { HelpCategory } from "../content/types";
 export function HelpTableOfContents({
   navigation,
   currentSlug,
+  onNavigate,
 }: {
   navigation: HelpCategory[];
   currentSlug: string;
+  onNavigate?: () => void;
 }) {
   return (
     <nav aria-label="文章目录" className="space-y-5 text-sm">
@@ -23,6 +25,7 @@ export function HelpTableOfContents({
                   <Link
                     key={article.slug}
                     href={`/help/${article.slug}`}
+                    onClick={onNavigate}
                     aria-current={active ? "page" : undefined}
                     className={
                       active

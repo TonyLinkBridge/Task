@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { makeLiveblocksAuthHandler } from "@/features/content/api/liveblocks-auth-handler";
 
@@ -18,6 +18,36 @@ const user = {
 };
 
 describe("POST /api/liveblocks-auth", () => {
+  it("lets the SDK retry a temporary collaboration outage instead of permanently rejecting the member", async () => {
+    const handler = makeLiveblocksAuthHandler({
+      getVerifiedUser: async () => user,
+      findContentByRoomId: async () => ({ id: "22222222-2222-4222-8222-222222222222", status: "in_review" }),
+      authorizeRoom: async () => { throw new TypeError("fetch failed"); },
+    });
+    const response = await handler(requestWithRoom("content:22222222-2222-4222-8222-222222222222"));
+    expect(response.status).toBe(503);
+    expect(response.headers.get("retry-after")).toBe("1");
+    expect(await response.json()).toEqual({ error: "temporarily_unavailable" });
+  });
+
+  it("does not mislabel a database or profile outage as missing room access", async () => {
+    const authorizeRoom = vi.fn();
+    const handler = makeLiveblocksAuthHandler({
+      getVerifiedUser: async () => user,
+      findContentByRoomId: async () => { throw new Error("CONTENT_DATABASE_ERROR:temporary timeout"); },
+      authorizeRoom,
+    });
+    const response = await handler(requestWithRoom("content:22222222-2222-4222-8222-222222222222"));
+    expect(response.status).toBe(503);
+    expect(authorizeRoom).not.toHaveBeenCalled();
+  });
+
+  it.each([["UNAUTHENTICATED",401],["WRONG_SLACK_WORKSPACE",403],["SLACK_IDENTITY_LOOKUP_FAILED",503]] as const)("handles %s without granting a token",async(message,status)=>{
+    const authorizeRoom=vi.fn();
+    const handler=makeLiveblocksAuthHandler({getVerifiedUser:async()=>{throw new Error(message);},findContentByRoomId:vi.fn(),authorizeRoom});
+    const response=await handler(requestWithRoom("content:22222222-2222-4222-8222-222222222222"));
+    expect(response.status).toBe(status);expect(authorizeRoom).not.toHaveBeenCalled();
+  });
   it("refuses a room id that is not an existing content record", async () => {
     const handler = makeLiveblocksAuthHandler({
       getVerifiedUser: async () => user,
@@ -142,7 +172,7 @@ describe("POST /api/liveblocks-auth", () => {
 
     const response = await handler(requestWithRoom(room));
 
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(503);
     expect(permissions).toEqual([true, false, true, false]);
   });
 });

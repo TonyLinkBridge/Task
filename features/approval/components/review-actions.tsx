@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 
 import { useState } from "react";
 
@@ -115,23 +116,7 @@ export function ReviewActions({
       {canSubmit ? (
         <div className="mt-4 space-y-3 border-t pt-4">
           {currentUser.role === "admin" && content.authorId === currentUser.id ? (
-            <label className="grid gap-2 text-sm">
-              由谁检查
-              <select
-                value={reviewerId}
-                onChange={(event) => setReviewerId(event.target.value)}
-                className="h-9 rounded-md border border-input bg-background px-2.5 text-sm"
-              >
-                <option value={currentUser.id}>我自己批准</option>
-                {admins
-                  .filter(({ id }) => id !== currentUser.id)
-                  .map((admin) => (
-                    <option key={admin.id} value={admin.id}>
-                      交给 {admin.name}
-                    </option>
-                  ))}
-              </select>
-            </label>
+            <Select label="由谁检查" value={reviewerId} onValueChange={setReviewerId} options={[{value:currentUser.id,label:"我自己批准"},...admins.filter(a=>a.id!==currentUser.id).map(a=>({value:a.id,label:`交给 ${a.name}`}))]} />
           ) : null}
           <Button
             disabled={isSaving || document === null}

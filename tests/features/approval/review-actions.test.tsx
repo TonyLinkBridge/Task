@@ -1,3 +1,4 @@
+import { chooseOption } from "@/tests/helpers/choose-option";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
@@ -98,7 +99,7 @@ describe("ReviewActions", () => {
       />
     );
 
-    expect(screen.getByLabelText("由谁检查")).toHaveValue("admin-a");
+    expect(screen.getByRole("combobox", {name:/由谁检查/})).toHaveTextContent("我自己批准");
     await user.click(screen.getByRole("button", { name: "交给上司检查" }));
 
     await waitFor(() =>
@@ -136,7 +137,7 @@ describe("ReviewActions", () => {
       />
     );
 
-    await user.selectOptions(screen.getByLabelText("由谁检查"), "admin-b");
+    await chooseOption(user, "由谁检查", "交给 上司 B");
     await user.click(screen.getByRole("button", { name: "交给上司检查" }));
 
     await waitFor(() =>

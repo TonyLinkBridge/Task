@@ -27,3 +27,9 @@ Object.defineProperty(window, "matchMedia", {
     dispatchEvent: () => false,
   }),
 });
+
+// jsdom lacks these browser APIs used by Radix Select's pointer/focus handling.
+if (!HTMLElement.prototype.hasPointerCapture) HTMLElement.prototype.hasPointerCapture = () => false;
+if (!HTMLElement.prototype.setPointerCapture) HTMLElement.prototype.setPointerCapture = () => {};
+if (!HTMLElement.prototype.releasePointerCapture) HTMLElement.prototype.releasePointerCapture = () => {};
+if (!HTMLElement.prototype.scrollIntoView) HTMLElement.prototype.scrollIntoView = () => {};

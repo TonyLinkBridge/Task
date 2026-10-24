@@ -7,4 +7,5 @@ export const POST = makeLiveblocksAuthHandler({
   getVerifiedUser,
   findContentByRoomId: (roomId) => contentRepository.findByRoomId(roomId),
   authorizeRoom: authorizeContentRoom,
+  reportFailure: (failure) => console.error("COLLABORATION_AUTH_UNAVAILABLE", failure),
 });

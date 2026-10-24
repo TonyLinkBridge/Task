@@ -1,3 +1,4 @@
+import { chooseOption } from "@/tests/helpers/choose-option";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
@@ -54,16 +55,16 @@ describe("TaskForm", () => {
     await user.type(screen.getByLabelText("标题"), "准备周报");
     await user.clear(screen.getByLabelText("项目／分类"));
     await user.type(screen.getByLabelText("项目／分类"), "内容运营");
-    await user.selectOptions(screen.getByLabelText("负责人"), "user_employee");
+    await chooseOption(user, "负责人", "Employee");
     await user.click(screen.getByLabelText("共同负责人 Admin"));
-    await user.selectOptions(screen.getByLabelText("优先级"), "urgent");
-    await user.selectOptions(screen.getByLabelText("开始状态"), "draft");
+    await chooseOption(user, "优先级", "紧急");
+    await chooseOption(user, "开始状态", "草稿");
     fireEvent.change(screen.getByLabelText("完成时间"), {
       target: { value: "2026-08-29T10:00" },
     });
     expect(screen.getByLabelText("标题")).toHaveValue("准备周报");
-    expect(screen.getByLabelText("负责人")).toHaveValue("user_employee");
-    expect(screen.getByLabelText("优先级")).toHaveValue("urgent");
+    expect(screen.getByRole("combobox", {name: /负责人/})).toHaveTextContent("Employee");
+    expect(screen.getByRole("combobox", {name: /优先级/})).toHaveTextContent("紧急");
     expect(screen.getByLabelText("完成时间")).toHaveValue("2026-08-29T10:00");
     await user.click(screen.getByRole("button", { name: "保存任务" }));
 

@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "preview:murmura": "node scripts/murmura-preview.mjs",
+    "preview:marketing": "node scripts/marketing-connected-preview.mjs",
+    "test:marketing": "node --test tests/marketing/*.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0",
@@ -55,7 +58,10 @@
     "usehooks-ts": "^3.1.1",
     "xlsx": "^0.18.5",
     "zod": "^4.4.3",
-    "zustand": "^5.0.9"
+    "zustand": "^5.0.9",
+    "@radix-ui/react-select": "^2.4.1",
+    "motion": "^14.6.0",
+    "lucide-react": "^1.61.0"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",

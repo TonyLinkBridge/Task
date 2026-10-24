@@ -12,6 +12,13 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("DeleteTaskButton", () => {
+  it("returns to the marketing board when that destination is supplied", async () => {
+    push.mockClear();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    render(<DeleteTaskButton taskId="one" deleteTaskAction={async()=>({ok:true})} redirectTo="/marketing/tasks" />);
+    await userEvent.click(screen.getByRole("button", { name: "删除任务" }));
+    expect(push).toHaveBeenCalledWith("/marketing/tasks");
+  });
   it("requires confirmation before permanently deleting a task", async () => {
     const user = userEvent.setup();
     const deleteAction = vi.fn(async () => ({ ok: true as const }));

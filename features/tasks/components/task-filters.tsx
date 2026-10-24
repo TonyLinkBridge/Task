@@ -1,3 +1,4 @@
+import { Select } from "@/components/ui/select";
 import Link from "next/link";
 
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -12,16 +13,18 @@ export function TaskFiltersBar({
   assignees,
   tasks,
   createTaskAction,
+  basePath = '/tasks',
 }: {
   filters: TaskFilters;
   assignees: AssignableUser[];
   tasks: TaskRecord[];
+  basePath?: '/tasks' | '/marketing/tasks';
   createTaskAction: (input: unknown) => Promise<
     { ok: true; data: TaskRecord } | { ok: false; message: string }
   >;
 }) {
   return (
-    <form action="/tasks" className="flex flex-wrap items-end gap-3 px-4 sm:px-6">
+    <form action={basePath} className="flex flex-wrap items-end gap-3 px-4 sm:px-6">
       <label className="grid min-w-56 flex-1 gap-1.5 text-xs text-muted-foreground">
         搜索任务
         <Input name="search" type="search" defaultValue={filters.search} placeholder="输入任务标题" />
@@ -30,26 +33,10 @@ export function TaskFiltersBar({
         项目／分类
         <Input name="project" defaultValue={filters.project ?? ""} placeholder="例如：内容运营" className="min-w-36" />
       </label>
-      <label className="grid gap-1.5 text-xs text-muted-foreground">
-        优先级
-        <select name="priority" defaultValue={filters.priority ?? ""} className="h-9 min-w-28 rounded-md border border-input bg-background px-2.5 text-sm text-foreground">
-          <option value="">全部</option>
-          <option value="urgent">紧急</option>
-          <option value="medium">重要</option>
-          <option value="low">普通</option>
-        </select>
-      </label>
-      <label className="grid gap-1.5 text-xs text-muted-foreground">
-        负责人
-        <select name="assignee" defaultValue={filters.assigneeId ?? ""} className="h-9 min-w-36 rounded-md border border-input bg-background px-2.5 text-sm text-foreground">
-          <option value="">所有人</option>
-          {assignees.map((assignee) => (
-            <option key={assignee.id} value={assignee.id}>{assignee.name}</option>
-          ))}
-        </select>
-      </label>
+      <Select label="优先级" name="priority" defaultValue={filters.priority??""} options={[{value:"",label:"全部"},{value:"urgent",label:"紧急"},{value:"medium",label:"重要"},{value:"low",label:"普通"}]} className="min-w-28" />
+      <Select label="负责人" name="assignee" defaultValue={filters.assigneeId??""} options={[{value:"",label:"所有人"},...assignees.map(a=>({value:a.id,label:a.name}))]} className="min-w-36" />
       <Button type="submit" variant="outline">筛选</Button>
-      <Link href="/tasks" className={cn(buttonVariants({ variant: "ghost" }), "h-9")}>清除</Link>
+      <Link href={basePath} className={cn(buttonVariants({ variant: "ghost" }), "h-9")}>清除</Link>
       <ImportExportDropdown tasks={tasks} assignees={assignees} createTaskAction={createTaskAction} />
     </form>
   );

@@ -1,5 +1,6 @@
 .worktrees/
-node_modules/
+node_modules
+.isolated/
 .next/
 out/
 build/
@@ -19,3 +20,6 @@ yarn-error.log*
 .env.local
 .env.*.local
 !.env.example
+
+# Local browser acceptance captures may contain account or internal content.
+preview/murmura/evidence/

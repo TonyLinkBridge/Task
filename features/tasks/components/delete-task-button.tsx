@@ -8,9 +8,11 @@ import type { DeleteTaskResult } from "@/features/tasks/action-service";
 
 export function DeleteTaskButton({
   taskId,
+  redirectTo = "/tasks",
   deleteTaskAction,
 }: {
   taskId: string;
+  redirectTo?: "/tasks" | "/marketing/tasks";
   deleteTaskAction: (taskId: string) => Promise<DeleteTaskResult>;
 }) {
   const router = useRouter();
@@ -33,7 +35,7 @@ export function DeleteTaskButton({
       setMessage(result.message);
       return;
     }
-    router.push("/tasks");
+    router.push(redirectTo);
     router.refresh();
   }
 

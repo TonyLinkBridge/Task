@@ -1,3 +1,4 @@
+import "@/features/marketing/marketing.css";
 import { HelpChrome } from "@/features/help-center/components/help-chrome";
 import { getVerifiedUser } from "@/lib/auth/get-verified-user";
 

@@ -27,17 +27,22 @@ export function ContentEditorReview({
   currentUser,
   admins,
   snapshotDocument,
+  onReviewCompleted,
 }: {
   content: ContentRecord;
   approvals: ContentApproval[];
   currentUser: VerifiedUser;
   admins: AssignableUser[];
   snapshotDocument: unknown | null;
+  onReviewCompleted?: () => void;
 }) {
   const router = useRouter();
   const [document, setDocument] = useState<unknown>(null);
   const [synchronized, setSynchronized] = useState(false);
-  const refresh = useCallback(() => router.refresh(), [router]);
+  const refresh = useCallback(() => {
+    onReviewCompleted?.();
+    router.refresh();
+  }, [router, onReviewCompleted]);
   const editable =
     content.status === "draft" || content.status === "changes_requested";
 

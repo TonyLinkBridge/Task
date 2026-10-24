@@ -30,6 +30,7 @@ export function ContentBoard({
     message: "暂时无法移动，请稍后再试。",
   }),
   onMoved,
+  basePath = "/content",
 }: {
   initialContents: ScheduledContent[];
   moveAction?: (
@@ -37,6 +38,7 @@ export function ContentBoard({
     status: "draft" | "changes_requested"
   ) => Promise<MoveResult>;
   onMoved?: () => void;
+  basePath?: "/content" | "/marketing/content";
 }) {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [movingId, setMovingId] = useState<string | null>(null);
@@ -104,7 +106,7 @@ export function ContentBoard({
                     onDragStart={() => setDraggedId(content.id)}
                     className="cursor-grab rounded-xl border bg-background p-4 shadow-xs active:cursor-grabbing"
                   >
-                    <Link href={`/content/${content.id}`} className="text-sm font-medium hover:underline">
+                    <Link href={`${basePath}/${content.id}`} className="text-sm font-medium hover:underline">
                       {content.title}
                     </Link>
                     <p className="mt-2 text-xs text-muted-foreground">

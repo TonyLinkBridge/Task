@@ -1,12 +1,12 @@
+import "@/features/marketing/marketing.css";
+import { MarketingShell } from "@/features/marketing/components/shell";
+import { MarketingRouteTransition } from "@/features/marketing/components/route-transition";
 import { z } from "zod";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { AppSidebar } from "@/components/app-shell/app-sidebar";
-import { TasksHeader } from "@/components/tasks/header/tasks-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { ArchiveTaskButton } from "@/features/tasks/components/archive-task-button";
 import { DeleteTaskButton } from "@/features/tasks/components/delete-task-button";
 import { TaskComments } from "@/features/tasks/components/task-comments";
@@ -61,14 +61,11 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
   );
 
   return (
-    <SidebarProvider>
-      <AppSidebar currentUser={currentUser} />
-      <div className="flex h-screen flex-1 flex-col overflow-hidden">
-        <TasksHeader currentUser={currentUser} />
-        <main className="flex-1 overflow-auto p-4 sm:p-6">
-          <div className="mx-auto max-w-4xl space-y-5">
+    <MarketingRouteTransition>
+      <MarketingShell currentUser={currentUser} active="tasks" title={task.title} description="查看任务资料、文件和留言。">
+        <div className="marketing-task-detail marketing-entry">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <Link href="/tasks" className={buttonVariants({ variant: "ghost" })}>
+              <Link href="/marketing/tasks" className={buttonVariants({ variant: "ghost" })}>
                 ← 返回任务看板
               </Link>
               <div className="flex items-center gap-2">
@@ -80,7 +77,7 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
                   />
                 ) : task.linkedContentId ? (
                   <Link
-                    href={`/content/${task.linkedContentId}`}
+                    href={`/marketing/content/${task.linkedContentId}`}
                     className={buttonVariants({ variant: "outline" })}
                   >
                     打开排期内容
@@ -90,6 +87,7 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
                   taskId={task.id}
                   taskKind={task.kind}
                   archiveTaskAction={archiveTask}
+                  redirectTo="/marketing/tasks"
                 />
                 {task.kind === "general" &&
                 (currentUser.role === "admin" ||
@@ -97,17 +95,17 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
                   <DeleteTaskButton
                     taskId={task.id}
                     deleteTaskAction={deleteTask}
+                    redirectTo="/marketing/tasks"
                   />
                 ) : null}
               </div>
             </div>
 
-            <section className="rounded-xl border bg-card p-5 sm:p-6">
+            <section aria-label="任务资料" className="rounded-xl border bg-card p-5 sm:p-6">
               <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary">{statusLabels[task.status]}</Badge>
                 <Badge variant="outline">{priorityLabels[task.priority]}</Badge>
               </div>
-              <h1 className="mt-4 text-2xl font-semibold">{task.title}</h1>
               <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-muted-foreground">
                 {task.description || "没有填写说明。"}
               </p>
@@ -126,7 +124,7 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground">完成时间</dt>
+                  <dt className="text-xs text-muted-foreground">截止时间</dt>
                   <dd className="mt-1 text-sm font-medium">
                     {timeFormatter.format(new Date(task.dueAt))}
                   </dd>
@@ -148,9 +146,8 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
                 finishUploadAction={finishTaskUpload}
               />
             ) : null}
-          </div>
-        </main>
-      </div>
-    </SidebarProvider>
+        </div>
+      </MarketingShell>
+    </MarketingRouteTransition>
   );
 }

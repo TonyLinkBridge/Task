@@ -1,3 +1,4 @@
+import { Select } from "@/components/ui/select";
 import Link from "next/link";
 
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -17,32 +18,9 @@ export function ScheduleFiltersBar({
 }) {
   return (
     <form action="/content" className="grid gap-3 rounded-xl border bg-card p-4 md:grid-cols-5">
-      <label className="grid gap-1.5 text-xs text-muted-foreground">
-        平台
-        <select name="platform" defaultValue={filters.platformId ?? ""} className="h-9 rounded-md border border-input bg-background px-2.5 text-sm text-foreground">
-          <option value="">全部平台</option>
-          {platforms.map((platform) => <option key={platform.id} value={platform.id}>{platform.name}</option>)}
-        </select>
-      </label>
-      <label className="grid gap-1.5 text-xs text-muted-foreground">
-        负责人
-        <select name="assignee" defaultValue={filters.assigneeId ?? ""} className="h-9 rounded-md border border-input bg-background px-2.5 text-sm text-foreground">
-          <option value="">所有人</option>
-          {assignees.map((assignee) => <option key={assignee.id} value={assignee.id}>{assignee.name}</option>)}
-        </select>
-      </label>
-      <label className="grid gap-1.5 text-xs text-muted-foreground">
-        状态
-        <select name="status" defaultValue={filters.status ?? ""} className="h-9 rounded-md border border-input bg-background px-2.5 text-sm text-foreground">
-          <option value="">全部状态</option>
-          <option value="draft">草稿</option>
-          <option value="in_review">等待审核</option>
-          <option value="changes_requested">需要修改</option>
-          <option value="approved">已经批准</option>
-          <option value="due">等待发布</option>
-          <option value="published">已经发布</option>
-        </select>
-      </label>
+      <Select label="平台" name="platform" defaultValue={filters.platformId??""} options={[{value:"",label:"全部平台"},...platforms.map(p=>({value:p.id,label:p.name}))]} />
+      <Select label="负责人" name="assignee" defaultValue={filters.assigneeId??""} options={[{value:"",label:"所有人"},...assignees.map(a=>({value:a.id,label:a.name}))]} />
+      <Select label="状态" name="status" defaultValue={filters.status??""} options={[{value:"",label:"全部状态"},{value:"draft",label:"草稿"},{value:"in_review",label:"等待审核"},{value:"changes_requested",label:"需要修改"},{value:"approved",label:"已经批准"},{value:"due",label:"等待发布"},{value:"published",label:"已经发布"}]} />
       <label className="grid gap-1.5 text-xs text-muted-foreground">
         从哪一天
         <input name="from" type="date" defaultValue={filters.from} className="h-9 rounded-md border border-input bg-background px-2.5 text-sm text-foreground" />

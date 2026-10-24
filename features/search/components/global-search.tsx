@@ -22,7 +22,7 @@ type SearchResult = {
   href: string;
 };
 
-export function GlobalSearch() {
+export function GlobalSearch({ mapHref }: { mapHref?: (href: string) => string } = {}) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -98,7 +98,7 @@ export function GlobalSearch() {
           {results.map((result) => (
             <Link
               key={`${result.type}:${result.id}`}
-              href={result.href}
+              href={mapHref ? mapHref(result.href) : result.href}
               onClick={() => setOpen(false)}
               className="flex items-center justify-between gap-3 rounded-lg border p-3 hover:bg-muted/60"
             >

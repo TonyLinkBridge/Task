@@ -14,6 +14,12 @@ describe("ArchiveTaskButton", () => {
     router.refresh.mockClear();
   });
 
+  it("returns to the marketing board without changing the default legacy destination", async () => {
+    render(<ArchiveTaskButton taskId="one" taskKind="general" redirectTo="/marketing/tasks" archiveTaskAction={async()=>({ok:true,data:{id:"one"}} as never)} />);
+    await userEvent.click(screen.getByRole("button", { name: "收起任务" }));
+    await userEvent.click(screen.getByRole("button", { name: "确认收起" }));
+    await waitFor(()=>expect(router.push).toHaveBeenCalledWith("/marketing/tasks"));
+  });
   it("asks for confirmation before archiving a normal task", async () => {
     const user = userEvent.setup();
     let archived = false;

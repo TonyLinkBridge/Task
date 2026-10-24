@@ -6,10 +6,11 @@ import { ChartsSection } from "./charts/charts-section";
 
 type MoveResult = { ok: true; data: TaskRecord } | { ok: false; message: string };
 
-export function TasksMain({ tasks, assignees, filters, createTaskAction, updateTaskAction, moveTaskAction }: {
+export function TasksMain({ tasks, assignees, filters, createTaskAction, updateTaskAction, moveTaskAction, basePath }: {
   tasks: TaskRecord[];
   assignees: AssignableUser[];
   filters: TaskFilters;
+  basePath?: '/tasks' | '/marketing/tasks';
   createTaskAction: (input: unknown) => Promise<MoveResult>;
   updateTaskAction: (id: string, input: unknown) => Promise<MoveResult>;
   moveTaskAction: (id: string, status: TaskStatus, position: number) => Promise<MoveResult>;
@@ -20,7 +21,7 @@ export function TasksMain({ tasks, assignees, filters, createTaskAction, updateT
     <div className="flex w-full flex-col gap-5 py-5">
       <StatsCards tasks={tasks} />
       <ChartsSection tasks={tasks} />
-      <TaskFiltersBar filters={filters} assignees={assignees} tasks={tasks} createTaskAction={createTaskAction} />
+      <TaskFiltersBar filters={filters} assignees={assignees} tasks={tasks} createTaskAction={createTaskAction} basePath={basePath} />
       <TaskBoard key={boardKey} initialTasks={tasks} assignees={assignees} createTaskAction={createTaskAction} updateTaskAction={updateTaskAction} moveTaskAction={moveTaskAction} />
     </div>
   );

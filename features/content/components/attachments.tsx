@@ -37,6 +37,7 @@ export function Attachments({
   requestUploadAction = unavailable,
   finishUploadAction = unavailable,
   editable = true,
+  presentation = "default",
 }: {
   contentId: string;
   attachments: ContentAttachment[];
@@ -50,6 +51,7 @@ export function Attachments({
     fileMeta: ContentFileMeta
   ) => Promise<FinishUploadResult>;
   editable?: boolean;
+  presentation?: "default" | "library";
 }) {
   const [attachments, setAttachments] = useState(initialAttachments);
   const [previewAttachment, setPreviewAttachment] =
@@ -108,8 +110,8 @@ export function Attachments({
   }
 
   return (
-    <section className="rounded-xl border bg-card p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <section className={presentation === "library" ? "marketing-library-files" : "rounded-xl border bg-card p-5"}>
+      {presentation !== "library" || editable ? <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="font-medium">文件</h2>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -137,7 +139,7 @@ export function Attachments({
             />
           </label>
         ) : null}
-      </div>
+      </div> : null}
 
       <div className="mt-4 space-y-2">
         {attachments.map((attachment) => {
@@ -147,8 +149,9 @@ export function Attachments({
           return (
             <div
               key={attachment.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-muted/50 px-3 py-2"
+              className={presentation === "library" ? "marketing-library-file" : "flex flex-wrap items-center justify-between gap-3 rounded-lg bg-muted/50 px-3 py-2"}
             >
+              {canPreview && presentation === "library" ? <button type="button" className="marketing-file-thumbnail" aria-label={`预览图片 ${attachment.fileName}`} onClick={() => setPreviewAttachment(attachment)}><Image src={`/api/files/${attachment.id}?mode=preview`} alt="" width={640} height={360} sizes="(max-width:760px) 90vw, 280px" unoptimized /></button> : null}
               {canPreview ? (
                 <button
                   type="button"
@@ -165,7 +168,7 @@ export function Attachments({
               )}
               <div className="ml-auto flex shrink-0 items-center gap-2">
                 <span className="text-xs text-muted-foreground">
-                  {(attachment.byteSize / 1024 / 1024).toFixed(1)} MB
+                  {attachment.byteSize < 1024 * 1024 ? `${(attachment.byteSize / 1024).toFixed(1)} KB` : `${(attachment.byteSize / 1024 / 1024).toFixed(1)} MB`}
                 </span>
                 {canPreview ? (
                   <Button

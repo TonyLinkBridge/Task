@@ -89,7 +89,6 @@ describe("notification settings actions", () => {
 
   it("explains when the app has not joined a private channel", async () => {
     const actions = makeNotificationSettingsActions({
-      ...setup().actions,
       getVerifiedUser: async () => ({
         id: "admin-a",
         role: "admin",
@@ -105,7 +104,7 @@ describe("notification settings actions", () => {
       }),
       recordAudit: async () => undefined,
       revalidatePath: () => undefined,
-    } as never);
+    });
 
     await expect(
       actions.saveNotificationSettings({

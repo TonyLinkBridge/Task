@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -20,9 +21,10 @@ export function HelpMobileNavigation({
   navigation: HelpCategory[];
   currentSlug: string;
 }) {
+  const [open, setOpen] = useState(false);
   return (
     <div className="mb-5 lg:hidden">
-      <Sheet>
+      <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger render={<Button type="button" variant="outline" />}>
           打开文章目录
         </SheetTrigger>
@@ -32,7 +34,7 @@ export function HelpMobileNavigation({
             <SheetDescription>选择要查看的帮助文章。</SheetDescription>
           </SheetHeader>
           <div className="mt-6">
-            <HelpTableOfContents navigation={navigation} currentSlug={currentSlug} />
+            <HelpTableOfContents navigation={navigation} currentSlug={currentSlug} onNavigate={() => setOpen(false)} />
           </div>
         </SheetContent>
       </Sheet>

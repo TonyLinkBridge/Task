@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 
 import { FormEvent, useMemo, useState } from "react";
 
@@ -180,20 +181,7 @@ export function ContentForm({
         className="grid items-start gap-4 sm:grid-cols-2"
       >
         <div className="grid gap-2">
-          <Label htmlFor="content-assignee">负责人</Label>
-          <select
-            id="content-assignee"
-            value={assigneeId}
-            onChange={(event) => setAssigneeId(event.target.value)}
-            required
-            className="h-9 rounded-md border border-input bg-background px-2.5 text-sm"
-          >
-            {assignees.map((assignee) => (
-              <option key={assignee.id} value={assignee.id}>
-                {assignee.name}
-              </option>
-            ))}
-          </select>
+          <Select id="content-assignee" label="负责人" value={assigneeId} onValueChange={setAssigneeId} required options={assignees.map(a=>({value:a.id,label:a.name}))} />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="content-publish-at">发布时间</Label>

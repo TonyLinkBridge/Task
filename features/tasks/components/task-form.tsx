@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 
 import { Add01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -190,59 +191,14 @@ export function TaskForm({
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
             <div className="grid gap-2">
-              <Label htmlFor="task-assignee">负责人</Label>
-              <select
-                id="task-assignee"
-                value={assigneeId}
-                onChange={(event) => {
-                  const nextPrimary = event.target.value;
-                  setAssigneeId(nextPrimary);
-                  setAdditionalAssigneeIds((current) =>
-                    current.filter((id) => id !== nextPrimary)
-                  );
-                }}
-                required
-                className="h-9 rounded-md border border-input bg-background px-2.5 text-sm"
-              >
-                {assignees.map((assignee) => (
-                  <option key={assignee.id} value={assignee.id}>
-                    {assignee.name}
-                  </option>
-                ))}
-              </select>
+              <Select id="task-assignee" label="负责人" value={assigneeId} onValueChange={(nextPrimary)=>{setAssigneeId(nextPrimary);setAdditionalAssigneeIds(current=>current.filter(id=>id!==nextPrimary));}} required options={assignees.map(a=>({value:a.id,label:a.name}))} />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="task-priority">优先级</Label>
-              <select
-                id="task-priority"
-                value={priority}
-                onChange={(event) =>
-                  setPriority(event.target.value as TaskRecord["priority"])
-                }
-                className="h-9 rounded-md border border-input bg-background px-2.5 text-sm"
-              >
-                <option value="low">普通</option>
-                <option value="medium">重要</option>
-                <option value="urgent">紧急</option>
-              </select>
+              <Select id="task-priority" label="优先级" value={priority} onValueChange={next=>setPriority(next as TaskRecord["priority"])} options={[{value:"low",label:"普通"},{value:"medium",label:"重要"},{value:"urgent",label:"紧急"}]} />
             </div>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="task-status">开始状态</Label>
-            <select
-              id="task-status"
-              value={status}
-              onChange={(event) =>
-                setStatus(event.target.value as TaskRecord["status"])
-              }
-              className="h-9 rounded-md border border-input bg-background px-2.5 text-sm"
-            >
-              <option value="draft">草稿</option>
-              <option value="todo">还没开始</option>
-              <option value="in_progress">正在做</option>
-              <option value="review">等人检查</option>
-              <option value="done">已经完成</option>
-            </select>
+            <Select id="task-status" label="开始状态" value={status} onValueChange={next=>setStatus(next as TaskRecord["status"])} options={[{value:"draft",label:"草稿"},{value:"todo",label:"还没开始"},{value:"in_progress",label:"正在做"},{value:"review",label:"等人检查"},{value:"done",label:"已经完成"}]} />
           </div>
           <fieldset className="grid gap-2 rounded-lg border p-3">
             <legend className="px-1 text-sm font-medium">共同负责人（可不选）</legend>

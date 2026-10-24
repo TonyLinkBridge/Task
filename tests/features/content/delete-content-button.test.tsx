@@ -12,6 +12,13 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("DeleteContentButton", () => {
+  it('returns marketing content to the new content list after the canonical delete action succeeds', async () => {
+    push.mockClear();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<DeleteContentButton contentId="22222222-2222-4222-8222-222222222222" deleteAction={async () => ({ ok: true })} redirectTo="/marketing/calendar?view=list" />);
+    await userEvent.click(screen.getByRole('button', { name: '删除内容' }));
+    expect(push).toHaveBeenCalledWith('/marketing/calendar?view=list');
+  });
   it("warns that Slack notifications disappear before permanently deleting", async () => {
     const user = userEvent.setup();
     const deleteAction = vi.fn(async () => ({ ok: true as const }));

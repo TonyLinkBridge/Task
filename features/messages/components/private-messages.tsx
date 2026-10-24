@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 
 import { BubbleChatUserIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -104,21 +105,7 @@ export function PrivateMessages() {
         </DialogHeader>
 
         <form className="grid gap-3 rounded-lg border p-3" onSubmit={sendMessage}>
-          <label className="grid gap-1.5 text-sm">
-            发给
-            <select
-              value={recipientId}
-              onChange={(event) => setRecipientId(event.target.value)}
-              className="h-9 rounded-md border border-input bg-background px-2.5"
-              required
-            >
-              {members.map((member) => (
-                <option key={member.id} value={member.id}>
-                  {member.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <Select label="发给" value={recipientId} onValueChange={setRecipientId} required options={members.map(m=>({value:m.id,label:m.name}))} />
           <label className="grid gap-1.5 text-sm">
             消息
             <textarea

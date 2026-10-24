@@ -1,0 +1,4 @@
+import { MarketingIcon, type MarketingIconName } from './icon';
+export function MarketingPageHeading({title,stats,action}:{title:string;stats:{label:string;value:number;icon:MarketingIconName}[];action?:React.ReactNode}){
+  return <header className="marketing-overview-head marketing-page-hero"><h1 className="marketing-title" aria-label={title.replace('\n',' ')}>{title.split('\n').map((word,index)=><span key={word}>{index>0?<br/>:null}<span className="word" aria-hidden="true">{Array.from(word).map((letter,i)=><span className="ch" key={i}>{letter}</span>)}</span></span>)}</h1><dl className="marketing-head-stats">{stats.map(stat=><div className="marketing-head-stat" key={stat.label}><span className="marketing-stat-icon"><MarketingIcon name={stat.icon}/></span><div><dd>{stat.value}</dd><dt>{stat.label}</dt></div></div>)}</dl>{action}</header>;
+}

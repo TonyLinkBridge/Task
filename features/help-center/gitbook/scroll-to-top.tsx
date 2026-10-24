@@ -12,7 +12,7 @@ export function HelpScrollToTop() {
       className="mt-6 w-full"
       onClick={(event) => {
         const main = event.currentTarget.closest("main");
-        if (main) {
+        if (main && main.id !== "marketing-main") {
           main.scrollTo({ top: 0, behavior: "smooth" });
           return;
         }

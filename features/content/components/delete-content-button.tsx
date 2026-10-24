@@ -9,9 +9,11 @@ import type { ContentDeleteResult } from "@/features/content/action-service";
 export function DeleteContentButton({
   contentId,
   deleteAction,
+  redirectTo = '/content',
 }: {
   contentId: string;
   deleteAction: (contentId: string) => Promise<ContentDeleteResult>;
+  redirectTo?: '/content' | '/marketing' | '/marketing/calendar?view=list';
 }) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -34,7 +36,7 @@ export function DeleteContentButton({
       setMessage(result.message);
       return;
     }
-    router.push("/content");
+    router.push(redirectTo);
     router.refresh();
   }
 

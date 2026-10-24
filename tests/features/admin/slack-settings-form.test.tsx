@@ -1,3 +1,4 @@
+import { chooseOption } from "@/tests/helpers/choose-option";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
@@ -54,7 +55,7 @@ describe("SlackSettingsForm", () => {
       />
     );
 
-    await user.selectOptions(screen.getByLabelText("Slack 通知频道"), "C001");
+    await chooseOption(user, "Slack 通知频道", "#content-review");
     await user.clear(screen.getByLabelText("提前多少分钟提醒"));
     await user.type(screen.getByLabelText("提前多少分钟提醒"), "60");
     await user.click(screen.getByRole("button", { name: "保存 Slack 设置" }));

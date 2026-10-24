@@ -5,6 +5,15 @@ import { describe, expect, it, vi } from "vitest";
 import { Attachments } from "@/features/content/components/attachments";
 
 describe("Attachments", () => {
+  it("opens the original preview from a library thumbnail without showing an upload form", async () => {
+    render(<Attachments contentId="one" editable={false} presentation="library" attachments={[{id:"file-one",contentId:"one",storagePath:"one/photo.png",fileName:"photo.png",mimeType:"image/png",byteSize:2048,uploaderId:"employee",createdAt:"2026-10-25T00:00:00Z"}]} />);
+    expect(screen.queryByText("文件", {exact:true})).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("上传文件")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button",{name:"预览图片 photo.png"}));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByRole("img",{name:"photo.png 预览"})).toHaveAttribute("src","/api/files/file-one?mode=preview");
+    expect(screen.getByText("2.0 KB")).toBeInTheDocument();
+  });
   it("restores the upload button when the server request rejects", async () => {
     const user = userEvent.setup();
     render(

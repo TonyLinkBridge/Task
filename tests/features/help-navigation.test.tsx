@@ -81,6 +81,13 @@ describe("help article navigation", () => {
     expect(screen.getByRole("dialog")).toHaveTextContent(article.title);
   });
 
+  it("closes the mobile directory after choosing an article", () => {
+    render(<HelpMobileNavigation navigation={getHelpNavigation()} currentSlug={article.slug} />);
+    fireEvent.click(screen.getByRole("button", { name: "打开文章目录" }));
+    fireEvent.click(screen.getByRole("link", { name: article.title }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("shows the current article outline on mobile", () => {
     render(
       <HelpMobilePageOutline

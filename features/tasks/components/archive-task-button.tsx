@@ -20,6 +20,7 @@ type ArchiveResult =
 
 export function ArchiveTaskButton({
   taskId,
+  redirectTo = "/tasks",
   taskKind,
   archiveTaskAction = async () => ({
     ok: false,
@@ -27,6 +28,7 @@ export function ArchiveTaskButton({
   }),
 }: {
   taskId: string;
+  redirectTo?: "/tasks" | "/marketing/tasks";
   taskKind: TaskKind;
   archiveTaskAction?: (taskId: string) => Promise<ArchiveResult>;
 }) {
@@ -53,7 +55,7 @@ export function ArchiveTaskButton({
       return;
     }
     setOpen(false);
-    router.push("/tasks");
+    router.push(redirectTo);
     router.refresh();
   }
 

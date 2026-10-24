@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/components/ui/select";
 
 import { FormEvent, useState } from "react";
 
@@ -101,21 +102,7 @@ export function SlackSettingsForm({
       <form className="space-y-5" onSubmit={save}>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="grid gap-2">
-            <Label htmlFor="slack-channel">Slack 通知频道</Label>
-            <select
-              id="slack-channel"
-              value={channelId}
-              onChange={(event) => setChannelId(event.target.value)}
-              required
-              className="h-9 rounded-md border border-input bg-background px-2.5 text-sm"
-            >
-              <option value="">请选择频道</option>
-              {channels.map((channel) => (
-                <option key={channel.id} value={channel.id}>
-                  #{channel.name}{channel.isPrivate ? "（私人）" : ""}
-                </option>
-              ))}
-            </select>
+            <Select id="slack-channel" label="Slack 通知频道" placeholder="请选择频道" value={channelId} onValueChange={setChannelId} required options={channels.map(c=>({value:c.id,label:`#${c.name}${c.isPrivate?"（私人）":""}`}))} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="reminder-minutes">提前多少分钟提醒</Label>

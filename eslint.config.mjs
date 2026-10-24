@@ -10,9 +10,13 @@ const eslintConfig = defineConfig([
     // Default ignores of eslint-config-next:
     ".next/**",
     ".worktrees/**",
+    ".isolated/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Browser-delivered third-party reference bundles; integrity checked by test:marketing.
+    "preview/murmura/site/**",
+    "public/marketing-assets/motion.mjs",
   ]),
 ]);
 

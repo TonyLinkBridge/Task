@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import type { InAppNotification } from "@/features/notifications/in-app-types";
+import { announceNotificationsRead, onNotificationsRead } from '@/features/notifications/read-state-events';
 
 const dateFormatter = new Intl.DateTimeFormat("zh-MY", {
   timeZone: "Asia/Kuala_Lumpur",
@@ -21,10 +22,15 @@ const dateFormatter = new Intl.DateTimeFormat("zh-MY", {
   timeStyle: "short",
 });
 
-export function NotificationCenter() {
+export function NotificationCenter({ mapHref }: { mapHref?: (href: string) => string } = {}) {
   const [notifications, setNotifications] = useState<InAppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isMarking, setIsMarking] = useState(false);
+
+  useEffect(() => onNotificationsRead(readAt => {
+    setNotifications(current => current.map(item => ({ ...item, readAt: item.readAt ?? readAt })));
+    setUnreadCount(0);
+  }), []);
 
   useEffect(() => {
     let active = true;
@@ -51,6 +57,7 @@ export function NotificationCenter() {
       current.map((notification) => ({ ...notification, readAt }))
     );
     setUnreadCount(0);
+    announceNotificationsRead(readAt);
   }
 
   return (
@@ -90,7 +97,7 @@ export function NotificationCenter() {
           {notifications.map((notification) => (
             <Link
               key={notification.id}
-              href={notification.href}
+              href={mapHref ? mapHref(notification.href) : notification.href}
               className={`block rounded-lg border p-3 hover:bg-muted/60 ${
                 notification.readAt ? "opacity-70" : "border-primary/40 bg-primary/5"
               }`}

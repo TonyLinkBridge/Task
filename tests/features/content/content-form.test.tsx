@@ -1,3 +1,4 @@
+import { chooseOption } from "@/tests/helpers/choose-option";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
@@ -90,7 +91,7 @@ describe("ContentForm", () => {
 
     await user.type(screen.getByLabelText("标题"), "新品贴文");
     await user.click(screen.getByLabelText("Instagram"));
-    await user.selectOptions(screen.getByLabelText("负责人"), "employee");
+    await chooseOption(user, "负责人", "员工");
     fireEvent.change(screen.getByLabelText("发布时间"), {
       target: { value: "2026-08-29T10:00" },
     });
@@ -180,7 +181,7 @@ describe("ContentForm", () => {
 
     expect(screen.getByLabelText("标题")).toHaveValue("旧标题");
     expect(screen.getByLabelText("Instagram")).toBeChecked();
-    expect(screen.getByLabelText("负责人")).toHaveValue("employee");
+    expect(screen.getByRole("combobox", {name: /负责人/})).toHaveTextContent("员工");
     expect(screen.getByLabelText("发布时间")).toHaveValue("2026-08-29T10:00");
     expect(screen.getByText("保存后会同步更新发布任务。")).toBeInTheDocument();
 
@@ -188,7 +189,7 @@ describe("ContentForm", () => {
     await user.type(screen.getByLabelText("标题"), "新标题");
     await user.click(screen.getByLabelText("Instagram"));
     await user.click(screen.getByLabelText("LinkedIn"));
-    await user.selectOptions(screen.getByLabelText("负责人"), "employee-2");
+    await chooseOption(user, "负责人", "另一位员工");
     fireEvent.change(screen.getByLabelText("发布时间"), {
       target: { value: "2026-08-30T12:30" },
     });

@@ -1,0 +1,26 @@
+import { readFile, mkdir, copyFile, writeFile, readdir } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const source=path.join(root,'preview/murmura/site');
+const target=path.join(root,'public/marketing-assets');
+const manifest=JSON.parse(await readFile(path.join(root,'preview/murmura/source-manifest.json'),'utf8'));
+const entry=manifest.find(file=>file.name==='index-CZLmpGJs.js');
+const bytes=await readFile(path.join(source,'assets',entry.name));
+if(createHash('sha256').update(bytes).digest('hex')!==entry.sha256)throw Error('MURMURA_SOURCE_CHANGED');
+const code=bytes.toString('utf8');
+const start=code.indexOf('function e(e){');
+const end=code.indexOf('var Za=matchMedia');
+if(start<0||end<start||!code.slice(start,end).includes('var U=Zn.registerPlugin'))throw Error('MURMURA_MOTION_BOUNDARY_CHANGED');
+await mkdir(target,{recursive:true});
+await writeFile(path.join(target,'motion.mjs'), '/* GSAP/Flip 3.15.0 from the recorded Murmura public browser bundle. Original vendor/template attribution: preview/murmura/THIRD_PARTY_NOTICES.md. Application/demo initialization is excluded. */\n'+code.slice(start,end)+'\nexport {U as gsap, Xa as Flip};\n');
+const html=await readFile(path.join(source,'index.html'),'utf8');
+const svg=html.match(/<span class="brand__mark"[^>]*>(<svg[\s\S]*?<\/svg>)/)?.[1];
+if(!svg)throw Error('MURMURA_BRAND_MISSING');
+await writeFile(path.join(target,'brand.svg'),svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#f6f7f5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" '));
+for(const name of await readdir(path.join(source,'fonts')))await copyFile(path.join(source,'fonts',name),path.join(target,name));
+const fonts=(await readFile(path.join(source,'fonts.css'),'utf8')).replaceAll('/murmura/fonts/','/marketing-assets/');
+await writeFile(path.join(root,'features/marketing/fonts.css'),fonts);
+console.log('Prepared original motion runtime, source mark and local fonts for connected marketing routes.');
