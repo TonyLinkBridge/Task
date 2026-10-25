@@ -9,6 +9,7 @@ import type { VerifiedUser } from '@/lib/auth/types';
 type Dependencies = {
   getVerifiedUser(): Promise<VerifiedUser>;
   find(id: string): Promise<ContentRecord | null>;
+  isArchived(id: string): Promise<boolean>;
   listApprovals(id: string): Promise<ContentApprovalView[]>;
   listHistory(id: string): Promise<ContentReviewEventView[]>;
   listComments(id: string): Promise<ContentCommentView[]>;
@@ -23,6 +24,11 @@ type Dependencies = {
 
 export function makeMarketingContentQueries(dependencies: Dependencies) {
   return {
+    async isArchived(id: string) {
+      await dependencies.getVerifiedUser();
+      if (!z.uuid().safeParse(id).success) return false;
+      return dependencies.isArchived(id);
+    },
     async creation() {
       const currentUser = await dependencies.getVerifiedUser();
       const [platforms, assignees] = await Promise.all([dependencies.listPlatforms(), dependencies.listAssignees()]);

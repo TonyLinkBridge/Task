@@ -245,3 +245,13 @@ describe("mapPlatformRow", () => {
     });
   });
 });
+
+it('distinguishes archived records from active and missing contents without hiding archived rows',async()=>{
+ let row:{id:string;status:string;archived_at:string|null}|null={id:contentId,status:'archived',archived_at:'now'};
+ const q={select:()=>q,eq:()=>q,maybeSingle:async()=>({data:row,error:null})};
+ const repository=createContentRepository({from:()=>q} as never);
+ expect(await repository.isArchived(contentId)).toBe(true);
+ row={id:contentId,status:'draft',archived_at:null};expect(await repository.isArchived(contentId)).toBe(false);
+ row={id:contentId,status:'draft',archived_at:'now'};expect(await repository.isArchived(contentId)).toBe(true);
+ row=null;expect(await repository.isArchived(contentId)).toBe(false);
+});

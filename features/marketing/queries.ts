@@ -8,6 +8,7 @@ import { makeMarketingContentQueries } from './content-query-service';
 export const marketingContentQueries = makeMarketingContentQueries({
   getVerifiedUser,
   find: id => contentRepository.find(id),
+  isArchived: id => contentRepository.isArchived(id),
   listApprovals: id => approvalRepository.listApprovals(id),
   listHistory: id => approvalRepository.listHistory(id),
   listComments: id => contentRepository.listComments(id),

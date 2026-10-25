@@ -272,6 +272,13 @@ export function createContentRepository(
       return mapContentRow(assertData(data as ContentRow | null, error));
     },
 
+    async isArchived(id: string): Promise<boolean> {
+      const { data, error } = await client().from("contents")
+        .select("id,status,archived_at").eq("id", id).maybeSingle();
+      if (error) throw new Error(`CONTENT_DATABASE_ERROR:${error.message}`);
+      return Boolean(data && (data.status === "archived" || data.archived_at != null));
+    },
+
     async find(id: string): Promise<ContentRecord | null> {
       const { data, error } = await client()
         .from("contents")

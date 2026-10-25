@@ -1,0 +1,13 @@
+import {beforeEach,it,expect,vi} from 'vitest';
+const state=vi.hoisted(()=>({detail:vi.fn(),archived:vi.fn()}));
+vi.mock('next/navigation',()=>({redirect:(path:string)=>{throw Error('REDIRECT:'+path);},notFound:()=>{throw Error('NOT_FOUND');}}));
+vi.mock('@/features/marketing/queries',()=>({marketingContentQueries:{detail:state.detail,isArchived:state.archived}}));
+vi.mock('@/features/marketing/components/shell',()=>({MarketingShell:()=>null}));
+vi.mock('@/features/marketing/components/content-workspace',()=>({MarketingContentWorkspace:()=>null}));
+vi.mock('@/features/content/components/delete-content-button',()=>({DeleteContentButton:()=>null}));
+vi.mock('@/features/content/actions/content',()=>({deleteScheduledContent:vi.fn()}));
+import Page from '@/app/(protected)/marketing/content/[contentId]/page';
+const id='22222222-2222-4222-8222-222222222222';
+beforeEach(()=>{vi.clearAllMocks();state.detail.mockResolvedValue(null);});
+it('redirects an archived detail during automatic refresh and direct visits',async()=>{state.archived.mockResolvedValue(true);await expect(Page({params:Promise.resolve({contentId:id})})).rejects.toThrow('REDIRECT:/marketing/calendar?view=list');expect(state.archived).toHaveBeenCalledWith(id);});
+it('keeps 404 for a genuinely missing content',async()=>{state.archived.mockResolvedValue(false);await expect(Page({params:Promise.resolve({contentId:id})})).rejects.toThrow('NOT_FOUND');});

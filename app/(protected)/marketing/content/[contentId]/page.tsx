@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { MarketingShell } from '@/features/marketing/components/shell';
 import { MarketingContentWorkspace } from '@/features/marketing/components/content-workspace';
 import { marketingContentQueries } from '@/features/marketing/queries';
@@ -10,7 +10,12 @@ const labels = {draft:'草稿',in_review:'等待审核',changes_requested:'需�
 export default async function MarketingContentDetailPage({ params }: { params: Promise<{contentId:string}> }) {
   const { contentId }=await params;
   const detail=await marketingContentQueries.detail(contentId);
-  if (!detail) notFound();
+  if (!detail) {
+    // Room permission changes can refresh this route before the initiating
+    // action's client callback. Handle archived links at the server boundary.
+    if (await marketingContentQueries.isArchived(contentId)) redirect('/marketing/calendar?view=list');
+    notFound();
+  }
   const { content }=detail;
   return <MarketingShell currentUser={detail.currentUser} active={content.status === 'in_review' ? 'approvals' : 'compose'} title={content.title} description="内容正文、指定文字留言、文件与审核记录。">
     <section className="marketing-summary marketing-entry">

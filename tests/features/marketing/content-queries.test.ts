@@ -8,7 +8,7 @@ function setup() {
  const currentFiles=[{id:'current-file',mimeType:'image/png'}], fixedFiles=[{id:'submitted-file',mimeType:'image/png'}];
  const dependencies={
   getVerifiedUser:vi.fn(async()=>({id:'admin-a',role:'admin' as const,name:'上司A',imageUrl:null})),
-  find:vi.fn(async()=>content),listApprovals:vi.fn(async()=>[]),listHistory:vi.fn(async()=>[]),listComments:vi.fn(async()=>[]),
+  find:vi.fn(async()=>content),isArchived:vi.fn(async()=>true),listApprovals:vi.fn(async()=>[]),listHistory:vi.fn(async()=>[]),listComments:vi.fn(async()=>[]),
   listAttachments:vi.fn(async()=>currentFiles),listPlatforms:vi.fn(async()=>[]),listPlatformIds:vi.fn(async()=>[]),listAssignees:vi.fn(async()=>[]),
   findVersion:vi.fn(async()=>[{type:'paragraph',content:'固定审核版本'}]),listVersionAttachments:vi.fn(async()=>fixedFiles),now:()=>new Date('2026-10-24T12:00:00Z'),
  };
@@ -43,3 +43,5 @@ describe('marketing content queries',()=>{
   expect(dependencies.findVersion).not.toHaveBeenCalled();
  });
 });
+
+it('only checks archived state for verified users and valid ids',async()=>{const {queries,dependencies}=setup();expect(await queries.isArchived('invalid-id')).toBe(false);expect(dependencies.isArchived).not.toHaveBeenCalled();expect(await queries.isArchived(id)).toBe(true);expect(dependencies.isArchived).toHaveBeenCalledWith(id);dependencies.isArchived.mockClear();dependencies.getVerifiedUser.mockRejectedValueOnce(Error('NOT_SIGNED_IN'));await expect(queries.isArchived(id)).rejects.toThrow('NOT_SIGNED_IN');expect(dependencies.isArchived).not.toHaveBeenCalled();});
