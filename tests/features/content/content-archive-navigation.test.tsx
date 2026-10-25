@@ -1,0 +1,16 @@
+import {render,screen} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import {beforeEach,it,expect,vi} from 'vitest';
+import type {ContentRecord} from '@/features/content/types';
+const state=vi.hoisted(()=>({replace:vi.fn(),refresh:vi.fn(),archive:vi.fn()}));
+vi.mock('next/navigation',()=>({useRouter:()=>({replace:state.replace,refresh:state.refresh})}));
+vi.mock('@/features/approval/actions',()=>({approveContent:vi.fn(),archiveContent:state.archive,markPublished:vi.fn(),requestChanges:vi.fn(),submitForReview:vi.fn(),unlockApprovedContent:vi.fn()}));
+vi.mock('@/features/content/actions/inline-threads',()=>({clearResolvedComments:vi.fn()}));
+vi.mock('@/features/content/components/blocknote-editor',()=>({BlockNoteEditor:()=>null}));
+vi.mock('@/features/content/components/snapshot-viewer',()=>({SnapshotViewer:()=>null}));
+import {ContentEditorReview} from '@/features/content/components/content-editor-review';
+const content:ContentRecord={id:'22222222-2222-4222-8222-222222222222',title:'Archive sample',status:'draft',authorId:'me',assigneeId:'me',publishAt:'2027-01-01T00:00:00Z',liveblocksRoomId:'room',currentVersion:0,requiredApprovals:1,requestedReviewerId:null,publishedBy:null,publishedAt:null,linkedTaskId:null,archivedAt:null,createdAt:'now',updatedAt:'now'};
+const props={content,approvals:[],currentUser:{id:'me',role:'admin' as const,name:'Admin',imageUrl:null},admins:[],snapshotDocument:null};
+beforeEach(()=>vi.clearAllMocks());
+it('returns to the content list after archiving instead of refreshing an unavailable detail',async()=>{const broadcast=vi.fn();state.archive.mockResolvedValueOnce({ok:true,data:{...content,status:'archived',archivedAt:'now'}});render(<ContentEditorReview {...props} onReviewCompleted={broadcast}/>);await userEvent.click(screen.getByRole('button',{name:'收起内容'}));expect(state.replace).toHaveBeenCalledWith('/marketing/calendar?view=list');expect(state.refresh).not.toHaveBeenCalled();expect(broadcast).toHaveBeenCalledOnce();});
+it('stays on the content and shows the error if archiving fails',async()=>{state.archive.mockResolvedValueOnce({ok:false,message:'暂时无法收起。'});render(<ContentEditorReview {...props}/>);await userEvent.click(screen.getByRole('button',{name:'收起内容'}));expect(await screen.findByText('暂时无法收起。')).toBeInTheDocument();expect(state.replace).not.toHaveBeenCalled();expect(state.refresh).not.toHaveBeenCalled();});

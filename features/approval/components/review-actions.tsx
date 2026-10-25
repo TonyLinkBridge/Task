@@ -52,7 +52,7 @@ export function ReviewActions({
   unlockAction?: (contentId: string) => Promise<ApprovalActionResult>;
   publishAction?: (contentId: string) => Promise<ApprovalActionResult>;
   archiveAction?: (contentId: string) => Promise<ApprovalActionResult>;
-  onCompleted?: () => void;
+  onCompleted?: (updatedContent: ContentRecord) => void;
 }) {
   const [reviewerId, setReviewerId] = useState(
     content.requestedReviewerId ?? currentUser.id
@@ -95,7 +95,7 @@ export function ReviewActions({
       return;
     }
     setMessage("已经保存。 ");
-    onCompleted?.();
+    onCompleted?.(result.data);
   }
 
   return (

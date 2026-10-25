@@ -39,9 +39,13 @@ export function ContentEditorReview({
   const router = useRouter();
   const [document, setDocument] = useState<unknown>(null);
   const [synchronized, setSynchronized] = useState(false);
-  const refresh = useCallback(() => {
+  const refresh = useCallback((updatedContent: ContentRecord) => {
     onReviewCompleted?.();
-    router.refresh();
+    if (updatedContent.status === "archived") {
+      router.replace("/marketing/calendar?view=list");
+    } else {
+      router.refresh();
+    }
   }, [router, onReviewCompleted]);
   const editable =
     content.status === "draft" || content.status === "changes_requested";
