@@ -1,0 +1,13 @@
+import{act,render,screen}from'@testing-library/react';
+import{afterEach,beforeEach,expect,it,vi}from'vitest';
+import{MarketingMotion}from'@/features/marketing/components/motion';
+import{RouteMotionContext}from'@/features/marketing/components/route-context';
+const mock=vi.hoisted(()=>({load:vi.fn(),ready:vi.fn()}));
+vi.mock('@/features/marketing/motion-runtime',()=>({loadMarketingMotion:mock.load,getReadyMarketingMotion:mock.ready}));
+vi.mock('next/navigation',()=>({usePathname:()=>'/marketing/content/new'}));
+let resolve!:(value:never)=>void;
+beforeEach(()=>{mock.load.mockReset();mock.ready.mockReturnValue(undefined);mock.load.mockReturnValue(new Promise(r=>{resolve=r;}));});
+afterEach(()=>vi.useRealTimers());
+const body=<main><h1 className="marketing-title"><span className="ch">C</span></h1><div className="marketing-create-grid marketing-entry"><section data-testid="panel">编辑</section><aside>预览</aside></div></main>;
+it('prepares before paint, animates panels individually and waits for the outgoing view',async()=>{const fromTo=vi.fn();const gsap={to:vi.fn(),fromTo,context:(fn:()=>void)=>{fn();return{revert:vi.fn()};}};const snapshot={targetPath:'/marketing/content/new',mount:vi.fn(),play:vi.fn(),dispose:vi.fn()};render(<RouteMotionContext.Provider value={{pendingHref:null,snapshot:{current:snapshot},takeSnapshot:vi.fn()}}><MarketingMotion>{body}</MarketingMotion></RouteMotionContext.Provider>);expect(screen.getByTestId('panel')).toHaveStyle({opacity:'0'});expect(screen.getByTestId('marketing-motion')).toHaveStyle({visibility:'hidden'});await act(async()=>resolve(gsap as never));const panels=fromTo.mock.calls.find(call=>(call[0] as Element[])[0]?.tagName==='SECTION')!;expect(panels[0]).toHaveLength(2);expect(panels[2]).toMatchObject({delay:.28,stagger:.08,duration:.9});});
+it('fails open within a bounded delay and never hides content again when the runtime arrives late',async()=>{vi.useFakeTimers();const fromTo=vi.fn();render(<MarketingMotion>{body}</MarketingMotion>);await act(()=>vi.advanceTimersByTimeAsync(181));expect(screen.getByTestId('marketing-motion')).toHaveAttribute('data-motion-state','ready');expect(screen.getByTestId('panel').style.opacity).toBe('');await act(async()=>resolve({fromTo,context:(fn:()=>void)=>{fn();return{revert:vi.fn()};}} as never));expect(fromTo).not.toHaveBeenCalled();expect(screen.getByTestId('panel').style.opacity).toBe('');});

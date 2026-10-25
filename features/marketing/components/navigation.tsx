@@ -1,7 +1,8 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { Dialog as BaseDialog } from '@base-ui/react/dialog';
+import{getReadyMarketingMotion,loadMarketingMotion,type MarketingGsap}from'../motion-runtime';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { MarketingIcon, type MarketingIconName } from './icon';
 export type MarketingPage = 'overview' | 'compose' | 'calendar' | 'approvals' | 'inbox' | 'analytics' | 'listening' | 'library' | 'channels' | 'team' | 'settings' | 'tasks' | 'help' | 'history';
@@ -18,10 +19,10 @@ const destinations: { key: MarketingPage | 'help'; label: string; href: string; 
   {key:'settings',label:'设置',href:'/marketing/settings',icon:'settings'},
   {key:'help',label:'帮助中心',href:'/help',icon:'help'},
 ];
-let lastPill: { left: number; right: number } | undefined;
-export function MarketingTabs({ active }: { active: MarketingPage }) {
+export function MarketingTabs({active,pendingActive}:{active:MarketingPage;pendingActive?:MarketingPage}){
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
+  const lastPill=useRef<{left:number;right:number}|undefined>(undefined);
+  useLayoutEffect(() => {
     const track = ref.current;
     if (!track) return;
     let cancelled = false;
@@ -29,37 +30,38 @@ export function MarketingTabs({ active }: { active: MarketingPage }) {
     let cancelTween: (() => void) | undefined;
     const update = (animate = false) => {
       const version = ++revision;
-      const link = track.querySelector<HTMLElement>('[aria-current="page"]');
+      const link = track.querySelector<HTMLElement>('[data-active="true"]');
       const pill = track.querySelector<HTMLElement>('.marketing-tab-pill');
       if (!pill) return;
       pill.style.opacity = link ? '1' : '0';
       if (!link) return;
       const to = { left: link.offsetLeft, right: track.clientWidth - link.offsetLeft - link.offsetWidth };
       const clip = (v: typeof to) => `inset(4px ${v.right}px 4px ${v.left}px round 999px)`;
-      const from = animate ? lastPill : undefined;
-      lastPill = to;
+      const from = animate ? lastPill.current : undefined;
+      lastPill.current = to;
       cancelTween?.();
       if (!from || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { pill.style.clipPath = clip(to); return; }
       pill.style.clipPath = clip(from);
-      const url = '/marketing-assets/motion.mjs';
-      void import(/* webpackIgnore: true */ url).then((module: { gsap: { to(target: object, vars: object): {kill(): void} } }) => {
+      const animatePill=(gsap:MarketingGsap)=>{
         if (cancelled || version !== revision) return;
         const value = {...from};
         const forward = to.left > from.left;
         pill.style.transition = 'none';
-        const left = module.gsap.to(value,{left:to.left,duration:forward?.55:.36,ease:forward?'power3.inOut':'power3.out',onUpdate:()=>{pill.style.clipPath=clip(value);}});
-        const right = module.gsap.to(value,{right:to.right,duration:forward?.36:.55,ease:forward?'power3.out':'power3.inOut',onUpdate:()=>{pill.style.clipPath=clip(value);}});
+        const left = gsap.to(value,{left:to.left,duration:forward?.55:.36,ease:forward?'power3.inOut':'power3.out',onUpdate:()=>{pill.style.clipPath=clip(value);}});
+        const right = gsap.to(value,{right:to.right,duration:forward?.36:.55,ease:forward?'power3.out':'power3.inOut',onUpdate:()=>{pill.style.clipPath=clip(value);}});
         cancelTween = ()=>{left.kill();right.kill();};
-      }).catch(()=>{if(!cancelled)pill.style.clipPath=clip(to);});
+      };
+      const gsap=getReadyMarketingMotion();
+      if(gsap)animatePill(gsap);else{pill.style.clipPath=clip(to);void loadMarketingMotion().catch(()=>{});}
     };
     update(true);
     let measuredWidth = track.clientWidth;
     const observer = new ResizeObserver(() => {if(track.clientWidth!==measuredWidth){measuredWidth=track.clientWidth;update();}}); observer.observe(track);
     void document.fonts?.ready.then(()=>{if(!cancelled&&track.clientWidth!==measuredWidth)update();});
     return () => {cancelled=true;cancelTween?.();observer.disconnect();};
-  }, [active]);
+  }, [active,pendingActive]);
   return <nav className="marketing-tabs" aria-label="营销工作台"><div className="marketing-tab-track" ref={ref}>
-    {marketingTabs.map(([key,label,href]) => <Link key={key} href={href} prefetch={key === 'compose'} aria-current={active===key?'page':undefined}>{label}</Link>)}
+    {marketingTabs.map(([key,label,href]) => <Link key={key} href={href} prefetch aria-current={active===key?'page':undefined} data-active={(pendingActive??active)===key?'true':undefined}>{label}</Link>)}
     <span className="marketing-tab-pill" aria-hidden="true">{marketingTabs.map(([key,label])=><span key={key}>{label}</span>)}</span>
   </div></nav>;
 }

@@ -1,13 +1,20 @@
 'use client';
 
-import { useEffect, useTransition } from 'react';
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import {RouteMotionContext} from './route-context';
+import {captureRouteSnapshot,type RouteSnapshot} from '../route-snapshot';
 
 /** Start the request immediately; keep the current page visible until its replacement is ready. */
 export function MarketingRouteTransition({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const pathname = usePathname();
+  const [intent,setIntent]=useState<string|null>(null);
+  const snapshot=useRef<RouteSnapshot|null>(null);
+  const expiry=useRef<ReturnType<typeof setTimeout>|null>(null);
+  const takeSnapshot=useCallback(()=>{const outgoing=snapshot.current;snapshot.current=null;if(expiry.current){clearTimeout(expiry.current);expiry.current=null;}return outgoing;},[]);
+  useEffect(()=>()=>{snapshot.current?.dispose();if(expiry.current)clearTimeout(expiry.current);},[]);
 
   useEffect(() => {
     const warmed = new Map<string, number>();
@@ -42,7 +49,16 @@ export function MarketingRouteTransition({ children }: { children: React.ReactNo
       const href = destination(event.target);
       if (!href || !document.getElementById('marketing-main')) return;
       event.preventDefault();
-      startTransition(() => router.push(href));
+      setIntent(href);
+      const targetPath=new URL(href,window.location.href).pathname;
+      if(targetPath!==window.location.pathname){
+        snapshot.current?.dispose();
+        const outgoing=captureRouteSnapshot(document.getElementById('marketing-main')!,targetPath);
+        snapshot.current=outgoing;
+        if(expiry.current)clearTimeout(expiry.current);
+        expiry.current=setTimeout(()=>{if(snapshot.current===outgoing){outgoing.dispose();snapshot.current=null;}},5000);
+      }
+      startTransition(() => {try{router.push(href);}catch{snapshot.current?.dispose();snapshot.current=null;setIntent(null);}});
     };
     document.addEventListener('click', click, true);
     document.addEventListener('mouseover', prepare);
@@ -56,8 +72,8 @@ export function MarketingRouteTransition({ children }: { children: React.ReactNo
     };
   }, [router, pathname]);
 
-  return <div className="marketing-route-container" data-marketing-pending={isPending ? '' : undefined}>
+  return <RouteMotionContext.Provider value={{pendingHref:isPending?intent:null,snapshot,takeSnapshot}}><div className="marketing-route-container" data-marketing-pending={isPending ? '' : undefined}>
     {children}
     {isPending ? <div className="marketing-route-status" role="status">正在打开页面…</div> : null}
-  </div>;
+  </div></RouteMotionContext.Provider>;
 }

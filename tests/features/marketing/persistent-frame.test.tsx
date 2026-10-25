@@ -1,0 +1,12 @@
+import{render,screen}from'@testing-library/react';
+import{expect,it,vi}from'vitest';
+import{MarketingFrame}from'@/features/marketing/components/frame';
+import{MarketingShell}from'@/features/marketing/components/shell';
+const route=vi.hoisted(()=>({pathname:'/marketing'}));
+vi.mock('next/navigation',()=>({usePathname:()=>route.pathname,useRouter:()=>({push:vi.fn(),prefetch:vi.fn()})}));
+vi.mock('@/components/auth/user-account-menu',()=>({UserAccountMenu:()=> <button>账号</button>}));
+vi.mock('@/features/marketing/components/header-actions',()=>({MarketingHeaderActions:()=>null}));
+vi.mock('@/features/workspace-settings/components/provider',()=>({WorkspaceBrandCopy:()=> <span>JUYU 内部工作台</span>}));
+vi.mock('@/components/theme-toggle',()=>({ThemeToggle:()=> <button>显示模式</button>}));
+it('preserves the exact header and dock DOM when the route and page change, without nesting shells',()=>{const user={id:'me',name:'Me',role:'admin' as const,imageUrl:null};const tree=(title:string)=><MarketingFrame currentUser={user}><MarketingShell currentUser={user} active="overview" title={title} description="说明"><p>页面正文</p></MarketingShell></MarketingFrame>;const {rerender}=render(tree('Overview'));const header=document.querySelector('.marketing-top');const dock=document.querySelector('.marketing-dock');route.pathname='/marketing/content/new';rerender(tree('Compose'));expect(document.querySelector('.marketing-top')).toBe(header);expect(document.querySelector('.marketing-dock')).toBe(dock);expect(document.querySelectorAll('.marketing-shell')).toHaveLength(1);expect(document.querySelectorAll('#marketing-main')).toHaveLength(1);expect(screen.getByRole('heading',{name:'Compose'})).toBeInTheDocument();});
+it('refreshes header permissions from the newly verified page without replacing the header',async()=>{const admin={id:'me',name:'Me',role:'admin' as const,imageUrl:null};const employee={...admin,role:'employee' as const};const tree=(person:typeof admin|typeof employee)=><MarketingFrame currentUser={admin}><MarketingShell currentUser={person} active="overview" title="Overview" description="说明"><p>正文</p></MarketingShell></MarketingFrame>;const {rerender}=render(tree(admin));const header=document.querySelector('.marketing-top');expect(screen.getByRole('link',{name:'历史记录'})).toBeInTheDocument();rerender(tree(employee));expect(screen.queryByRole('link',{name:'历史记录'})).not.toBeInTheDocument();expect(document.querySelector('.marketing-top')).toBe(header);});
