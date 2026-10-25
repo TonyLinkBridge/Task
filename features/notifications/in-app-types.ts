@@ -6,4 +6,8 @@ export type InAppNotification = {
   href: string;
   readAt: string | null;
   createdAt: string;
+  /** Hidden from the bell, retained in the inbox/history. */
+  dismissedAt?: string | null;
 };
+
+export type NotificationMutation = 'read' | 'unread' | 'dismiss';

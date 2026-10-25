@@ -9,9 +9,9 @@ describe('marketing notification inbox', () => {
     const fetcher = vi.fn().mockResolvedValueOnce({ ok: true, json: async () => ({ notifications: [notification], unreadCount: 1 }) }).mockResolvedValueOnce({ ok: true });
     vi.stubGlobal('fetch', fetcher);
     render(<><NotificationCenter /><MarketingInbox initialNotifications={[notification]} /></>);
-    await screen.findByRole('button', { name: '通知，1 条未读' });
+    await screen.findByRole('button', { name: '通知中心，1 条未读' });
     fireEvent.click(screen.getByRole('button', { name: '全部设为已读' }));
-    await waitFor(() => expect(screen.getByRole('button', { name: '通知，0 条未读' })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('button', { name: '通知中心，0 条未读' })).toBeInTheDocument());
   });
   it('uses current notifications, maps content links and saves read state through the authorized existing endpoint', async () => {
     const fetcher = vi.fn().mockResolvedValue({ ok: true }); vi.stubGlobal('fetch', fetcher);

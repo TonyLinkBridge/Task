@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { MarketingIcon } from './icon';
 import { useEffect, useState } from 'react';
-import { announceNotificationsRead, onNotificationsRead } from '@/features/notifications/read-state-events';
+import { announceNotificationsRead, onNotificationsRead, onNotificationChange } from '@/features/notifications/read-state-events';
 import type { InAppNotification } from '@/features/notifications/in-app-types';
 import { marketingHref } from '../page-model';
 import { malaysiaDateTimeFormatter } from '@/features/schedule/date';
@@ -13,6 +13,11 @@ export function MarketingInbox({ initialNotifications }: { initialNotifications:
   const [error, setError] = useState<string | null>(null);
   const unread = notifications.filter(item => !item.readAt).length;
   useEffect(() => onNotificationsRead(readAt => setNotifications(items => items.map(item => ({ ...item, readAt: item.readAt ?? readAt })))), []);
+  useEffect(() => onNotificationChange(change => {
+    if (change.action === 'dismiss') return; // Bell dismissal preserves the inbox record.
+    const ids = new Set(change.ids);
+    setNotifications(items => items.map(item => ids.has(item.id) ? { ...item, readAt: change.readAt } : item));
+  }), []);
   async function markRead() {
     setBusy(true); setError(null);
     try {
