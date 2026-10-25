@@ -243,6 +243,40 @@ export function createContentRepository(
       }));
     },
 
+    async listAttachmentsForContents(contentIds: string[]): Promise<ContentAttachment[]> {
+      const ids = [...new Set(contentIds)];
+      const attachments: ContentAttachment[] = [];
+      // Bound URL length and paginate files, rather than issuing one request per content.
+      const idsPerBatch = 100;
+      const pageSize = 100;
+      for (let index = 0; index < ids.length; index += idsPerBatch) {
+        const batch = ids.slice(index, index + idsPerBatch);
+        for (let offset = 0; ; offset += pageSize) {
+          const { data, error } = await client()
+            .from("content_attachments")
+            .select("*")
+            .in("content_id", batch)
+            .is("archived_at", null)
+            .order("created_at")
+            .order("id")
+            .range(offset, offset + pageSize - 1);
+          if (error) throw new Error(`CONTENT_DATABASE_ERROR:${error.message}`);
+          attachments.push(...(data ?? []).map((row) => ({
+            id: row.id,
+            contentId: row.content_id,
+            storagePath: row.storage_path,
+            fileName: row.file_name,
+            mimeType: row.mime_type,
+            byteSize: Number(row.byte_size),
+            uploaderId: row.uploader_id,
+            createdAt: row.created_at,
+          })));
+          if (!data || data.length < pageSize) break;
+        }
+      }
+      return attachments;
+    },
+
     async create(input: ContentInput, authorId: string): Promise<ContentRecord> {
       const contentId = createId();
       const { data, error } = await client().rpc("create_scheduled_content", {

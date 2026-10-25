@@ -9,9 +9,9 @@ const group = { id: 'content-id', title: '原有内容', status: 'draft' as cons
 describe('marketing library', () => {
   it('authenticates before loading records and propagates failures instead of showing an empty library', async () => {
     const list = vi.fn().mockResolvedValue([{ id: 'content-id', title: '原有内容', status: 'draft' }]);
-    const queries = makeMarketingLibraryQueries({ getVerifiedUser: async () => { throw Error('UNAUTHENTICATED'); }, listContents: list, listAttachments: async () => [] });
+    const queries = makeMarketingLibraryQueries({ getVerifiedUser: async () => { throw Error('UNAUTHENTICATED'); }, listContents: list, listAttachmentsForContents: async () => [] });
     await expect(queries.list()).rejects.toThrow('UNAUTHENTICATED'); expect(list).not.toHaveBeenCalled();
-    const allowed = makeMarketingLibraryQueries({ getVerifiedUser: async () => {}, listContents: list, listAttachments: async () => { throw Error('offline'); } });
+    const allowed = makeMarketingLibraryQueries({ getVerifiedUser: async () => {}, listContents: list, listAttachmentsForContents: async () => { throw Error('offline'); } });
     await expect(allowed.list()).rejects.toThrow('offline');
   });
   it('keeps canonical attachment IDs, preview/download and the owning content route', async () => {
@@ -28,3 +28,18 @@ describe('marketing library', () => {
     expect(screen.getByText('没有符合条件的文件。')).toBeInTheDocument();
   });
 });
+
+it('loads attachments for 43 contents together and keeps each file in its owning group',async()=>{
+ const contents=Array.from({length:43},(_,i)=>({id:`content-${i}`,title:`内容 ${i}`,status:'draft' as const}));
+ const batch=vi.fn(async()=>[{...attachment,id:'first',contentId:'content-0'},{...attachment,id:'last',contentId:'content-42'},{...attachment,id:'unrelated',contentId:'private-other-content'}]);
+ const queries=makeMarketingLibraryQueries({getVerifiedUser:async()=>{},listContents:async()=>contents,listAttachmentsForContents:batch});
+ const groups=await queries.list();
+ expect(groups).toHaveLength(43);
+ expect(groups[0].attachments.map(a=>a.id)).toEqual(['first']);
+ expect(groups[1].attachments).toEqual([]);
+ expect(groups[42].attachments.map(a=>a.id)).toEqual(['last']);
+ expect(batch).toHaveBeenCalledTimes(1);
+ expect(batch).toHaveBeenCalledWith(contents.map(c=>c.id));
+ expect(groups.flatMap(g=>g.attachments).some(a=>a.id==='unrelated')).toBe(false);
+});
+it('does not fetch attachments when there are no visible contents',async()=>{const batch=vi.fn();const q=makeMarketingLibraryQueries({getVerifiedUser:async()=>{},listContents:async()=>[],listAttachmentsForContents:batch});expect(await q.list()).toEqual([]);expect(batch).not.toHaveBeenCalled();});
