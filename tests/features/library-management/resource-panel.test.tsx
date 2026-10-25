@@ -1,0 +1,5 @@
+import {render,screen} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import {it,expect,vi} from 'vitest';
+import {ResourcePanel} from '@/features/library-management/components/resource-panel';
+it('submits a multiline resource through its visible save button and preserves input on failure',async()=>{const user=userEvent.setup();const save=vi.fn(async()=>({ok:false as const,message:'同事已经更新，请重新加载。'}));render(<ResourcePanel kind="template" resources={[]} userId="employee" admin={false} onSave={save} onArchive={vi.fn()} onUsed={vi.fn()} onRefresh={vi.fn()}/>);await user.click(screen.getByRole('button',{name:'新增文案模板'}));await user.type(screen.getByRole('textbox',{name:'资源标题'}),'早报');await user.type(screen.getByRole('textbox',{name:'资源正文'}),'第一段\n\n第二段');await user.click(screen.getByRole('button',{name:'保存资源'}));expect(save).toHaveBeenCalledWith({id:undefined,kind:'template',title:'早报',body:'第一段\n\n第二段',revision:-1});expect(screen.getByRole('textbox',{name:'资源正文'})).toHaveValue('第一段\n\n第二段');expect(screen.getByRole('alert')).toHaveTextContent('同事');});

@@ -1,3 +1,4 @@
+'use server';
 import { revalidatePath } from 'next/cache';
 import { getVerifiedUser } from '@/lib/auth/get-verified-user';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
@@ -12,8 +13,8 @@ const actions=makeMediaLibraryActions({getUser:getVerifiedUser,...mediaRepositor
  async copy(from,to){const {error}=await bucket().copy(from,to);if(error)throw Error('COPY_UNAVAILABLE');},
  async remove(path){const {error}=await bucket().remove([path]);if(error)throw Error('REMOVE_UNAVAILABLE');},
 });
-export async function requestMediaUpload(meta:ContentFileMeta){'use server';return actions.request(meta);}
-export async function finishMediaUpload(id:string,path:string,meta:ContentFileMeta){'use server';const result=await actions.finish(id,path,meta);if(result.ok)revalidatePath('/marketing/library');return result;}
-export async function setMediaArchived(id:string,archived:boolean){'use server';const result=await actions.setArchived(id,archived);if(result.ok)revalidatePath('/marketing/library');return result;}
-export async function useMediaInContent(assetId:string,contentId:string){'use server';const result=await actions.useInContent(assetId,contentId);if(result.ok){revalidatePath(`/marketing/content/${contentId}`);revalidatePath(`/content/${contentId}`);}return result;}
-export async function listAvailableMedia(){'use server';await getVerifiedUser();return (await mediaRepository.list()).filter(a=>!a.archivedAt);}
+export async function requestMediaUpload(meta:ContentFileMeta){return actions.request(meta);}
+export async function finishMediaUpload(id:string,path:string,meta:ContentFileMeta){const result=await actions.finish(id,path,meta);if(result.ok)revalidatePath('/marketing/library');return result;}
+export async function setMediaArchived(id:string,archived:boolean){const result=await actions.setArchived(id,archived);if(result.ok)revalidatePath('/marketing/library');return result;}
+export async function useMediaInContent(assetId:string,contentId:string){const result=await actions.useInContent(assetId,contentId);if(result.ok){revalidatePath(`/marketing/content/${contentId}`);revalidatePath(`/content/${contentId}`);}return result;}
+export async function listAvailableMedia(){await getVerifiedUser();return (await mediaRepository.list()).filter(a=>!a.archivedAt);}

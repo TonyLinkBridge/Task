@@ -1,0 +1,3 @@
+import {expect,it,vi} from 'vitest';
+import {makeWorkspaceSettings} from '@/features/workspace-settings/service';
+it('blocks employees before saving workspace preferences, and preserves conflict errors',async()=>{const save=vi.fn();let role:'employee'|'admin'='employee';const s=makeWorkspaceSettings({getUser:async()=>({id:'person',role,name:'Person',imageUrl:null}),load:vi.fn(),save});const input={name:'测试团队',description:'内部工作台',weekStartsOn:0,revision:0};expect((await s.save(input)).ok).toBe(false);expect(save).not.toHaveBeenCalled();role='admin';save.mockRejectedValueOnce(Error('CONFLICT'));const result=await s.save(input);expect(result.ok).toBe(false);if(!result.ok)expect(result.message).toContain('更新');});

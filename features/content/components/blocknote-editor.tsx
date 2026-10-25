@@ -14,7 +14,8 @@ import {
   useThreads,
 } from "@liveblocks/react/suspense";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { SnippetPicker } from "@/features/library-management/components/snippet-picker";
 
 import { Button } from "@/components/ui/button";
 import { InlineThreads } from "@/features/content/components/inline-threads";
@@ -146,6 +147,9 @@ export function BlockNoteEditor({
   const visibleThreads = mergeThreads(threads, polledThreads);
   const { resolvedTheme } = useTheme();
   const blockNoteTheme = resolvedTheme === "dark" ? "dark" : "light";
+  const canInsert = editable && ready && status === "connected" && syncStatus === "synchronized";
+  const canInsertRef = useRef(canInsert);
+  useEffect(() => { canInsertRef.current = canInsert; return () => { canInsertRef.current = false; }; }, [canInsert]);
 
   useEffect(() => {
     if (ready) onDocumentChange?.(editor.document);
@@ -218,6 +222,14 @@ export function BlockNoteEditor({
               </Button>
             </div>
           ) : null}
+          {editable ? <div className="mb-3"><SnippetPicker disabled={!canInsert} onInsert={async(body)=>{
+            if(!canInsertRef.current)throw Error("EDITOR_NOT_READY");
+            const blocks=await editor.tryParseMarkdownToBlocks(body);
+            if(!canInsertRef.current)throw Error("EDITOR_NOT_READY");
+            const last=editor.document[editor.document.length-1];
+            if(!last)throw Error("EDITOR_EMPTY");
+            editor.insertBlocks(blocks,last,"after");
+          }}/></div> : null}
           <div className="min-h-72 overflow-hidden rounded-xl border bg-background py-4">
             <BlockNoteView
               editor={editor}

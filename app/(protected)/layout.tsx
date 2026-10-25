@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { WorkspacePreferencesProvider } from "@/features/workspace-settings/components/provider";
 
 import { getVerifiedUser } from "@/lib/auth/get-verified-user";
 
@@ -21,5 +22,5 @@ export default async function ProtectedLayout({
     throw error;
   }
 
-  return children;
+  return <WorkspacePreferencesProvider>{children}</WorkspacePreferencesProvider>;
 }

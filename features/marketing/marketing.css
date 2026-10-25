@@ -204,3 +204,5 @@ body:has(.marketing-shell) [data-slot=dialog-content] :is(input:not([type=checkb
 @media(max-width:760px){.media-asset-filters .marketing-filter-row{grid-template-columns:repeat(2,minmax(0,1fr))}.media-asset-filters .marketing-filter-row>label{grid-column:1/-1}}
 
 .media-library{display:grid;gap:20px}.media-library>.marketing-toolbar{margin-bottom:0}
+
+.marketing-brand-copy .workspace-brand-name{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

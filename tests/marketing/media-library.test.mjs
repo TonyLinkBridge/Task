@@ -17,6 +17,9 @@ test('library assets reuse into independent content attachments, lock reviews an
   const snapshot=await client.from('content_versions').select('attachments:content_version_attachments(attachment:content_attachments(*))').eq('content_id',a).single();
   assert.equal(snapshot.data.attachments[0].attachment.id,first.data.id);
   assert.equal((await client.from('content_attachments').select('*').eq('id',second.data.id).single()).error,null);
+  assert.equal((await client.from('media_asset_usage').select('*').eq('asset_id',asset).single()).data.use_count,2);
+  await db.query('update contents set archived_at=now() where id=$1',[b]);
+  assert.equal((await client.from('media_asset_usage').select('*').eq('asset_id',asset).single()).data.use_count,1);
   const grants=await db.query("select has_function_privilege('anon','attach_media_asset(uuid,uuid,text,text)','execute') as anon, has_function_privilege('authenticated','attach_media_asset(uuid,uuid,text,text)','execute') as signed, has_function_privilege('service_role','attach_media_asset(uuid,uuid,text,text)','execute') as service");
   assert.deepEqual(grants.rows[0],{anon:false,signed:false,service:true});
  }finally{await close();}
