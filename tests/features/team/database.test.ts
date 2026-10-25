@@ -72,3 +72,10 @@ it('keeps invitation addresses private from history-only roles and denies public
  expect(snapshot.invites).toEqual([]);expect(snapshot.members.every(m=>m.email===null)).toBe(true);expect(snapshot.events.every(e=>!('email'in e.details))).toBe(true);
  const rights=(await db.query<{readable:boolean;callable:boolean}>("select has_table_privilege('anon','public.team_roles','select') readable,has_function_privilege('authenticated','public.team_manage(text,text,jsonb)','execute') callable")).rows[0];expect(rights).toEqual({readable:false,callable:false});
 });
+it('excludes legacy archived identities while retaining recoverable removed team members',async()=>{
+ await db.query("insert into profiles(clerk_user_id,role,display_name,slack_team_id,slack_verified_at,archived_at) values('legacy-archived','employee','Legacy','T094DTFCVA8',now(),now())");
+ await db.query("insert into profiles(clerk_user_id,role,display_name,slack_team_id,slack_verified_at,team_status) values('recoverable-removed','employee','Removed','T094DTFCVA8',now(),'removed')");
+ const snapshot=(await db.query<{data:{members:{id:string;status:string}[]}}>("select team_snapshot('admin-a') data")).rows[0].data;
+ expect(snapshot.members.some(m=>m.id==='legacy-archived')).toBe(false);
+ expect(snapshot.members.find(m=>m.id==='recoverable-removed')?.status).toBe('removed');
+});
