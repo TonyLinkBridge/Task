@@ -3,7 +3,8 @@ import {ActionFeedback} from "@/components/feedback/action-feedback";
 import {useAppToast} from "@/components/feedback/app-toast";
 import { Select } from "@/components/ui/select";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { ConfirmActionDialog } from "@/components/feedback/confirm-action-dialog";
 
 import { Button } from "@/components/ui/button";
 import { ApprovalProgress } from "@/features/approval/components/approval-progress";
@@ -62,6 +63,8 @@ export function ReviewActions({
   const [changeMessage, setChangeMessage] = useState("");
   const {toast}=useAppToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [confirmUnlock, setConfirmUnlock] = useState(false);
+  const unlockTrigger = useRef<HTMLButtonElement>(null);
   const [message, setMessage] = useState<string | null>(null);
   const editable =
     content.status === "draft" || content.status === "changes_requested";
@@ -91,14 +94,14 @@ export function ReviewActions({
   async function run(operation: () => Promise<ApprovalActionResult>) {
     setIsSaving(true);
     setMessage(null);
-    const result = await operation();
-    setIsSaving(false);
-    if (!result.ok) {
-      setMessage(result.message);
-      return;
-    }
-    toast({type:"success",title:"审核决定已经保存。"});
-    onCompleted?.(result.data);
+    try {
+      const result = await operation();
+      if (!result.ok) { setMessage(result.message); return; }
+      toast({type:"success",title:"审核决定已经保存。"});
+      onCompleted?.(result.data);
+    } catch {
+      setMessage("暂时无法保存审核决定，请稍后再试。");
+    } finally { setIsSaving(false); }
   }
 
   return (
@@ -205,13 +208,8 @@ export function ReviewActions({
           <Button
             variant="outline"
             disabled={isSaving}
-            onClick={() => {
-              if (
-                window.confirm("修改后需要重新批准。要继续吗？")
-              ) {
-                void run(() => unlockAction(content.id));
-              }
-            }}
+            ref={unlockTrigger}
+            onClick={() => setConfirmUnlock(true)}
           >
             修改内容
           </Button>
@@ -230,6 +228,13 @@ export function ReviewActions({
         </div>
       ) : null}
 
+      <ConfirmActionDialog open={confirmUnlock} onOpenChange={setConfirmUnlock}
+        title="重新修改内容？" description="修改后需要重新批准。要继续吗？"
+        confirmLabel="确认修改" pendingLabel="正在处理…" destructive={false}
+        pending={isSaving} returnFocus={unlockTrigger} onConfirm={async () => {
+          await run(() => unlockAction(content.id));
+          setConfirmUnlock(false);
+        }} />
       {message ? (
         <ActionFeedback message={message} type="error" className="mt-3 text-sm text-muted-foreground"/>
       ) : null}

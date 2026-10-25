@@ -1,44 +1,47 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
-
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { AppToastProvider } from "@/components/feedback/app-toast";
 import { DeleteContentButton } from "@/features/content/components/delete-content-button";
-
 const push = vi.fn();
 const refresh = vi.fn();
-
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push, refresh }),
-}));
-
+vi.mock("next/navigation", () => ({useRouter: () => ({push, refresh})}));
+beforeEach(() => { push.mockClear(); refresh.mockClear(); });
+const contentId = "22222222-2222-4222-8222-222222222222";
 describe("DeleteContentButton", () => {
-  it('returns marketing content to the new content list after the canonical delete action succeeds', async () => {
-    push.mockClear();
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
-    render(<DeleteContentButton contentId="22222222-2222-4222-8222-222222222222" deleteAction={async () => ({ ok: true })} redirectTo="/marketing/calendar?view=list" />);
-    await userEvent.click(screen.getByRole('button', { name: '删除内容' }));
-    expect(push).toHaveBeenCalledWith('/marketing/calendar?view=list');
-  });
-  it("warns that Slack notifications disappear before permanently deleting", async () => {
+  it("uses an accessible in-app confirmation, cancels safely, then deletes and keeps the Arc toast after navigation", async () => {
     const user = userEvent.setup();
-    const deleteAction = vi.fn(async () => ({ ok: true as const }));
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-
-    render(
-      <DeleteContentButton
-        contentId="22222222-2222-4222-8222-222222222222"
-        deleteAction={deleteAction}
-      />
-    );
-
-    await user.click(screen.getByRole("button", { name: "删除内容" }));
-
-    expect(window.confirm).toHaveBeenCalledWith(
-      "确定永久删除这个内容吗？相关 Slack 通知也会一起删除，而且不能恢复。"
-    );
-    expect(deleteAction).toHaveBeenCalledWith(
-      "22222222-2222-4222-8222-222222222222"
-    );
-    expect(push).toHaveBeenCalledWith("/content");
+    const browserConfirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const deleteAction = vi.fn(async () => ({ok: true as const}));
+    const view = render(<AppToastProvider><DeleteContentButton contentId={contentId} deleteAction={deleteAction} redirectTo="/marketing/calendar?view=list" /></AppToastProvider>);
+    const trigger = screen.getByRole("button", {name:"删除内容"});
+    await user.click(trigger);
+    const dialog = screen.getByRole("alertdialog", {name:"删除这篇内容？"});
+    expect(dialog).toHaveAccessibleDescription("相关 Slack 通知也会一起删除，删除后不能恢复。");
+    expect(deleteAction).not.toHaveBeenCalled();
+    await waitFor(() => expect(within(dialog).getByRole("button", {name:"取消"})).toHaveFocus());
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument());
+    expect(trigger).toHaveFocus();
+    expect(deleteAction).not.toHaveBeenCalled();
+    await user.click(trigger);
+    await user.click(screen.getByRole("button", {name:"永久删除内容"}));
+    await waitFor(() => expect(deleteAction).toHaveBeenCalledExactlyOnceWith(contentId));
+    expect(push).toHaveBeenCalledWith("/marketing/calendar?view=list");
+    expect(refresh).toHaveBeenCalledOnce();
+    view.rerender(<AppToastProvider><p>内容列表</p></AppToastProvider>);
+    expect(await screen.findByText("内容已经删除。")).toBeInTheDocument();
+    expect(browserConfirm).not.toHaveBeenCalled();
+    browserConfirm.mockRestore();
+  });
+  it("shows a failed deletion in Arc Toast and allows retry instead of redirecting", async () => {
+    const user = userEvent.setup();
+    const deleteAction = vi.fn().mockRejectedValueOnce(new Error("network"));
+    render(<AppToastProvider><DeleteContentButton contentId={contentId} deleteAction={deleteAction}/></AppToastProvider>);
+    await user.click(screen.getByRole("button",{name:"删除内容"}));
+    await user.click(screen.getByRole("button",{name:"永久删除内容"}));
+    expect(await screen.findByText("暂时无法删除内容，请稍后再试。")).toBeInTheDocument();
+    expect(push).not.toHaveBeenCalled();
+    expect(screen.getByRole("button",{name:"删除内容"})).toBeEnabled();
   });
 });

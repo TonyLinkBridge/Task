@@ -1,43 +1,25 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
-
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DeleteTaskButton } from "@/features/tasks/components/delete-task-button";
-
-const push = vi.fn();
-const refresh = vi.fn();
-
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push, refresh }),
-}));
-
+const push = vi.fn(); const refresh = vi.fn();
+vi.mock("next/navigation", () => ({useRouter: () => ({push, refresh})}));
+beforeEach(() => { push.mockClear(); refresh.mockClear(); });
 describe("DeleteTaskButton", () => {
-  it("returns to the marketing board when that destination is supplied", async () => {
-    push.mockClear();
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-    render(<DeleteTaskButton taskId="one" deleteTaskAction={async()=>({ok:true})} redirectTo="/marketing/tasks" />);
-    await userEvent.click(screen.getByRole("button", { name: "删除任务" }));
-    expect(push).toHaveBeenCalledWith("/marketing/tasks");
-  });
-  it("requires confirmation before permanently deleting a task", async () => {
+  it("does not delete before an explicit confirmation and returns to the requested board", async () => {
     const user = userEvent.setup();
-    const deleteAction = vi.fn(async () => ({ ok: true as const }));
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-
-    render(
-      <DeleteTaskButton
-        taskId="11111111-1111-4111-8111-111111111111"
-        deleteTaskAction={deleteAction}
-      />
-    );
-    await user.click(screen.getByRole("button", { name: "删除任务" }));
-
-    expect(window.confirm).toHaveBeenCalledWith(
-      "确定永久删除这个任务吗？任务和留言都会消失，而且不能恢复。"
-    );
-    expect(deleteAction).toHaveBeenCalledWith(
-      "11111111-1111-4111-8111-111111111111"
-    );
-    expect(push).toHaveBeenCalledWith("/tasks");
+    const browserConfirm = vi.spyOn(window,"confirm").mockReturnValue(true);
+    const deleteTaskAction = vi.fn(async () => ({ok:true as const}));
+    render(<DeleteTaskButton taskId="one" deleteTaskAction={deleteTaskAction} redirectTo="/marketing/tasks"/>);
+    await user.click(screen.getByRole("button",{name:"删除任务"}));
+    expect(screen.getByRole("alertdialog",{name:"删除这个任务？"})).toHaveAccessibleDescription("任务和留言都会消失，删除后不能恢复。");
+    expect(deleteTaskAction).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button",{name:"取消"}));
+    expect(deleteTaskAction).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button",{name:"删除任务"}));
+    await user.click(screen.getByRole("button",{name:"永久删除任务"}));
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/marketing/tasks"));
+    expect(deleteTaskAction).toHaveBeenCalledExactlyOnceWith("one");
+    expect(browserConfirm).not.toHaveBeenCalled(); browserConfirm.mockRestore();
   });
 });

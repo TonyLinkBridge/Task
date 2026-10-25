@@ -278,7 +278,10 @@ describe("ReviewActions", () => {
 
     await user.click(screen.getByRole("button", { name: "修改内容" }));
 
-    expect(confirm).toHaveBeenCalledWith("修改后需要重新批准。要继续吗？");
+    expect(screen.getByRole("alertdialog", { name: "重新修改内容？" })).toHaveAccessibleDescription("修改后需要重新批准。要继续吗？");
+    expect(unlockAction).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "确认修改" }));
+    expect(confirm).not.toHaveBeenCalled();
     await waitFor(() => expect(unlockAction).toHaveBeenCalledWith(contentId));
     confirm.mockRestore();
   });

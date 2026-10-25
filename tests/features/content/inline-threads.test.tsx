@@ -178,9 +178,13 @@ describe("InlineThreads", () => {
     await user.click(screen.getByRole("button", { name: "清空已解决" }));
     expect(onClearResolved).not.toHaveBeenCalled();
 
-    confirm.mockReturnValue(true);
+    expect(screen.getByRole("alertdialog", { name: "清空已解决留言？" })).toHaveAccessibleDescription("确定要永久删除 1 条已解决留言吗？删除后不能恢复。");
+    await user.click(screen.getByRole("button", { name: "取消" }));
+    expect(onClearResolved).not.toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: "清空已解决" }));
+    await user.click(screen.getByRole("button", { name: "永久清空留言" }));
     expect(onClearResolved).toHaveBeenCalledOnce();
+    expect(confirm).not.toHaveBeenCalled();
 
     confirm.mockRestore();
   });
