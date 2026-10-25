@@ -59,7 +59,7 @@ export function MarketingTabs({ active }: { active: MarketingPage }) {
     return () => {cancelled=true;cancelTween?.();observer.disconnect();};
   }, [active]);
   return <nav className="marketing-tabs" aria-label="营销工作台"><div className="marketing-tab-track" ref={ref}>
-    {marketingTabs.map(([key,label,href]) => <Link key={key} href={href} prefetch={false} aria-current={active===key?'page':undefined}>{label}</Link>)}
+    {marketingTabs.map(([key,label,href]) => <Link key={key} href={href} prefetch={key === 'compose'} aria-current={active===key?'page':undefined}>{label}</Link>)}
     <span className="marketing-tab-pill" aria-hidden="true">{marketingTabs.map(([key,label])=><span key={key}>{label}</span>)}</span>
   </div></nav>;
 }

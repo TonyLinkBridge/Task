@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { auth, clerkClient } from "@clerk/nextjs/server";
 
 import { resolveVerifiedUser } from "@/lib/auth/resolve-verified-user";
@@ -8,7 +10,8 @@ import type { VerifiedUser } from "@/lib/auth/types";
 import { getServerEnv } from "@/lib/env/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
-export async function getVerifiedUser(): Promise<VerifiedUser> {
+// Share identity verification within one server render, never across requests.
+export const getVerifiedUser = cache(async function getVerifiedUser(): Promise<VerifiedUser> {
   const { userId } = await auth();
   const client = await clerkClient();
   const env = getServerEnv();
@@ -52,4 +55,4 @@ export async function getVerifiedUser(): Promise<VerifiedUser> {
       }
     },
   });
-}
+});
