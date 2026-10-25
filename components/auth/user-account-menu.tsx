@@ -18,7 +18,7 @@ import {
 import type { VerifiedUser } from "@/lib/auth/types";
 
 export function UserAccountMenu({ currentUser }: { currentUser: VerifiedUser }) {
-  const { signOut } = useClerk();
+  const { signOut, openUserProfile } = useClerk();
 
   return (
     <DropdownMenu>
@@ -52,6 +52,7 @@ export function UserAccountMenu({ currentUser }: { currentUser: VerifiedUser }) 
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => openUserProfile()}>管理个人资料与账号安全</DropdownMenuItem>
         <DropdownMenuItem
           variant="destructive"
           className="cursor-pointer"

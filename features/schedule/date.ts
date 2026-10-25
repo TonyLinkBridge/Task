@@ -19,10 +19,10 @@ function utcDateKey(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-export function calendarMonthDays(monthKey: string): string[] {
+export function calendarMonthDays(monthKey: string, weekStartsOn: 0 | 1 = 1): string[] {
   const { year, monthIndex } = parseMonthKey(monthKey);
   const firstDay = new Date(Date.UTC(year, monthIndex, 1));
-  const daysSinceMonday = (firstDay.getUTCDay() + 6) % 7;
+  const daysSinceMonday = (firstDay.getUTCDay() - weekStartsOn + 7) % 7;
   const gridStart = new Date(Date.UTC(year, monthIndex, 1 - daysSinceMonday));
 
   return Array.from({ length: 42 }, (_, index) => {

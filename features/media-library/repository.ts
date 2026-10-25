@@ -3,8 +3,8 @@ import { MediaAttachRejected } from './service';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import type { ContentAttachment } from '@/features/content/types';
 import type { MediaAsset } from './types';
-type Row={id:string;storage_path:string;file_name:string;mime_type:string;byte_size:number|string;uploader_id:string;created_at:string;archived_at:string|null};
-const map=(r:Row):MediaAsset=>({id:r.id,storagePath:r.storage_path,fileName:r.file_name,mimeType:r.mime_type,byteSize:Number(r.byte_size),uploaderId:r.uploader_id,createdAt:r.created_at,archivedAt:r.archived_at});
+type Row={id:string;storage_path:string;file_name:string;mime_type:string;byte_size:number|string;uploader_id:string;created_at:string;archived_at:string|null;tags?:string[]};
+const map=(r:Row):MediaAsset=>({id:r.id,storagePath:r.storage_path,fileName:r.file_name,mimeType:r.mime_type,byteSize:Number(r.byte_size),uploaderId:r.uploader_id,createdAt:r.created_at,archivedAt:r.archived_at,tags:r.tags??[]});
 export const mediaRepository={
  async list(){
   const assets:MediaAsset[]=[];const batchSize=100;

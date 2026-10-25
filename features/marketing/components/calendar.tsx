@@ -1,4 +1,5 @@
 'use client';
+import {useWorkspacePreferences} from '@/features/workspace-settings/components/provider';
 import { Select } from "@/components/ui/select";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -11,7 +12,7 @@ import { marketingStatusLabels } from '../page-model';
 import { MarketingIcon } from './icon';
 type View = 'week' | 'month' | 'list' | 'board';
 const shift = (day: string, count: number) => new Date(Date.parse(`${day}T00:00:00Z`) + count * 86400000).toISOString().slice(0, 10);
-const week = (day: string) => { const start = shift(day, -((new Date(`${day}T00:00:00Z`).getUTCDay() + 6) % 7)); return Array.from({ length: 7 }, (_, index) => shift(start, index)); };
+const week = (day: string, startsOn:0|1=1) => { const start = shift(day, -((new Date(`${day}T00:00:00Z`).getUTCDay() - startsOn + 7) % 7)); return Array.from({ length: 7 }, (_, index) => shift(start, index)); };
 const time = new Intl.DateTimeFormat('zh-MY', { timeZone: 'Asia/Kuala_Lumpur', hour: '2-digit', minute: '2-digit' });
 const malaysiaMinute=(value:string)=>{const date=new Date(Date.parse(value)+8*3600000);return date.getUTCHours()*60+date.getUTCMinutes();};
 export function MarketingCalendar({ contents, initialDate, initialView = 'week', initialFilters = {}, platforms: availablePlatforms, assignees: availableAssignees, moveAction }: {
@@ -20,6 +21,8 @@ export function MarketingCalendar({ contents, initialDate, initialView = 'week',
   moveAction?: (contentId: string, status: 'draft' | 'changes_requested') => Promise<{ ok: true } | { ok: false; message: string }>;
 }) {
   const router = useRouter();
+  const {preferences}=useWorkspacePreferences();
+  const weekStartsOn=preferences.weekStartsOn;
   const today = toMalaysiaDateKey(new Date().toISOString());
   const [anchor, setAnchor] = useState(initialDate ?? today);
   const [view, setView] = useState<View>(initialView);
@@ -40,15 +43,15 @@ export function MarketingCalendar({ contents, initialDate, initialView = 'week',
   const platforms = useMemo(() => availablePlatforms ?? Array.from(new Map(contents.flatMap(item => item.platforms).map(item => [item.id, item])).values()), [contents, availablePlatforms]);
   const assignees = useMemo(() => availableAssignees ?? Array.from(new Map(contents.map(item => [item.assignee.id, item.assignee])).values()), [contents, availableAssignees]);
   const filtered = contents.filter(item => (!platform || item.platforms.some(p => p.id === platform)) && (!status || item.status === status) && (!assignee || item.assignee.id === assignee) && (!from || toMalaysiaDateKey(item.publishAt) >= from) && (!to || toMalaysiaDateKey(item.publishAt) <= to)).sort((a, b) => a.publishAt.localeCompare(b.publishAt));
-  const days = view === 'month' ? calendarMonthDays(anchor.slice(0, 7)) : week(anchor);
-  const monthDays=calendarMonthDays(anchor.slice(0,7));
+  const days = view === 'month' ? calendarMonthDays(anchor.slice(0, 7),weekStartsOn) : week(anchor,weekStartsOn);
+  const monthDays=calendarMonthDays(anchor.slice(0,7),weekStartsOn);
   const grouped = new Map<string, ScheduledContent[]>();
   for (const item of filtered) { const key = toMalaysiaDateKey(item.publishAt); grouped.set(key, [...(grouped.get(key) ?? []), item]); }
   const visible = view === 'list' || view === 'board' ? filtered : filtered.filter(item => days.includes(toMalaysiaDateKey(item.publishAt)));
   const move = (count: number) => {capture();setAnchor(view === 'month' ? moveCalendarMonth(anchor.slice(0, 7), count) + '-01' : shift(anchor, count * 7));};
   // A busy day remains readable: all cards at the same time share its timeline row.
   const slots=(items:ScheduledContent[])=>{const groups=new Map<number,ScheduledContent[]>();for(const item of items){const hour=Math.floor(malaysiaMinute(item.publishAt)/60);groups.set(hour,[...(groups.get(hour)??[]),item]);}return Array.from(groups);};
-  useEffect(()=>{if(view!=='week'||!stage.current)return;const minutes=contents.filter(c=>week(anchor).includes(toMalaysiaDateKey(c.publishAt))).map(c=>malaysiaMinute(c.publishAt));stage.current.scrollTop=Math.max(0,(minutes.length?Math.min(...minutes)/60-1:8)*72);},[anchor,view,contents]);
+  useEffect(()=>{if(view!=='week'||!stage.current)return;const minutes=contents.filter(c=>week(anchor,weekStartsOn).includes(toMalaysiaDateKey(c.publishAt))).map(c=>malaysiaMinute(c.publishAt));stage.current.scrollTop=Math.max(0,(minutes.length?Math.min(...minutes)/60-1:8)*72);},[anchor,view,contents,weekStartsOn]);
   function card(item: ScheduledContent) {
     return <Link key={item.id} className="marketing-calendar-post" data-flip-id={`calendar-content-${item.id}`} href={`/marketing/content/${encodeURIComponent(item.id)}`} style={{ borderLeftColor: item.platforms[0]?.color }}>
       <time dateTime={item.publishAt}>{view === 'list' ? `${toMalaysiaDateKey(item.publishAt)} · ` : ''}{time.format(new Date(item.publishAt))}</time>
@@ -70,7 +73,7 @@ export function MarketingCalendar({ contents, initialDate, initialView = 'week',
         </div></div>:<div className="marketing-calendar-scroll"><div role="grid" aria-label="月日历" className="marketing-calendar-grid is-month">{days.map(day => <section role="gridcell" aria-label={day} key={day} className={day === today ? 'is-today' : ''}><h3><time dateTime={day}>{day.slice(5)} · {['日', '一', '二', '三', '四', '五', '六'][new Date(`${day}T00:00:00Z`).getUTCDay()]}</time></h3>{(grouped.get(day) ?? []).map(card)}</section>)}</div></div>}
       </div>
       {visible.length === 0 ? <p className="marketing-empty">这段时间没有符合条件的内容。</p> : null}<p className="marketing-caption">审核和发布状态请到内容详情里处理。</p>
-    </div><aside className="mcal-side" aria-label="日历辅助信息"><section className="marketing-card card"><header className="marketing-card-head"><h2>{anchor.slice(0,7)}</h2><div className="marketing-mini-nav"><button aria-label="小日历上个月" onClick={()=>setAnchor(moveCalendarMonth(anchor.slice(0,7),-1)+'-01')}>‹</button><button aria-label="小日历下个月" onClick={()=>setAnchor(moveCalendarMonth(anchor.slice(0,7),1)+'-01')}>›</button></div></header><div className="marketing-mini-month" aria-label="选择日期">{['一','二','三','四','五','六','日'].map(day=><span key={day}>{day}</span>)}{monthDays.map(day=><button key={day} type="button" aria-label={`跳到 ${day}`} aria-pressed={day===anchor} className={`${day===today?'is-today':''} ${day.slice(0,7)!==anchor.slice(0,7)?'is-muted':''}`} onClick={()=>{setAnchor(day);setView('week');}}>{day.slice(8).replace(/^0/,'')}{grouped.has(day)?<i/>:null}</button>)}</div></section>
+    </div><aside className="mcal-side" aria-label="日历辅助信息"><section className="marketing-card card"><header className="marketing-card-head"><h2>{anchor.slice(0,7)}</h2><div className="marketing-mini-nav"><button aria-label="小日历上个月" onClick={()=>setAnchor(moveCalendarMonth(anchor.slice(0,7),-1)+'-01')}>‹</button><button aria-label="小日历下个月" onClick={()=>setAnchor(moveCalendarMonth(anchor.slice(0,7),1)+'-01')}>›</button></div></header><div className="marketing-mini-month" aria-label="选择日期">{(weekStartsOn===0?['日','一','二','三','四','五','六']:['一','二','三','四','五','六','日']).map(day=><span key={day}>{day}</span>)}{monthDays.map(day=><button key={day} type="button" aria-label={`跳到 ${day}`} aria-pressed={day===anchor} className={`${day===today?'is-today':''} ${day.slice(0,7)!==anchor.slice(0,7)?'is-muted':''}`} onClick={()=>{setAnchor(day);setView('week');}}>{day.slice(8).replace(/^0/,'')}{grouped.has(day)?<i/>:null}</button>)}</div></section>
       <section className="marketing-card card"><header className="marketing-card-head"><h2>草稿</h2><span>{filtered.filter(c=>c.status==='draft').length}</span></header><div className="marketing-calendar-drafts">{filtered.filter(c=>c.status==='draft').slice(0,5).map(c=><Link href={`/marketing/content/${c.id}`} key={c.id}><MarketingIcon name="library"/><span>{c.title}<small>{c.assignee.name} · 已设排期</small></span></Link>)}</div>{!filtered.some(c=>c.status==='draft')?<p>暂时没有草稿。</p>:null}</section>
       <section className="marketing-card card"><header className="marketing-card-head"><h2>各平台内容</h2></header><div className="marketing-platform-summary">{platforms.map(p=><button type="button" key={p.id} onClick={()=>setPlatform(platform===p.id?'':p.id)} aria-pressed={platform===p.id}><i style={{background:p.color}}/>{p.name}<b>{visible.filter(c=>c.platforms.some(item=>item.id===p.id)).length}</b></button>)}</div></section>
     </aside></div>

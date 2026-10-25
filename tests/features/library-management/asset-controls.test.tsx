@@ -1,0 +1,7 @@
+import {render,screen} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import {expect,it,vi} from 'vitest';
+import {AssetGrid} from '@/features/media-library/components/asset-grid';
+const asset={id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',fileName:'封面.png',mimeType:'image/png',storagePath:'library/photo.png',byteSize:20,uploaderId:'me',createdAt:'2026-10-25',archivedAt:null,tags:['封面']};
+it('lets a verified reader favorite a file and filter by its tags',async()=>{const user=userEvent.setup(),favorite=vi.fn(async()=>({ok:true as const,data:{}}));render(<AssetGrid assets={[asset]} userId="me" admin={false} onArchive={vi.fn()} organization={{favorites:[],usage:{[asset.id]:2},snippets:[]}} onFavorite={favorite}/>);await user.click(screen.getByRole('button',{name:'收藏 封面.png'}));expect(favorite).toHaveBeenCalledWith([asset.id],true);expect(screen.getByText('用于 2 篇内容')).toBeInTheDocument();await user.type(screen.getByRole('searchbox',{name:'搜索素材'}),'封面');expect(screen.getByRole('article',{name:'素材 封面.png'})).toBeInTheDocument();});
+it('does not offer another uploader’s tag editing to employees',()=>{render(<AssetGrid assets={[{...asset,uploaderId:'someone-else'}]} userId="me" admin={false} onArchive={vi.fn()} organization={{favorites:[],usage:{},snippets:[]}} onTags={vi.fn()}/>);expect(screen.queryByRole('button',{name:'编辑标签 封面.png'})).not.toBeInTheDocument();});

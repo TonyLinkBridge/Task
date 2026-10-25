@@ -89,9 +89,11 @@ export async function createMarketingTestClient({directory,sourceRoot=process.cw
   async createSignedUrl(path,seconds,options){if(!files.has(path))return {data:null,error:{message:'NOT_FOUND'}};const token=randomUUID();downloads.set(token,{path,expires:Date.now()+seconds*1000,download:options?.download});return {data:{signedUrl:'/marketing-test/file?token='+token},error:null};},
   async remove(paths){for(const path of paths){await rm(pathFor(path),{force:true});files.delete(path);}return {error:null};},
  };}};
- return {client:{from:table=>new Query(table),storage,async rpc(name,args){try{
+ return {client:{supportsSetofResults:true,from:table=>new Query(table),storage,async rpc(name,args){try{
   identifier(name);const params=Object.values(args).map((v,i)=>Object.keys(args)[i].includes('json')?JSON.stringify(v):v);
   const result=await db.query('select * from public.'+identifier(name)+'('+Object.keys(args).map((key,i)=>identifier(key)+' => $'+(i+1)).join(',')+')',params);
+  const signature=await db.query("select proretset from pg_proc where proname=$1 and pronamespace='public'::regnamespace",[name]);
+  if(signature.rows.some(row=>row.proretset))return {data:normalized(result.rows),error:null};
   const first=result.rows[0]??null;
   return {data:normalized(first&&Object.keys(first).length===1&&name in first?first[name]:first),error:null};
  }catch(e){return {data:null,error:{message:e.message}};}}},

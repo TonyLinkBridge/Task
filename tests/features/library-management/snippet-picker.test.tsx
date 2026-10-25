@@ -1,0 +1,9 @@
+import {render,screen,waitFor} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import {beforeEach,expect,it,vi} from 'vitest';
+import {SnippetPicker} from '@/features/library-management/components/snippet-picker';
+const actions=vi.hoisted(()=>({load:vi.fn(),used:vi.fn()}));
+vi.mock('@/features/library-management/actions',()=>({loadLibraryOrganization:actions.load,recordLibrarySnippetUse:actions.used}));
+beforeEach(()=>{actions.load.mockReset();actions.used.mockReset();actions.load.mockResolvedValue({ok:true,data:{favorites:[],usage:{},snippets:[{id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',kind:'template',title:'多行模板',body:'第一段\n\n第二段',archivedAt:null}]}});actions.used.mockResolvedValue({ok:true,data:1});});
+it('keeps insertion unavailable until the editor is ready',()=>{render(<SnippetPicker disabled onInsert={vi.fn()}/>);expect(screen.getByRole('button',{name:'插入模板或常用文字'})).toBeDisabled();expect(actions.load).not.toHaveBeenCalled();});
+it('does not record usage when inserting fails, and records only after successful insertion',async()=>{const user=userEvent.setup();const insert=vi.fn().mockRejectedValueOnce(Error('EDITOR_NOT_READY')).mockResolvedValueOnce(undefined);render(<SnippetPicker disabled={false} onInsert={insert}/>);await user.click(screen.getByRole('button',{name:'插入模板或常用文字'}));await user.click(await screen.findByRole('button',{name:'添加 多行模板 到正文末尾'}));expect(actions.used).not.toHaveBeenCalled();expect(await screen.findByRole('alert')).toHaveTextContent('未能插入');await user.click(screen.getByRole('button',{name:'添加 多行模板 到正文末尾'}));await waitFor(()=>expect(actions.used).toHaveBeenCalledOnce());expect(insert).toHaveBeenLastCalledWith('第一段\n\n第二段');expect(insert.mock.invocationCallOrder[1]).toBeLessThan(actions.used.mock.invocationCallOrder[0]);});
