@@ -1,4 +1,5 @@
 "use client";
+import {useAppToast} from "@/components/feedback/app-toast";
 import { Select } from "@/components/ui/select";
 
 import { FormEvent, useMemo, useState } from "react";
@@ -54,6 +55,7 @@ export function ContentForm({
   helperText?: string;
   onSaved?: (content: ContentRecord) => void;
 }) {
+  const {toast}=useAppToast();
   const [title, setTitle] = useState(initialValues?.title ?? "");
   const [platformIds, setPlatformIds] = useState<string[]>(
     initialValues?.platformIds ?? []
@@ -97,6 +99,7 @@ export function ContentForm({
       setMessage(result.message);
       return;
     }
+    toast({type:"success",title:initialValues?"排期资料已经更新。":"排期内容已经建立。"});
     onSaved?.(result.data);
   }
 

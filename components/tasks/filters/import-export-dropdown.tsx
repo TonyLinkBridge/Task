@@ -1,5 +1,6 @@
 "use client";
 
+import {ActionFeedback} from "@/components/feedback/action-feedback";
 import {
   ArrowDown01Icon,
   Csv02Icon,
@@ -368,7 +369,7 @@ export function ImportExportDropdown({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <span role="status" className="max-w-72 text-right text-xs text-muted-foreground">{status}</span>
+      <ActionFeedback message={status} className="max-w-72 text-right text-xs text-muted-foreground"/>
     </div>
   );
 }

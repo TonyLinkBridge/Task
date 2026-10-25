@@ -1,5 +1,6 @@
 "use client";
 
+import {ActionFeedback} from "@/components/feedback/action-feedback";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -92,9 +93,7 @@ export function DeliveryLog({
                     </p>
                   ) : null}
                   {messages[delivery.id] ? (
-                    <p role="status" className="mt-2 text-sm text-muted-foreground">
-                      {messages[delivery.id]}
-                    </p>
+                    <ActionFeedback message={messages[delivery.id]} className="mt-2 text-sm text-muted-foreground"/>
                   ) : null}
                 </div>
                 {delivery.status === "failed" ? (

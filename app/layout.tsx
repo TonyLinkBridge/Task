@@ -5,6 +5,7 @@ import "@blocknote/mantine/style.css";
 import "@liveblocks/react-ui/styles.css";
 import "@liveblocks/react-blocknote/styles.css";
 import "./globals.css";
+import { AppToastProvider } from "@/components/feedback/app-toast";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
@@ -27,7 +28,7 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {children}
+            <AppToastProvider>{children}</AppToastProvider>
           </ThemeProvider>
         </ClerkProvider>
       </body>

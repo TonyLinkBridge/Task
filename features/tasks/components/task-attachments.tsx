@@ -1,5 +1,6 @@
 "use client";
 
+import {ActionFeedback} from "@/components/feedback/action-feedback";
 import { useState } from "react";
 
 import { buttonVariants } from "@/components/ui/button";
@@ -141,9 +142,7 @@ export function TaskAttachments({
         ) : null}
       </div>
       {message ? (
-        <p aria-live="polite" className="mt-3 text-sm text-muted-foreground">
-          {message}
-        </p>
+        <ActionFeedback message={message} type="info" className="mt-3 text-sm text-muted-foreground"/>
       ) : null}
     </section>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import {ActionFeedback} from "@/components/feedback/action-feedback";
 import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -88,7 +89,7 @@ export function HelpPageFeedback({
         </div>
       ) : null}
 
-      {message ? <p role="status" className="mt-3 text-sm text-muted-foreground">{message}</p> : null}
+      {message ? <ActionFeedback message={message} type="info" className="mt-3 text-sm text-muted-foreground"/> : null}
     </section>
   );
 }

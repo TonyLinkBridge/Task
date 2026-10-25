@@ -1,5 +1,7 @@
 "use client";
 
+import {useAppToast} from "@/components/feedback/app-toast";
+import {ActionFeedback} from "@/components/feedback/action-feedback";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -15,6 +17,7 @@ export function DeleteContentButton({
   deleteAction: (contentId: string) => Promise<ContentDeleteResult>;
   redirectTo?: '/content' | '/marketing' | '/marketing/calendar?view=list';
 }) {
+  const {toast}=useAppToast();
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -36,6 +39,7 @@ export function DeleteContentButton({
       setMessage(result.message);
       return;
     }
+    toast({type:"success",title:"内容已经删除。"});
     router.push(redirectTo);
     router.refresh();
   }
@@ -51,9 +55,7 @@ export function DeleteContentButton({
         {isDeleting ? "正在删除…" : "删除内容"}
       </Button>
       {message ? (
-        <p role="alert" className="mt-2 text-sm text-destructive">
-          {message}
-        </p>
+        <ActionFeedback message={message} type="error" className="mt-2 text-sm text-destructive"/>
       ) : null}
     </div>
   );

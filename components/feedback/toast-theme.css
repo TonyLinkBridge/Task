@@ -1,0 +1,16 @@
+/* Arc source styles remain separate. These aliases map its tokens to Task's existing theme. */
+.app-toast{
+ --space-2:8px;--space-3:12px;--space-4:16px;--space-6:24px;--space-8:32px;
+ --surface:var(--card);--surface-raised:var(--card);--surface-muted:var(--muted);
+ --text-muted:var(--muted-foreground);--text-secondary:var(--muted-foreground);--border-strong:var(--border);
+ --success:#059669;--warning:#b45309;--danger:var(--destructive);--accent:var(--primary);
+ --radius-panel:16px;--radius-pill:999px;--text-sm:14px;--tracking-body:0;
+ --shadow-raised:0 4px 16px #00000012;--shadow-floating:0 12px 40px #00000024;
+ --duration-instant:100ms;--duration-fast:150ms;--duration-standard:200ms;--duration-spring:300ms;
+ --ease-standard:cubic-bezier(.2,0,0,1);--ease-spring:cubic-bezier(.2,0,0,1);
+ z-index:100;
+ bottom:max(24px,env(safe-area-inset-bottom));
+}
+.app-toast button:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.app-toast [class*="line"],.app-toast [class*="description"]{overflow-wrap:anywhere;word-break:normal}
+@media(max-width:30rem){.app-toast{bottom:max(16px,env(safe-area-inset-bottom))}}

@@ -1,5 +1,7 @@
 "use client";
 
+import {useAppToast} from "@/components/feedback/app-toast";
+import {ActionFeedback} from "@/components/feedback/action-feedback";
 import {
   closestCenter,
   DndContext,
@@ -80,6 +82,7 @@ export function TaskBoard({
   createTaskAction?: SaveTaskAction;
   updateTaskAction?: UpdateTaskAction;
 }) {
+  const {toast}=useAppToast();
   const boardId = useId();
   const [tasks, setTasks] = useState(initialTasks);
   const [editingTask, setEditingTask] = useState<TaskRecord | null>(null);
@@ -119,6 +122,7 @@ export function TaskBoard({
       showTasks: setTasks,
     });
     setErrorMessage(message);
+    if(!message)toast({type:"success",title:"任务状态已经更新。"});
   }
 
   return (
@@ -148,12 +152,7 @@ export function TaskBoard({
         />
       ) : null}
       {errorMessage ? (
-        <p
-          role="alert"
-          className="mx-4 mb-3 rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive sm:mx-6"
-        >
-          {errorMessage}
-        </p>
+        <ActionFeedback message={errorMessage} type="error" className="mx-4 mb-3 rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive sm:mx-6"/>
       ) : null}
       <DndContext
         id={boardId}
