@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { makeTaskQueries } from "@/features/tasks/query-service";
 import type { TaskRecord } from "@/features/tasks/types";
@@ -22,6 +22,52 @@ const task: TaskRecord = {
 };
 
 describe("task queries", () => {
+  it("distinguishes an archived notification target without exposing its old details", async () => {
+    const queries = makeTaskQueries({
+      getVerifiedUser: async () => ({ id: 'member', role: 'employee', name: 'Member', imageUrl: null }),
+      list: async () => [], getTask: async () => null,
+      isTaskArchived: async () => true,
+      listComments: async () => [{ id: 'old', taskId: task.id, authorId: 'member', body: 'old comment', createdAt: task.createdAt, authorName: 'Member', authorImageUrl: null }],
+    });
+    await expect(queries.getTaskDetailData(task.id)).resolves.toMatchObject({ task: null, archived: true, comments: [], attachments: [], assignees: [] });
+  });
+
+  it("does not describe a missing task as archived", async () => {
+    const queries = makeTaskQueries({
+      getVerifiedUser: async () => ({ id: 'member', role: 'employee', name: 'Member', imageUrl: null }),
+      list: async () => [], getTask: async () => null, isTaskArchived: async () => false,
+    });
+    await expect(queries.getTaskDetailData(task.id)).resolves.toMatchObject({ task: null, archived: false });
+  });
+
+  it("does not add an archive lookup to a normal task page", async () => {
+    const isTaskArchived = vi.fn(async () => true);
+    const queries = makeTaskQueries({
+      getVerifiedUser: async () => ({ id: 'member', role: 'employee', name: 'Member', imageUrl: null }),
+      list: async () => [], getTask: async () => task, isTaskArchived,
+    });
+    await queries.getTaskDetailData(task.id);
+    expect(isTaskArchived).not.toHaveBeenCalled();
+  });
+
+  it("requires a verified login before checking archived tasks", async () => {
+    const isTaskArchived = vi.fn(async () => true);
+    const queries = makeTaskQueries({
+      getVerifiedUser: async () => { throw Error('UNAUTHENTICATED'); },
+      list: async () => [], getTask: vi.fn(), isTaskArchived,
+    });
+    await expect(queries.getTaskDetailData(task.id)).rejects.toThrow('UNAUTHENTICATED');
+    expect(isTaskArchived).not.toHaveBeenCalled();
+  });
+
+  it("does not report a database failure as an archived task", async () => {
+    const queries = makeTaskQueries({
+      getVerifiedUser: async () => ({ id: 'member', role: 'employee', name: 'Member', imageUrl: null }),
+      list: async () => [], getTask: async () => null,
+      isTaskArchived: async () => { throw Error('DATABASE_UNAVAILABLE'); },
+    });
+    await expect(queries.getTaskDetailData(task.id)).rejects.toThrow('DATABASE_UNAVAILABLE');
+  });
   it("does not read tasks without a verified user", async () => {
     let readCount = 0;
     const queries = makeTaskQueries({
@@ -136,6 +182,7 @@ describe("task queries", () => {
       comments: [comment],
       attachments: [attachment],
       assignees,
+      archived: false,
     });
   });
 });

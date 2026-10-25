@@ -9,6 +9,7 @@ import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { ArchiveTaskButton } from "@/features/tasks/components/archive-task-button";
+import { ArchivedTaskNotice } from "@/features/tasks/components/archived-task-notice";
 import { DeleteTaskButton } from "@/features/tasks/components/delete-task-button";
 import { TaskComments } from "@/features/tasks/components/task-comments";
 import { TaskAttachments } from "@/features/tasks/components/task-attachments";
@@ -53,8 +54,15 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
   const { taskId } = await params;
   if (!z.uuid().safeParse(taskId).success) notFound();
 
-  const { task, comments, attachments, currentUser, assignees } =
+  const { task, comments, attachments, currentUser, assignees, archived } =
     await getTaskDetailData(taskId);
+  if (archived) {
+    return <MarketingRouteTransition>
+      <MarketingShell currentUser={currentUser} active="tasks" title="任务已归档" description="查看历史通知对应的任务状态。">
+        <ArchivedTaskNotice />
+      </MarketingShell>
+    </MarketingRouteTransition>;
+  }
   if (!task) notFound();
 
   const taskAssignees = assignees.filter(({ id }) =>

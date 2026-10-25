@@ -12,6 +12,7 @@ type Dependencies = {
   list: (filters?: TaskFilters) => Promise<TaskRecord[]>;
   listAssignees?: () => Promise<AssignableUser[]>;
   getTask?: (id: string) => Promise<TaskRecord | null>;
+  isTaskArchived?: (id: string) => Promise<boolean>;
   listComments?: (taskId: string) => Promise<TaskCommentView[]>;
   listAttachments?: (taskId: string) => Promise<TaskAttachment[]>;
 };
@@ -40,7 +41,15 @@ export function makeTaskQueries(dependencies: Dependencies) {
         dependencies.listAttachments?.(taskId) ?? Promise.resolve([]),
         dependencies.listAssignees?.() ?? Promise.resolve([]),
       ]);
-      return { currentUser, task, comments, attachments, assignees };
+      // Normal pages keep their existing parallel reads. Only an unavailable
+      // target needs this small status lookup; archived details stay hidden.
+      const archived = task ? false : (await dependencies.isTaskArchived?.(taskId) ?? false);
+      return {
+        currentUser, task, archived,
+        comments: task ? comments : [],
+        attachments: task ? attachments : [],
+        assignees: task ? assignees : [],
+      };
     },
   };
 }

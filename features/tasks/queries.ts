@@ -8,6 +8,7 @@ const taskQueries = makeTaskQueries({
   list: (filters) => taskRepository.list(filters),
   listAssignees: () => taskRepository.listAssignees(),
   getTask: (id) => taskRepository.get(id),
+  isTaskArchived: (id) => taskRepository.isArchived(id),
   listComments: (taskId) => taskRepository.listComments(taskId),
   listAttachments: (taskId) => taskRepository.listAttachments(taskId),
 });

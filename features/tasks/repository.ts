@@ -25,6 +25,7 @@ export type TaskRepository = TaskActionRepository & {
   list(filters?: TaskFilters): Promise<TaskRecord[]>;
   listAssignees(): Promise<AssignableUser[]>;
   get(id: string): Promise<TaskRecord | null>;
+  isArchived(id: string): Promise<boolean>;
   listComments(taskId: string): Promise<TaskCommentView[]>;
   listAttachments(taskId: string): Promise<TaskAttachment[]>;
   findAttachment(id: string): Promise<TaskAttachment | null>;
@@ -140,6 +141,16 @@ export function createTaskRepository(
         .maybeSingle();
       if (error) throw new Error(`TASK_DATABASE_ERROR:${error.message}`);
       return data ? mapTaskRow(data as TaskRow) : null;
+    },
+
+    async isArchived(id) {
+      const { data, error } = await client()
+        .from("tasks")
+        .select("archived_at")
+        .eq("id", id)
+        .maybeSingle();
+      if (error) throw new Error(`TASK_DATABASE_ERROR:${error.message}`);
+      return Boolean(data?.archived_at);
     },
 
     async listComments(taskId) {
