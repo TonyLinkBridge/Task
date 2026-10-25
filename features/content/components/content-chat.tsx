@@ -1,5 +1,6 @@
 "use client";
 
+import {useAppToast} from "@/components/feedback/app-toast";
 import { FormEvent, useEffect, useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -60,6 +61,7 @@ export function ContentChat({
     contentId: string
   ) => Promise<RefreshCommentsResult>;
 }) {
+  const {toast}=useAppToast();
   const [comments, setComments] = useState(initialComments);
   const [body, setBody] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -111,6 +113,7 @@ export function ContentChat({
         },
       ])
     );
+    toast({type:"success",title:"留言已经发送。"});
     setBody("");
   }
 

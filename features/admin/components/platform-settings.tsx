@@ -1,5 +1,6 @@
 "use client";
 
+import {ActionFeedback} from "@/components/feedback/action-feedback";
 import { FormEvent, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -154,9 +155,7 @@ export function PlatformSettings({
       </form>
 
       {message ? (
-        <p role="status" className="text-sm text-muted-foreground">
-          {message}
-        </p>
+        <ActionFeedback message={message} type="info" className="text-sm text-muted-foreground"/>
       ) : null}
 
       <div className="grid gap-3">

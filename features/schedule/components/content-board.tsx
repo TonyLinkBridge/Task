@@ -1,5 +1,7 @@
 "use client";
 
+import {useAppToast} from "@/components/feedback/app-toast";
+import {ActionFeedback} from "@/components/feedback/action-feedback";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -40,6 +42,7 @@ export function ContentBoard({
   onMoved?: () => void;
   basePath?: "/content" | "/marketing/content";
 }) {
+  const {toast}=useAppToast();
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [movingId, setMovingId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -62,6 +65,7 @@ export function ContentBoard({
       setMessage(result.message);
     } else {
       setMessage(null);
+      toast({type:"success",title:"内容状态已经更新。"});
       onMoved?.();
     }
   }
@@ -75,9 +79,7 @@ export function ContentBoard({
   return (
     <div>
       {message ? (
-        <p role="alert" className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          {message}
-        </p>
+        <ActionFeedback message={message} type="warning" className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900"/>
       ) : null}
       <div className="flex gap-4 overflow-x-auto pb-4">
         {columns.map((column) => {

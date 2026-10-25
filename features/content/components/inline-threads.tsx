@@ -1,5 +1,6 @@
 "use client";
 
+import {useAppToast} from "@/components/feedback/app-toast";
 import type { BlockNoteEditor } from "@blocknote/core";
 import type { ThreadData } from "@liveblocks/client";
 import { useMarkThreadAsUnresolved } from "@liveblocks/react/suspense";
@@ -43,6 +44,7 @@ export function InlineThreads({
   threads: ThreadData[];
 }) {
   const [view, setView] = useState<"open" | "resolved">("open");
+  const {toast}=useAppToast();
   const [clearing, setClearing] = useState(false);
   const [clearMessage, setClearMessage] = useState<string | null>(null);
   const markThreadAsUnresolved = useMarkThreadAsUnresolved();
@@ -114,6 +116,7 @@ export function InlineThreads({
     setClearMessage(null);
     const result = await onClearResolved();
     setClearing(false);
+    toast({type:result.ok?"success":"error",title:result.ok?`已经清空 ${result.deleted} 条已解决留言。`:result.message});
     setClearMessage(
       result.ok
         ? `已经清空 ${result.deleted} 条已解决留言。`

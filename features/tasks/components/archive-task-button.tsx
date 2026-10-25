@@ -1,5 +1,6 @@
 "use client";
 
+import {useAppToast} from "@/components/feedback/app-toast";
 import type { TaskKind, TaskRecord } from "@/features/tasks/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +33,7 @@ export function ArchiveTaskButton({
   taskKind: TaskKind;
   archiveTaskAction?: (taskId: string) => Promise<ArchiveResult>;
 }) {
+  const {toast}=useAppToast();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -54,6 +56,7 @@ export function ArchiveTaskButton({
       setErrorMessage(result.message);
       return;
     }
+    toast({type:"success",title:"任务已经收起。"});
     setOpen(false);
     router.push(redirectTo);
     router.refresh();

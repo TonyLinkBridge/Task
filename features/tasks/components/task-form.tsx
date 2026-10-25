@@ -1,4 +1,5 @@
 "use client";
+import {useAppToast} from "@/components/feedback/app-toast";
 import { Select } from "@/components/ui/select";
 
 import { Add01Icon } from "@hugeicons/core-free-icons";
@@ -70,6 +71,7 @@ export function TaskForm({
   onOpenChange,
   showTrigger = true,
 }: TaskFormProps) {
+  const {toast}=useAppToast();
   const [internalOpen, setInternalOpen] = useState(false);
   const [title, setTitle] = useState(initialTask?.title ?? "");
   const [description, setDescription] = useState(initialTask?.description ?? "");
@@ -128,6 +130,7 @@ export function TaskForm({
       return;
     }
 
+    toast({type:"success",title:initialTask?"任务已经更新。":"任务已经建立。"});
     onSaved?.(result.data);
     changeOpen(false);
     if (!initialTask) {

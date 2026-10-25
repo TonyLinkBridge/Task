@@ -1,5 +1,6 @@
 "use client";
 
+import {ActionFeedback} from "@/components/feedback/action-feedback";
 import Image from "next/image";
 import { useRef, useState } from "react";
 
@@ -93,7 +94,7 @@ export function Attachments({
           const result=await finishUploadAction(contentId,ticket.storagePath,meta);
           if(!result.ok)throw Error(result.message);
           setAttachments(all=>[...all.filter(a=>a.id!==result.data.id),result.data]);
-          setMessage('文件已经上传。');options.onProgress(100);
+          options.onProgress(100);
         } catch(e) {
           if(e instanceof Error && e.name==='AbortError')throw e;
           throw Error(e instanceof Error && !e.message.includes('Server Components') ? e.message : '服务器刚刚没有回应，请直接重试，不需要刷新页面。');
@@ -159,9 +160,7 @@ export function Attachments({
         ) : null}
       </div>
       {message ? (
-        <p aria-live="polite" className="mt-3 text-sm text-muted-foreground">
-          {message}
-        </p>
+        <ActionFeedback message={message} type="success" className="mt-3 text-sm text-muted-foreground"/>
       ) : null}
 
       <Dialog

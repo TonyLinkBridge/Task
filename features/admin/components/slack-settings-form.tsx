@@ -1,4 +1,5 @@
 "use client";
+import {ActionFeedback} from "@/components/feedback/action-feedback";
 import { Select } from "@/components/ui/select";
 
 import { FormEvent, useState } from "react";
@@ -138,9 +139,7 @@ export function SlackSettingsForm({
           </p>
         ) : null}
         {message ? (
-          <p role="status" className="text-sm text-muted-foreground">
-            {message}
-          </p>
+          <ActionFeedback message={message} type="info" className="text-sm text-muted-foreground"/>
         ) : null}
         <div className="flex justify-end">
           <Button type="submit" disabled={isSaving || !channelId}>

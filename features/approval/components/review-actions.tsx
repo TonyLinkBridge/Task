@@ -1,4 +1,6 @@
 "use client";
+import {ActionFeedback} from "@/components/feedback/action-feedback";
+import {useAppToast} from "@/components/feedback/app-toast";
 import { Select } from "@/components/ui/select";
 
 import { useState } from "react";
@@ -58,6 +60,7 @@ export function ReviewActions({
     content.requestedReviewerId ?? currentUser.id
   );
   const [changeMessage, setChangeMessage] = useState("");
+  const {toast}=useAppToast();
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const editable =
@@ -94,7 +97,7 @@ export function ReviewActions({
       setMessage(result.message);
       return;
     }
-    setMessage("已经保存。 ");
+    toast({type:"success",title:"审核决定已经保存。"});
     onCompleted?.(result.data);
   }
 
@@ -228,9 +231,7 @@ export function ReviewActions({
       ) : null}
 
       {message ? (
-        <p aria-live="polite" className="mt-3 text-sm text-muted-foreground">
-          {message}
-        </p>
+        <ActionFeedback message={message} type="error" className="mt-3 text-sm text-muted-foreground"/>
       ) : null}
     </section>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import {useAppToast} from "@/components/feedback/app-toast";
 import type { TaskCommentRecord } from "@/features/tasks/action-service";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ export function TaskComments({
     body: string
   ) => Promise<AddCommentResult>;
 }) {
+  const {toast}=useAppToast();
   const [comments, setComments] = useState(initialComments);
   const [body, setBody] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -62,6 +64,7 @@ export function TaskComments({
         authorImageUrl: currentUser.imageUrl,
       },
     ]);
+    toast({type:"success",title:"留言已经发送。"});
     setBody("");
   }
 

@@ -1,4 +1,5 @@
 "use client";
+import {useAppToast} from "@/components/feedback/app-toast";
 import { Select } from "@/components/ui/select";
 
 import { BubbleChatUserIcon } from "@hugeicons/core-free-icons";
@@ -16,6 +17,7 @@ import {
 import type { MessageMember, PrivateMessage } from "@/features/messages/types";
 
 export function PrivateMessages() {
+  const {toast}=useAppToast();
   const [messages, setMessages] = useState<PrivateMessage[]>([]);
   const [members, setMembers] = useState<MessageMember[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -58,6 +60,7 @@ export function PrivateMessages() {
     }
     const data = await response.json();
     setMessages((current) => [data.message, ...current]);
+    toast({type:"success",title:"私人消息已经发送。"});
     setBody("");
   }
 
