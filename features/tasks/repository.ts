@@ -121,12 +121,13 @@ export function createTaskRepository(
     async listAssignees() {
       const { data, error } = await client()
         .from("profiles")
-        .select("clerk_user_id, role, display_name, avatar_url")
+        .select("clerk_user_id, role, display_name, avatar_url, team_role:team_roles(name,permissions)")
+        .eq("team_status", "active")
         .is("archived_at", null)
         .order("display_name");
       if (error) throw new Error(`TASK_DATABASE_ERROR:${error.message}`);
       return (data ?? []).map((row) =>
-        mapAssignableUserRow(row as Parameters<typeof mapAssignableUserRow>[0])
+        mapAssignableUserRow(row as unknown as Parameters<typeof mapAssignableUserRow>[0])
       );
     },
 

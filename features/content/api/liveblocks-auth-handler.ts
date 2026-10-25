@@ -1,3 +1,4 @@
+import {hasPermission} from "@/features/team/permissions";
 import type { VerifiedUser } from "@/lib/auth/types";
 import type { ContentStatus } from "@/features/content/types";
 import { canEditBody } from "@/features/approval/rules";
@@ -60,7 +61,7 @@ export function makeLiveblocksAuthHandler(dependencies: Dependencies) {
       }
 
       for (let attempt = 0; attempt < 3; attempt += 1) {
-        const editable = canEditBody(content.status);
+        const editable = canEditBody(content.status) && hasPermission(user,"content.write");
         stage = "collaboration_authorize";
         const token = await dependencies.authorizeRoom(
           user,
@@ -72,7 +73,7 @@ export function makeLiveblocksAuthHandler(dependencies: Dependencies) {
         if (!latest) {
           return denyWithReadOnlyRoom();
         }
-        if (canEditBody(latest.status) === editable) {
+        if ((canEditBody(latest.status) && hasPermission(user,"content.write")) === editable) {
           return Response.json(token);
         }
         content = latest;

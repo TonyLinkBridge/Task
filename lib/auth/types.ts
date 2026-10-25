@@ -5,6 +5,11 @@ export type VerifiedUser = {
   role: AppRole;
   name: string;
   imageUrl: string | null;
+  permissions?: import("@/features/team/permissions").Permission[];
+  teamRoleId?: string;
+  teamRoleName?: string;
+  teamStatus?: "active" | "suspended" | "removed";
+  accessRevision?: string;
 };
 
 export type ClerkUserSnapshot = {

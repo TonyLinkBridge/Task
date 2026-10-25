@@ -1,3 +1,4 @@
+import {hasPermission} from "@/features/team/permissions";
 import { listAvailableMedia,useMediaInContent } from '@/features/media-library/actions';
 import { ReviewHistory } from '@/features/approval/components/review-history';
 import { MarketingEditorReview } from './editor-review';
@@ -26,7 +27,7 @@ export function MarketingContentWorkspace({ detail }: { detail: MarketingContent
           <MarketingRoomPermissionSync editable={detail.editable}>
           <MarketingCollaborationGuard>
           <MarketingEditorReview content={content} currentUser={currentUser} approvals={approvals}
-            admins={assignees.filter(member => member.role === 'admin')} snapshotDocument={snapshotDocument} />
+            admins={assignees.filter(member => hasPermission(member,'content.approve'))} snapshotDocument={snapshotDocument} />
           </MarketingCollaborationGuard>
           </MarketingRoomPermissionSync>
         </ContentRoom>

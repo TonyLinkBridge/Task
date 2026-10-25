@@ -1,4 +1,5 @@
 "use client";
+import {hasPermission} from "@/features/team/permissions";
 import {ActionFeedback} from "@/components/feedback/action-feedback";
 import {useAppToast} from "@/components/feedback/app-toast";
 import { Select } from "@/components/ui/select";
@@ -58,7 +59,7 @@ export function ReviewActions({
   onCompleted?: (updatedContent: ContentRecord) => void;
 }) {
   const [reviewerId, setReviewerId] = useState(
-    content.requestedReviewerId ?? currentUser.id
+    content.requestedReviewerId ?? (hasPermission(currentUser,"content.approve") ? currentUser.id : admins.find(a=>hasPermission(a,"content.approve"))?.id ?? "")
   );
   const [changeMessage, setChangeMessage] = useState("");
   const {toast}=useAppToast();
@@ -69,12 +70,12 @@ export function ReviewActions({
   const editable =
     content.status === "draft" || content.status === "changes_requested";
   const canSubmit =
-    editable &&
+    hasPermission(currentUser,"content.write") && editable &&
     (content.requiredApprovals === 1
       ? content.authorId === currentUser.id
       : content.authorId === currentUser.id ||
         content.assigneeId === currentUser.id ||
-        currentUser.role === "admin");
+        hasPermission(currentUser,"content.manage_all"));
   const chosenOtherAdmin =
     content.requiredApprovals === 1 &&
     content.requestedReviewerId !== null &&
@@ -87,7 +88,8 @@ export function ReviewActions({
   );
   const canReview =
     content.status === "in_review" &&
-    currentUser.role === "admin" &&
+    (content.requiredApprovals === 1 || content.authorId !== currentUser.id) &&
+    hasPermission(currentUser,"content.approve") &&
     !chosenOtherAdmin &&
     !hasCurrentApproval;
 
@@ -122,7 +124,7 @@ export function ReviewActions({
       {canSubmit ? (
         <div className="mt-4 space-y-3 border-t pt-4">
           {currentUser.role === "admin" && content.authorId === currentUser.id ? (
-            <Select label="由谁检查" value={reviewerId} onValueChange={setReviewerId} options={[{value:currentUser.id,label:"我自己批准"},...admins.filter(a=>a.id!==currentUser.id).map(a=>({value:a.id,label:`交给 ${a.name}`}))]} />
+            <Select label="由谁检查" value={reviewerId} onValueChange={setReviewerId} options={[...(hasPermission(currentUser,"content.approve")?[{value:currentUser.id,label:"我自己批准"}]:[]),...admins.filter(a=>a.id!==currentUser.id).map(a=>({value:a.id,label:`交给 ${a.name}`}))]} />
           ) : null}
           <Button
             disabled={isSaving || document === null}
@@ -200,14 +202,14 @@ export function ReviewActions({
       {content.status === "approved" || content.status === "due" ? (
         <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
           <Button
-            disabled={isSaving}
+            disabled={isSaving || !hasPermission(currentUser,"content.publish")}
             onClick={() => void run(() => publishAction(content.id))}
           >
             确认已经发布
           </Button>
           <Button
             variant="outline"
-            disabled={isSaving}
+            disabled={isSaving || !hasPermission(currentUser,"content.write")}
             ref={unlockTrigger}
             onClick={() => setConfirmUnlock(true)}
           >
@@ -216,7 +218,7 @@ export function ReviewActions({
         </div>
       ) : null}
 
-      {currentUser.role === "admin" && content.status !== "archived" ? (
+      {hasPermission(currentUser,"content.manage_all") && content.status !== "archived" ? (
         <div className="mt-4 border-t pt-4">
           <Button
             variant="destructive"

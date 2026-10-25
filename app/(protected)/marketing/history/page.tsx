@@ -1,3 +1,4 @@
+import {hasPermission} from "@/features/team/permissions";
 import { redirect } from 'next/navigation';
 import { retrySlackDelivery } from '@/features/admin/actions/retry-slack-delivery';
 import { AuditLog } from '@/features/admin/components/audit-log';
@@ -8,7 +9,7 @@ import { getVerifiedUser } from '@/lib/auth/get-verified-user';
 
 export default async function MarketingHistoryPage() {
   const currentUser = await getVerifiedUser();
-  if (currentUser.role !== 'admin') redirect('/access-denied?reason=admin-only');
+  if (!hasPermission(currentUser,'history.view')) redirect('/access-denied?reason=admin-only');
   const [deliveries, events] = await Promise.all([
     adminRepository.listSlackDeliveries(), adminRepository.listAuditEvents(),
   ]);

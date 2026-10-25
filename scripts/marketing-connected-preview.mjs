@@ -9,10 +9,10 @@ const source=resolve(import.meta.dirname,'..');
 const realLogin=process.argv.includes('--real-login');
 const portArg=process.argv.find(a=>a.startsWith('--port='));
 const port=portArg?Number(portArg.split('=')[1]):realLogin?3219:3218;
-if(![3218,3219,3221,3222].includes(port))throw Error('ONLY_ISOLATED_PORTS_ALLOWED');
+if(![3218,3219,3221,3222,3223].includes(port))throw Error('ONLY_ISOLATED_PORTS_ALLOWED');
 const origin='http://127.0.0.1:'+port;
 const root=resolve(source,'.isolated/marketing/web',Date.now().toString());
-const providers=JSON.parse(await readFile((realLogin||port===3222)?resolve(source,'.isolated/marketing/providers.json'):'/Users/tony/Documents/ChatGPT/Task/.isolated/n8n/providers.json','utf8'));
+const providers=JSON.parse(await readFile((realLogin||[3222,3223].includes(port))?resolve(source,'.isolated/marketing/providers.json'):'/Users/tony/Documents/ChatGPT/Task/.isolated/n8n/providers.json','utf8'));
 if(providers.liveblocksProjectId!=='6a91c42f2636d77aa4a4f4eb'||!providers.liveblocksSecretKey?.startsWith('sk_dev_')||!providers.liveblocksPublicKey?.startsWith('pk_dev_'))throw Error('Dedicated development Liveblocks project required');
 if(realLogin){
  assertMarketingClerkProviders(providers);
@@ -37,8 +37,8 @@ export const testClient={from:query,rpc:async(...args:unknown[])=> (await runtim
 `);
 await put('lib/auth/get-verified-user.ts',`
 import 'server-only';import {cookies} from 'next/headers';import {redirect} from 'next/navigation';
-import {identities} from '@/lib/marketing-test/runtime';import type {VerifiedUser} from './types';
-export async function getVerifiedUser():Promise<VerifiedUser>{const key=(await cookies()).get('marketing-test-person')?.value;if(!key||!Object.hasOwn(identities,key))redirect('/marketing-test');return identities[key as keyof typeof identities];}
+import {identities} from '@/lib/marketing-test/runtime';import{teamRepository}from'@/features/team/repository';import type {VerifiedUser} from './types';
+export async function getVerifiedUser():Promise<VerifiedUser>{const key=(await cookies()).get('marketing-test-person')?.value;if(!key||!Object.hasOwn(identities,key))redirect('/marketing-test');return teamRepository.hydrate(identities[key as keyof typeof identities]);}
 `);
 await put('lib/supabase/admin.ts',`import 'server-only';import type{SupabaseClient}from'@supabase/supabase-js';import{testClient}from'@/lib/marketing-test/runtime';export function getSupabaseAdmin():SupabaseClient{return testClient as unknown as SupabaseClient;}`);
 await put('lib/supabase/browser.ts',`'use client';export function getSupabaseBrowser(){return {storage:{from:(bucket:string)=>({uploadToSignedUrl:async(path:string,token:string,file:File,options:{contentType:string})=>{if(!['content-files','task-files'].includes(bucket))return {error:{message:'TEST_INVALID_BUCKET'}};const response=await fetch('/marketing-test/upload?token='+encodeURIComponent(token),{method:'PUT',headers:{'content-type':options.contentType},body:file});return response.ok?{error:null}:{error:{message:'TEST_UPLOAD_FAILED'}};}})}};}`);
@@ -74,13 +74,14 @@ export default async function isolatedClerkProxy(request:NextRequest,event:NextF
  await put('next.config.ts',`export default{serverExternalPackages:['@electric-sql/pglite'],skipProxyUrlNormalize:false,outputFileTracingRoot:${JSON.stringify(root)},allowedDevOrigins:['127.0.0.1'],experimental:{serverActions:{allowedOrigins:[${JSON.stringify('127.0.0.1:'+port)}]}}};`);
  await writeFile(resolve(root,'app/globals.css'),result.css+'\nbody::before{content:"独立测试环境 · 真实测试登录 · 正式资料未连接";display:block;background:#fef3c7;color:#78350f;padding:8px;text-align:center;font:13px sans-serif;}');
 }
-if(!realLogin&&port===3222){
+if(!realLogin&&[3222,3223].includes(port)){
  await put('features/workspace-settings/components/account-management.tsx',`export function AccountManagement(){return <p>当前为本机角色测试；真实账号安全界面请在 3221 的 Clerk 测试登录中查看。</p>;}`);
  await put('app/globals.css',(await readFile(resolve(root,'app/globals.css'),'utf8'))+'\nbody::before{content:"独立角色测试 · 本机资料 · 正式系统未连接";display:block;background:#fef3c7;color:#78350f;padding:8px;text-align:center;font:13px sans-serif;}');
 }
 await put('.env.local',Object.entries(env).map(([k,v])=>k+'='+v).join('\n'));await chmod(resolve(root,'.env.local'),0o600);
+if(!realLogin&&port===3223){await put('features/team/clerk-provider.ts',`export async function deliverTeamInvite(_email:string,id:string){return {id:'local-simulation-'+id};}export async function revokeTeamInvite(_id:string){}`);await put('next.config.ts',`export default{images:{unoptimized:true},serverExternalPackages:['@electric-sql/pglite'],outputFileTracingRoot:${JSON.stringify(root)},allowedDevOrigins:['localhost','127.0.0.1'],experimental:{serverActions:{allowedOrigins:[${JSON.stringify('localhost:'+port)},${JSON.stringify('127.0.0.1:'+port)}]}}};`);await put('app/globals.css',(await readFile(resolve(root,'app/globals.css'),'utf8'))+`body::before{content:'团队权限隔离测试 · 本机资料 · 邮件仅模拟，不发送 · 正式系统未连接'!important;}`);}
 await put('ISOLATION.txt',realLogin?'Disposable marketing preview. Dedicated Clerk DEVELOPMENT identity with original Slack workspace verification. Local PGlite and files; designated development Liveblocks only. Synthetic login endpoint disabled. No production connection, deployment or Slack notifications.':'Disposable marketing preview. Synthetic identities. Local PGlite and local files. Only the designated development Liveblocks project is connected. No Slack messages, Clerk changes, deployment or production database connection.');
-await mkdir(resolve(source,'.isolated/marketing'),{recursive:true});await writeFile(resolve(source,'.isolated/marketing/'+(port===3222?'current-library-settings-roles.json':port===3221?'current-library-settings.json':realLogin?'current-real.json':'current.json')),JSON.stringify({root,url:origin+'/marketing',realLogin},null,2));
+await mkdir(resolve(source,'.isolated/marketing'),{recursive:true});await writeFile(resolve(source,'.isolated/marketing/'+(port===3223?'current-team.json':port===3222?'current-library-settings-roles.json':port===3221?'current-library-settings.json':realLogin?'current-real.json':'current.json')),JSON.stringify({root,url:origin+'/marketing',realLogin},null,2));
 const childEnv={...env,NODE_ENV:'development'};for(const name of ['PATH','HOME','TMPDIR','USER','LANG','SHELL'])if(process.env[name])childEnv[name]=process.env[name];
 console.log('Independent preview: '+origin+(realLogin?'/marketing':'/marketing-test'));console.log('Temporary source copy:',root);
 const child=spawn(process.execPath,[resolve(source,'node_modules/next/dist/bin/next'),'dev','--webpack','--hostname','127.0.0.1','--port',String(port)],{cwd:root,env:childEnv,stdio:'inherit'});for(const signal of ['SIGINT','SIGTERM'])process.on(signal,()=>child.kill(signal));child.on('exit',code=>process.exit(code??0));

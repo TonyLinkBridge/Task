@@ -1,3 +1,4 @@
+import {hasPermission} from "@/features/team/permissions";
 import { z } from "zod";
 
 import type { ContentRecord } from "@/features/content/types";
@@ -54,6 +55,7 @@ function isJsonValue(value: unknown): boolean {
 
 function errorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : "";
+  if (message.includes("CONTENT_AUTHOR_CANNOT_REVIEW")) return "这份内容需要其他审核人检查，不能自己批准。";
   if (message.includes("CONTENT_VERSION_STALE")) {
     return "内容已经更新，请重新检查";
   }
@@ -121,6 +123,7 @@ export function makeApprovalActions(dependencies: Dependencies) {
       requestedReviewerId?: string
     ): Promise<ApprovalActionResult> {
       const user = await dependencies.getVerifiedUser();
+      if (!hasPermission(user,"content.write")) return {ok:false,message:"你没有执行这个操作的权限。"};
       const parsedId = contentIdSchema.safeParse(contentId);
       const parsedReviewer = reviewerSchema.safeParse(requestedReviewerId);
       if (!parsedId.success || !parsedReviewer.success || !isJsonValue(blocknoteJson)) {
@@ -162,7 +165,7 @@ export function makeApprovalActions(dependencies: Dependencies) {
       version: number
     ): Promise<ApprovalActionResult> {
       const user = await dependencies.getVerifiedUser();
-      if (user.role !== "admin") {
+      if (!hasPermission(user, "content.approve")) {
         return { ok: false, message: "只有管理员可以批准内容。" };
       }
       const parsedId = contentIdSchema.safeParse(contentId);
@@ -191,7 +194,7 @@ export function makeApprovalActions(dependencies: Dependencies) {
       message: string
     ): Promise<ApprovalActionResult> {
       const user = await dependencies.getVerifiedUser();
-      if (user.role !== "admin") {
+      if (!hasPermission(user, "content.approve")) {
         return { ok: false, message: "只有管理员可以要求修改。" };
       }
       const parsedId = contentIdSchema.safeParse(contentId);
@@ -230,6 +233,7 @@ export function makeApprovalActions(dependencies: Dependencies) {
 
     async unlockApprovedContent(contentId: string): Promise<ApprovalActionResult> {
       const user = await dependencies.getVerifiedUser();
+      if (!hasPermission(user,"content.write")) return {ok:false,message:"你没有执行这个操作的权限。"};
       const parsedId = contentIdSchema.safeParse(contentId);
       if (!parsedId.success) return { ok: false, message: "找不到这份内容。" };
       const result = await save(parsedId.data, () =>
@@ -248,6 +252,7 @@ export function makeApprovalActions(dependencies: Dependencies) {
 
     async markPublished(contentId: string): Promise<ApprovalActionResult> {
       const user = await dependencies.getVerifiedUser();
+      if (!hasPermission(user,"content.publish")) return {ok:false,message:"你没有执行这个操作的权限。"};
       const parsedId = contentIdSchema.safeParse(contentId);
       if (!parsedId.success) return { ok: false, message: "找不到这份内容。" };
       const result = await save(parsedId.data, () =>
@@ -259,7 +264,7 @@ export function makeApprovalActions(dependencies: Dependencies) {
 
     async archiveContent(contentId: string): Promise<ApprovalActionResult> {
       const user = await dependencies.getVerifiedUser();
-      if (user.role !== "admin") {
+      if (!hasPermission(user, "content.manage_all")) {
         return { ok: false, message: "只有管理员可以收起内容。" };
       }
       const parsedId = contentIdSchema.safeParse(contentId);

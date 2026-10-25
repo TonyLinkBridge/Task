@@ -1,3 +1,4 @@
+import {requirePermission} from "@/features/team/permissions";
 import { z } from "zod";
 
 import type { ContentAttachment } from "@/features/content/types";
@@ -81,7 +82,7 @@ export function makeContentFileActions(dependencies: Dependencies) {
   return {
     async requestUpload(contentId: string, fileMeta: unknown) {
       try {
-        await dependencies.getVerifiedUser();
+        requirePermission(await dependencies.getVerifiedUser(),"content.write");
       } catch {
         return { ok: false as const, message: RETRYABLE_SERVER_MESSAGE };
       }
@@ -123,6 +124,7 @@ export function makeContentFileActions(dependencies: Dependencies) {
       let user: VerifiedUser;
       try {
         user = await dependencies.getVerifiedUser();
+        requirePermission(user,"content.write");
       } catch {
         return { ok: false as const, message: RETRYABLE_SERVER_MESSAGE };
       }

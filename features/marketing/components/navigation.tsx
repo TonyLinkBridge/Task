@@ -1,4 +1,6 @@
 'use client';
+import {hasPermission} from '@/features/team/permissions';
+import type{VerifiedUser}from'@/lib/auth/types';
 import Link from 'next/link';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { Dialog as BaseDialog } from '@base-ui/react/dialog';
@@ -65,9 +67,9 @@ export function MarketingTabs({active,pendingActive}:{active:MarketingPage;pendi
     <span className="marketing-tab-pill" aria-hidden="true">{marketingTabs.map(([key,label])=><span key={key}>{label}</span>)}</span>
   </div></nav>;
 }
-export function MarketingNavigation({ active, role = 'employee' }: { active: MarketingPage; role?: 'employee' | 'admin' }) {
+export function MarketingNavigation({ active, role = 'employee',user }: { active: MarketingPage; role?: 'employee' | 'admin';user?:VerifiedUser }) {
   const [open, setOpen] = useState(false);
-  const accessibleDestinations = destinations.filter(d => d.key !== 'history' || role === 'admin');
+  const accessibleDestinations = destinations.filter(d => d.key !== 'history' || hasPermission(user??{role},'history.view'));
   return <>
     <nav className="marketing-dock" aria-label="现有工作台功能">
       <Link href="/marketing/content/new" className="marketing-create" aria-label="建立内容" title="建立内容"><MarketingIcon name="plus" /></Link>

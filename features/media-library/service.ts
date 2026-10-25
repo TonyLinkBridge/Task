@@ -1,3 +1,4 @@
+import {hasPermission,requirePermission} from "@/features/team/permissions";
 import { z } from 'zod';
 import { fileSchema, buildStoragePath, type ContentFileMeta } from '@/features/content/files/service';
 import type { ContentAttachment } from '@/features/content/types';
@@ -29,17 +30,17 @@ export function makeMediaLibraryActions(d:Dependencies){
    }catch{return {ok:false as const,message:'素材没有保存成功，请重试。'};}
   },
   async setArchived(assetId:string,archived:boolean){
-   try{const user=await d.getUser();if(!validId(assetId)||typeof archived!=='boolean')return {ok:false as const,message:'找不到素材。'};const asset=await d.find(assetId);
-    if(!asset)return {ok:false as const,message:'找不到素材。'};if(user.role!=='admin'&&asset.uploaderId!==user.id)return {ok:false as const,message:'你只能管理自己上传的素材。'};
+   try{const user=await d.getUser();requirePermission(user,"library.manage");if(!validId(assetId)||typeof archived!=='boolean')return {ok:false as const,message:'找不到素材。'};const asset=await d.find(assetId);
+    if(!asset)return {ok:false as const,message:'找不到素材。'};if(!hasPermission(user,'library.manage_all')&&asset.uploaderId!==user.id)return {ok:false as const,message:'你只能管理自己上传的素材。'};
     return {ok:true as const,data:await d.archive(assetId,archived?d.now().toISOString():null)};
    }catch{return {ok:false as const,message:'没有保存成功，请重试。'};}
   },
   async useInContent(assetId:string,contentId:string){
    let copied:string|undefined;
-   try{const user=await d.getUser();if(!validId(assetId)||!validId(contentId))return {ok:false as const,message:'素材或内容资料不正确。'};
+   try{const user=await d.getUser();requirePermission(user,"library.manage");if(!validId(assetId)||!validId(contentId))return {ok:false as const,message:'素材或内容资料不正确。'};
     const [asset,content]=await Promise.all([d.find(assetId),d.findContent(contentId)]);
     if(!asset||asset.archivedAt)return {ok:false as const,message:'素材已移除，请选择其他素材。'};
-    if(!content||!['draft','changes_requested'].includes(content.status)||(user.role!=='admin'&&user.id!==content.authorId&&user.id!==content.assigneeId))return {ok:false as const,message:'你不能修改这份内容的文件，或内容正在审核。'};
+    if(!content||!['draft','changes_requested'].includes(content.status)||(!hasPermission(user,'content.manage_all')&&user.id!==content.authorId&&user.id!==content.assigneeId))return {ok:false as const,message:'你不能修改这份内容的文件，或内容正在审核。'};
     const path=buildStoragePath(contentId,asset.fileName,d.id());await d.copy(asset.storagePath,path);copied=path;
     const attached=await d.attach(assetId,contentId,path,user.id);
     if(attached.storagePath!==path)await d.remove(path).catch(()=>{});

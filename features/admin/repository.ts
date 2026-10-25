@@ -80,7 +80,8 @@ export function createAdminRepository(providedClient?: SupabaseClient) {
     async listMembers(): Promise<AssignableUser[]> {
       const { data, error } = await client()
         .from("profiles")
-        .select("clerk_user_id, role, display_name, avatar_url")
+        .select("clerk_user_id, role, display_name, avatar_url, team_role:team_roles(name,permissions)")
+        .eq("team_status", "active")
         .is("archived_at", null)
         .order("display_name");
       if (error) throw new Error(`ADMIN_DATABASE_ERROR:${error.message}`);
@@ -89,6 +90,7 @@ export function createAdminRepository(providedClient?: SupabaseClient) {
         role: row.role,
         name: row.display_name,
         imageUrl: row.avatar_url,
+        ...(row.team_role ? {permissions:(row.team_role as unknown as {permissions:AssignableUser["permissions"]}).permissions,teamRoleName:(row.team_role as unknown as {name:string}).name} : {}),
       })) as AssignableUser[];
     },
 

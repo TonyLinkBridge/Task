@@ -1,3 +1,4 @@
+import {requirePermission} from "@/features/team/permissions";
 import {z} from 'zod';
 import type {VerifiedUser} from '@/lib/auth/types';
 import type {LibraryOrganization,LibrarySnippet,Result} from './types';
@@ -10,9 +11,9 @@ export function makeLibraryManagement(d:Dependencies){
  return {
   list:()=>run(user=>d.list(user.id)),
   favorite:(input:unknown)=>run(async user=>{const v=z.object({ids:z.array(z.uuid()).min(1).max(100),favorite:z.boolean()}).parse(input);await d.favorite([...new Set(v.ids)],v.favorite,user.id);return v;}),
-  tags:(input:unknown)=>run(async user=>{const v=z.object({id:z.uuid(),tags:z.array(z.string().trim().min(1).max(32)).max(20)}).parse(input);return {id:v.id,tags:await d.tags(v.id,[...new Set(v.tags)],user.id)};}),
-  save:(input:unknown)=>run(async user=>{const v=snippetSchema.parse(input);if(!v.id&&v.revision!==-1)throw Error('CONFLICT');return d.save({...v,id:v.id??d.id()},user.id);}),
-  archive:(input:unknown)=>run(async user=>{const v=z.object({id:z.uuid(),archived:z.boolean(),revision:z.number().int().min(0)}).parse(input);return d.archive(v.id,v.archived,v.revision,user.id);}),
+  tags:(input:unknown)=>run(async user=>{requirePermission(user,"library.manage");const v=z.object({id:z.uuid(),tags:z.array(z.string().trim().min(1).max(32)).max(20)}).parse(input);return {id:v.id,tags:await d.tags(v.id,[...new Set(v.tags)],user.id)};}),
+  save:(input:unknown)=>run(async user=>{requirePermission(user,"library.manage");const v=snippetSchema.parse(input);if(!v.id&&v.revision!==-1)throw Error('CONFLICT');return d.save({...v,id:v.id??d.id()},user.id);}),
+  archive:(input:unknown)=>run(async user=>{requirePermission(user,"library.manage");const v=z.object({id:z.uuid(),archived:z.boolean(),revision:z.number().int().min(0)}).parse(input);return d.archive(v.id,v.archived,v.revision,user.id);}),
   use:(input:unknown)=>run(async user=>{const v=z.object({id:z.uuid(),eventId:z.uuid()}).parse(input);return d.use(v.id,v.eventId,user.id);}),
  };
 }

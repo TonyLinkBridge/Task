@@ -33,6 +33,8 @@ export type TaskRecord = {
 };
 
 export type AssignableUser = {
+  permissions?: import("@/features/team/permissions").Permission[];
+  teamRoleName?: string;
   id: string;
   role: "employee" | "admin";
   name: string;

@@ -1,3 +1,4 @@
+import {requirePermission} from "@/features/team/permissions";
 import { z } from "zod";
 
 import {
@@ -48,7 +49,7 @@ export function makeTaskFileActions(dependencies: Dependencies) {
 
   return {
     async requestUpload(taskId: string, fileMeta: unknown) {
-      await dependencies.getVerifiedUser();
+      requirePermission(await dependencies.getVerifiedUser(),"tasks.manage");
       const parsedId = taskIdSchema.safeParse(taskId);
       const parsedFile = fileSchema.safeParse(fileMeta);
       if (!parsedId.success || !parsedFile.success) {
@@ -76,6 +77,7 @@ export function makeTaskFileActions(dependencies: Dependencies) {
 
     async finishUpload(taskId: string, storagePath: string, fileMeta: unknown) {
       const user = await dependencies.getVerifiedUser();
+      requirePermission(user,"tasks.manage");
       const parsedId = taskIdSchema.safeParse(taskId);
       const parsedFile = fileSchema.safeParse(fileMeta);
       if (

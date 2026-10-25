@@ -1,5 +1,6 @@
 "use client";
 
+import {hasPermission} from "@/features/team/permissions";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 
@@ -63,9 +64,9 @@ export function ContentEditorReview({
         </div>
         {editable ? (
           <BlockNoteEditor
-            canClearResolved={currentUser.role === "admin"}
+            canClearResolved={hasPermission(currentUser,"content.manage_all")}
             contentId={content.id}
-            editable
+            editable={hasPermission(currentUser,"content.write")}
             onClearResolved={() => clearResolvedComments(content.id)}
             onDocumentChange={setDocument}
             onSyncChange={setSynchronized}
@@ -81,7 +82,7 @@ export function ContentEditorReview({
             这里的同步副本只用来查看、回复或新增指定文字留言，不能修改正文。
           </p>
           <BlockNoteEditor
-            canClearResolved={currentUser.role === "admin"}
+            canClearResolved={hasPermission(currentUser,"content.manage_all")}
             contentId={content.id}
             editable={false}
             onClearResolved={() => clearResolvedComments(content.id)}

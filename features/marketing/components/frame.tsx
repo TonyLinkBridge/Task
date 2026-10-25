@@ -15,7 +15,7 @@ export function marketingPageForPath(path:string):MarketingPage{
 export function MarketingFrame({currentUser,children}:{currentUser:VerifiedUser;children:React.ReactNode}){
  const pathname=usePathname();
  const [identity,setIdentity]=useState(currentUser);
- const publishIdentity=useCallback((user:VerifiedUser)=>setIdentity(previous=>previous.id===user.id&&previous.name===user.name&&previous.role===user.role&&previous.imageUrl===user.imageUrl?previous:user),[]);
+ const publishIdentity=useCallback((user:VerifiedUser)=>setIdentity(previous=>previous.id===user.id&&previous.name===user.name&&previous.role===user.role&&previous.imageUrl===user.imageUrl&&previous.accessRevision===user.accessRevision?previous:user),[]);
  const context=useMemo(()=>({publishIdentity}),[publishIdentity]);
  const frame=useRef<HTMLDivElement>(null);
  const previous=useRef(pathname);
@@ -23,8 +23,10 @@ export function MarketingFrame({currentUser,children}:{currentUser:VerifiedUser;
  useLayoutEffect(()=>{void loadMarketingMotion().catch(()=>{});},[]);
  useLayoutEffect(()=>{
   if(previous.current===pathname)return;
+  const internalTeam=previous.current.startsWith('/marketing/team')&&pathname.startsWith('/marketing/team');
   previous.current=pathname;
   const snapshot=route?.takeSnapshot();
+  if(internalTeam){snapshot?.dispose();return;}
   if(snapshot){if(frame.current&&snapshot.targetPath===pathname&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches)snapshot.play(frame.current);else snapshot.dispose();}
   window.scrollTo({top:0});
   const title=frame.current?.querySelector<HTMLElement>('#marketing-main h1');

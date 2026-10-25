@@ -1,3 +1,4 @@
+import {hasPermission} from "@/features/team/permissions";
 import { taskRepository } from '@/features/tasks/repository';
 import { buildDashboardSummary } from '@/features/marketing/dashboard-summary';
 import { DashboardSummary } from '@/features/marketing/components/dashboard-summary';
@@ -13,7 +14,9 @@ import { buildMarketingSummary, marketingStatusLabels } from '@/features/marketi
 import { malaysiaDateTimeFormatter, toMalaysiaDateKey } from '@/features/schedule/date';
 export default async function MarketingPage({searchParams}:{searchParams:Promise<{status?:string}>}) {
   if ((await searchParams).status === 'in_review') redirect('/marketing/approvals');
-  const [currentUser, contents, tasks] = await Promise.all([getVerifiedUser(), listScheduledContent(), taskRepository.list()]);
+  const currentUser = await getVerifiedUser();
+  if (!hasPermission(currentUser,"reports.view")) redirect("/marketing/team");
+  const [contents, tasks] = await Promise.all([listScheduledContent(), taskRepository.list()]);
   const { counts, pending } = buildMarketingSummary(contents);
   const next = pending[0];
   const cover = next ? await marketingContentQueries.cover(next.id).catch(() => null) : null;

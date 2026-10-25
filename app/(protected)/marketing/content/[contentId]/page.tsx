@@ -1,3 +1,4 @@
+import {hasPermission} from "@/features/team/permissions";
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { MarketingShell } from '@/features/marketing/components/shell';
@@ -21,7 +22,7 @@ export default async function MarketingContentDetailPage({ params }: { params: P
     <section className="marketing-summary marketing-entry">
       <div className="marketing-pills"><span className={`marketing-status status-${content.status}`}>{labels[content.status]}</span>{detail.platforms.filter(p=>detail.platformIds.includes(p.id)).map(p=><span key={p.id}><i style={{background:p.color}}/>{p.name}</span>)}</div>
       <dl><div><dt>负责人</dt><dd>{detail.assignees.find(m=>m.id===content.assigneeId)?.name ?? '未找到负责人'}</dd></div><div><dt>发布时间 · 马来西亚</dt><dd>{new Intl.DateTimeFormat('zh-MY',{timeZone:'Asia/Kuala_Lumpur',dateStyle:'medium',timeStyle:'short'}).format(new Date(content.publishAt))}</dd></div><div><dt>审核版本</dt><dd>{content.currentVersion > 0 ? `第 ${content.currentVersion} 版` : '尚未送审'}</dd></div></dl>
-      <div className="marketing-toolbar"><Link href="/marketing/calendar?view=list">← 返回内容列表</Link>{detail.currentUser.role === 'admin' || content.authorId === detail.currentUser.id ? <DeleteContentButton contentId={content.id} deleteAction={deleteScheduledContent} redirectTo="/marketing/calendar?view=list" /> : null}</div>
+      <div className="marketing-toolbar"><Link href="/marketing/calendar?view=list">← 返回内容列表</Link>{hasPermission(detail.currentUser,'content.delete') && (hasPermission(detail.currentUser,'content.manage_all') || content.authorId === detail.currentUser.id) ? <DeleteContentButton contentId={content.id} deleteAction={deleteScheduledContent} redirectTo="/marketing/calendar?view=list" /> : null}</div>
     </section>
     <div className="marketing-entry"><MarketingContentWorkspace detail={detail}/></div>
   </MarketingShell>;

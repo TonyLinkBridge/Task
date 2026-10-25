@@ -1,4 +1,5 @@
 'use client';
+import {roleLabel} from '@/features/team/permissions';
 import Link from 'next/link';
 import {WorkspaceBrandCopy} from '@/features/workspace-settings/components/provider';
 import Image from 'next/image';
@@ -20,8 +21,8 @@ export function MarketingChrome({currentUser,active,pendingActive}:{currentUser:
           <WorkspaceBrandCopy/>
         </Link>
         <MarketingTabs active={active} pendingActive={pendingActive} />
-        <div className="marketing-account"><MarketingHeaderActions /><UserAccountMenu currentUser={currentUser} /><span className="marketing-account-name">{currentUser.name}<small>{currentUser.role === 'admin' ? '管理员' : '员工'}</small></span></div>
+        <div className="marketing-account"><MarketingHeaderActions /><UserAccountMenu currentUser={currentUser} /><span className="marketing-account-name">{currentUser.name}<small>{roleLabel(currentUser)}</small></span></div>
       </header>
-      <MarketingNavigation active={active} role={currentUser.role} />
+      <MarketingNavigation active={active} role={currentUser.role} user={currentUser} />
 
 </>;}

@@ -1,3 +1,4 @@
+import {hasPermission} from "@/features/team/permissions";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -17,6 +18,7 @@ export async function moveEditableContent(
 ) {
   "use server";
   const user = await getVerifiedUser();
+  if (!hasPermission(user,"content.reschedule")) return {ok:false as const,message:"你没有调整排期的权限。"};
   const parsed = inputSchema.safeParse({ contentId, status });
   if (!parsed.success) return { ok: false as const, message: "不能移到这个状态。" };
 
@@ -26,7 +28,7 @@ export async function moveEditableContent(
     return { ok: false as const, message: "这份内容已经收起。" };
   }
   if (
-    user.role !== "admin" &&
+    !hasPermission(user,"content.manage_all") &&
     content.authorId !== user.id &&
     content.assigneeId !== user.id
   ) {

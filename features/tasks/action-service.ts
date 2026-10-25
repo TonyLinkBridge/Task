@@ -1,3 +1,4 @@
+import {hasPermission} from "@/features/team/permissions";
 import type { VerifiedUser } from "@/lib/auth/types";
 import type { TaskInput } from "@/features/tasks/schema";
 import { taskInputSchema } from "@/features/tasks/schema";
@@ -79,6 +80,7 @@ export function makeTaskActions(dependencies: Dependencies) {
   return {
     async createTask(input: unknown): Promise<ActionResult<TaskRecord>> {
       const user = await dependencies.getVerifiedUser();
+      if (!hasPermission(user,"tasks.manage")) return {ok:false,message:"你没有操作普通任务的权限。"};
       const parsed = taskInputSchema.safeParse(input);
       if (!parsed.success) {
         return { ok: false, message: "请检查任务内容。" };
@@ -91,7 +93,8 @@ export function makeTaskActions(dependencies: Dependencies) {
       id: string,
       input: unknown
     ): Promise<ActionResult<TaskRecord>> {
-      await dependencies.getVerifiedUser();
+      const user = await dependencies.getVerifiedUser();
+      if (!hasPermission(user,"tasks.manage")) return {ok:false,message:"你没有操作普通任务的权限。"};
       const parsedId = taskIdSchema.safeParse(id);
       const parsedInput = taskInputSchema.safeParse(input);
       if (!parsedId.success || !parsedInput.success) {
@@ -108,7 +111,8 @@ export function makeTaskActions(dependencies: Dependencies) {
       status: TaskStatus,
       position: number
     ): Promise<ActionResult<TaskRecord>> {
-      await dependencies.getVerifiedUser();
+      const user = await dependencies.getVerifiedUser();
+      if (!hasPermission(user,"tasks.manage")) return {ok:false,message:"你没有操作普通任务的权限。"};
       const parsed = moveTaskSchema.safeParse({ id, status, position });
       if (!parsed.success) {
         return { ok: false, message: "无法移动这个任务。" };
@@ -124,7 +128,8 @@ export function makeTaskActions(dependencies: Dependencies) {
     },
 
     async archiveTask(id: string): Promise<ActionResult<TaskRecord>> {
-      await dependencies.getVerifiedUser();
+      const user = await dependencies.getVerifiedUser();
+      if (!hasPermission(user,"tasks.manage")) return {ok:false,message:"你没有操作普通任务的权限。"};
       const parsedId = taskIdSchema.safeParse(id);
       if (!parsedId.success) {
         return { ok: false, message: "找不到这个任务。" };
@@ -140,6 +145,7 @@ export function makeTaskActions(dependencies: Dependencies) {
 
     async deleteTask(id: string): Promise<DeleteTaskResult> {
       const user = await dependencies.getVerifiedUser();
+      if (!hasPermission(user,"tasks.manage")) return {ok:false,message:"你没有操作普通任务的权限。"};
       const parsedId = taskIdSchema.safeParse(id);
       if (!parsedId.success) {
         return { ok: false, message: "找不到这个任务。" };
@@ -171,6 +177,7 @@ export function makeTaskActions(dependencies: Dependencies) {
       body: string
     ): Promise<ActionResult<TaskCommentRecord>> {
       const user = await dependencies.getVerifiedUser();
+      if (!hasPermission(user,"tasks.manage")) return {ok:false,message:"你没有操作普通任务的权限。"};
       const parsed = commentSchema.safeParse({ taskId, body });
       if (!parsed.success) {
         return { ok: false, message: "留言不能为空。" };

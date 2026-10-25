@@ -49,6 +49,7 @@ export function mapTaskRow(row: TaskRow): TaskRecord {
 }
 
 type AssignableUserRow = {
+  team_role?: {name:string; permissions: NonNullable<AssignableUser["permissions"]>};
   clerk_user_id: string;
   role: AssignableUser["role"];
   display_name: string;
@@ -61,6 +62,7 @@ export function mapAssignableUserRow(row: AssignableUserRow): AssignableUser {
     role: row.role,
     name: row.display_name,
     imageUrl: row.avatar_url,
+    ...(row.team_role ? {permissions:row.team_role.permissions,teamRoleName:row.team_role.name} : {}),
   };
 }
 

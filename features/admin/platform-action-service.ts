@@ -1,3 +1,4 @@
+import {hasPermission} from "@/features/team/permissions";
 import { z } from "zod";
 
 import type { ContentPlatform } from "@/features/content/types";
@@ -38,7 +39,7 @@ function refreshPlatformPages(revalidatePath: (path: string) => void) {
 export function makePlatformActions(dependencies: Dependencies) {
   async function authorize() {
     const user = await dependencies.getVerifiedUser();
-    return user.role === "admin" ? user : null;
+    return hasPermission(user,"channels.manage") ? user : null;
   }
 
   async function save(

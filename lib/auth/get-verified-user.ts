@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cache } from "react";
+import { teamRepository } from "@/features/team/repository";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
 
@@ -16,12 +17,17 @@ export const getVerifiedUser = cache(async function getVerifiedUser(): Promise<V
   const client = await clerkClient();
   const env = getServerEnv();
 
-  return resolveVerifiedUser({
+  let verifiedEmail: string | undefined;
+  let mfaEnabled: boolean | undefined;
+  const resolved = await resolveVerifiedUser({
     userId,
     allowedSlackTeamId: env.ALLOWED_SLACK_TEAM_ID,
     now: () => new Date(),
     getUser: async (id) => {
       const user = await client.users.getUser(id);
+      const email = user.emailAddresses.find(e => e.id === user.primaryEmailAddressId && e.verification?.status === "verified");
+      verifiedEmail = email?.emailAddress;
+      mfaEnabled = user.twoFactorEnabled;
       return {
         id: user.id,
         firstName: user.firstName,
@@ -48,11 +54,12 @@ export const getVerifiedUser = cache(async function getVerifiedUser(): Promise<V
     upsertProfile: async (profile) => {
       const { error } = await getSupabaseAdmin()
         .from("profiles")
-        .upsert(profile, { onConflict: "clerk_user_id" });
+        .upsert({...profile, ...(verifiedEmail ? {team_email:verifiedEmail} : {}), last_active_at:new Date().toISOString(), mfa_enabled:mfaEnabled??null}, { onConflict: "clerk_user_id" });
 
       if (error) {
         throw new Error(`PROFILE_SYNC_FAILED:${error.message}`);
       }
     },
   });
+  return teamRepository.hydrate(resolved, verifiedEmail);
 });

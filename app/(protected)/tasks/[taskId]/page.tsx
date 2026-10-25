@@ -1,3 +1,4 @@
+import {hasPermission} from "@/features/team/permissions";
 import "@/features/marketing/marketing.css";
 import { MarketingShell } from "@/features/marketing/components/shell";
 import { MarketingRouteTransition } from "@/features/marketing/components/route-transition";
@@ -90,7 +91,7 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
                   redirectTo="/marketing/tasks"
                 />
                 {task.kind === "general" &&
-                (currentUser.role === "admin" ||
+                (hasPermission(currentUser,"tasks.manage_all") ||
                   task.creatorId === currentUser.id) ? (
                   <DeleteTaskButton
                     taskId={task.id}

@@ -1,3 +1,4 @@
+import {requirePermission} from "@/features/team/permissions";
 import { z } from "zod";
 
 import type { MessageMember, PrivateMessage } from "@/features/messages/types";
@@ -44,6 +45,7 @@ export function makePrivateMessagesHandler(dependencies: Dependencies) {
     async POST(request: Request) {
       try {
         const user = await dependencies.getVerifiedUser();
+        requirePermission(user,"messages.send");
         const parsed = messageSchema.safeParse(await request.json());
         if (!parsed.success || parsed.data.recipientId === user.id) {
           return Response.json({ error: "invalid_message" }, { status: 400 });

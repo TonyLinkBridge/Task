@@ -1,3 +1,4 @@
+import {hasPermission} from "@/features/team/permissions";
 import { z } from "zod";
 
 import type {
@@ -51,7 +52,7 @@ export function makeNotificationSettingsActions(dependencies: Dependencies) {
   return {
     async saveNotificationSettings(input: unknown) {
       const user = await dependencies.getVerifiedUser();
-      if (user.role !== "admin") {
+      if (!hasPermission(user,"workspace.manage")) {
         return {
           ok: false as const,
           message: "只有管理员可以修改通知设置。",

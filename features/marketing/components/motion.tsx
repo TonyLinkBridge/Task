@@ -9,10 +9,14 @@ import{useRouteMotion}from'./route-context';
 export function MarketingMotion({children}:{children:React.ReactNode}){
  const ref=useRef<HTMLDivElement>(null);
  const pathname=usePathname();
+ const previousPath=useRef(pathname);
  const route=useRouteMotion();
  const snapshot=route?.snapshot;
  useLayoutEffect(()=>{
   const root=ref.current;if(!root)return;
+  const internalTeam=previousPath.current.startsWith("/marketing/team")&&pathname.startsWith("/marketing/team")&&previousPath.current!==pathname;
+  previousPath.current=pathname;
+  if(internalTeam){root.dataset.motionState="ready";return;}
   if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){root.dataset.motionState='ready';return;}
   const letters=Array.from(root.querySelectorAll<HTMLElement>('.marketing-title .ch'));
   const compose=root.querySelector('.marketing-create-grid');

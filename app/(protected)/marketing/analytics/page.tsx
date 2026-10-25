@@ -1,9 +1,13 @@
+import {redirect} from "next/navigation";
+import {hasPermission} from "@/features/team/permissions";
 import { MarketingShell } from '@/features/marketing/components/shell';
 import { listScheduledContent } from '@/features/schedule/queries';
 import { getVerifiedUser } from '@/lib/auth/get-verified-user';
 import { buildMarketingSummary, marketingStatusLabels } from '@/features/marketing/page-model';
 export default async function MarketingAnalyticsPage() {
-  const [currentUser, contents] = await Promise.all([getVerifiedUser(), listScheduledContent()]);
+  const currentUser=await getVerifiedUser();
+  if(!hasPermission(currentUser,"reports.view"))redirect("/marketing/team");
+  const contents=await listScheduledContent();
   const { counts } = buildMarketingSummary(contents);
   const platforms = new Map<string, { name: string; count: number; color: string }>();
   for (const item of contents) for (const platform of item.platforms) { const previous = platforms.get(platform.id); platforms.set(platform.id, { name: platform.name, color: platform.color, count: (previous?.count ?? 0) + 1 }); }

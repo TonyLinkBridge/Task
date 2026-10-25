@@ -1,3 +1,4 @@
+import {hasPermission} from "@/features/team/permissions";
 import { z } from "zod";
 
 import type { VerifiedUser } from "@/lib/auth/types";
@@ -13,7 +14,7 @@ export function makeRetrySlackDelivery(dependencies: {
 }) {
   return async (deliveryId: string) => {
     const user = await dependencies.getVerifiedUser();
-    if (user.role !== "admin") {
+    if (!hasPermission(user,"workspace.manage")) {
       return { ok: false as const, message: "只有管理员可以重发通知。" };
     }
     const parsedId = z.uuid().safeParse(deliveryId);

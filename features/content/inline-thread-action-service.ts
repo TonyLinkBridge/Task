@@ -1,3 +1,4 @@
+import {hasPermission} from "@/features/team/permissions";
 import { z } from "zod";
 
 import type { VerifiedUser } from "@/lib/auth/types";
@@ -11,7 +12,7 @@ export function makeInlineThreadActions(dependencies: Dependencies) {
   return {
     async clearResolvedComments(contentId: string) {
       const user = await dependencies.getVerifiedUser();
-      if (user.role !== "admin") {
+      if (!hasPermission(user,"content.manage_all")) {
         return {
           ok: false as const,
           message: "只有管理员可以清空已解决留言。",

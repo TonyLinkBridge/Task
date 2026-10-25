@@ -5,6 +5,7 @@ import { getVerifiedUser } from "@/lib/auth/get-verified-user";
 
 const accessErrors = new Set([
   "WRONG_SLACK_WORKSPACE",
+  "TEAM_ACCESS_DENIED",
   "SLACK_ACCESS_TOKEN_MISSING",
   "SLACK_IDENTITY_LOOKUP_FAILED",
 ]);

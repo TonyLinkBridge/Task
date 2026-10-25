@@ -28,6 +28,7 @@ export async function createMarketingTestClient({directory,sourceRoot=process.cw
  const pathFor=path=>{const result=resolve(filesRoot,path);if(!result.startsWith(filesRoot+'/'))throw Error('TEST_INVALID_PATH');return result;};
  async function enrich(table,rows,selection) {
   for(const row of rows) {
+   if(table==='profiles'&&selection.includes('team_role:'))row.team_role=(await db.query('select name,permissions from team_roles where id=$1',[row.team_role_id])).rows[0]??null;
    for(const [alias,column] of [['admin','admin_id'],['actor','actor_id'],['author','author_id'],['assignee','assignee_id']]) {
     if(selection.includes(alias+':')&&row[column])row[alias]=(await db.query('select * from profiles where clerk_user_id=$1',[row[column]])).rows[0]??null;
    }
