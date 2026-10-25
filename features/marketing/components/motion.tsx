@@ -14,7 +14,7 @@ export function MarketingMotion({children}:{children:React.ReactNode}){
  const snapshot=route?.snapshot;
  useLayoutEffect(()=>{
   const root=ref.current;if(!root)return;
-  const internalTeam=previousPath.current.startsWith("/marketing/team")&&pathname.startsWith("/marketing/team")&&previousPath.current!==pathname;
+  const internalTeam=['/marketing/team','/marketing/settings'].some(prefix=>previousPath.current.startsWith(prefix)&&pathname.startsWith(prefix))&&previousPath.current!==pathname;
   previousPath.current=pathname;
   if(internalTeam){root.dataset.motionState="ready";return;}
   if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){root.dataset.motionState='ready';return;}

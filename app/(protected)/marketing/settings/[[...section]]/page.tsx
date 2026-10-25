@@ -1,13 +1,12 @@
 import {hasPermission} from "@/features/team/permissions";
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { MarketingShell } from '@/features/marketing/components/shell';
+import {PersonalProfile} from '@/features/workspace-settings/components/personal-profile';
 import {ThemeOptions} from '@/features/workspace-settings/components/theme-options';
 import {WorkspaceForm} from '@/features/workspace-settings/components/workspace-form';
 import {AccountManagement} from '@/features/workspace-settings/components/account-management';
 import {workspaceRepository} from '@/features/workspace-settings/repository';
 import '@/features/library-management/components/management.css';
-import { UserAccountMenu } from '@/components/auth/user-account-menu';
 import { SlackSettingsForm } from '@/features/admin/components/slack-settings-form';
 import { adminRepository } from '@/features/admin/repository';
 import { saveNotificationSettings } from '@/features/admin/actions/notification-settings';
@@ -36,7 +35,7 @@ export default async function MarketingSettingsPage({ params }: { params: Promis
     case 'billing': body=<><h2>没有收费或订阅功能</h2><p>这是团队内部工作台，目前没有收费套餐、信用卡或发票功能。</p></>;break;
     case 'appearance': body=<ThemeOptions/>;break;
     case 'data': body=<><h2>导出团队资料</h2><p>内容排期导出只包含你当前可见的排期资料。JSON 保留结构，CSV 适合表格查看。</p><div className="workspace-export-links"><a className="marketing-primary" href="/api/workspace-export?format=schedule-json" download>下载排期 JSON</a><a className="marketing-primary" href="/api/workspace-export?format=schedule-csv" download>下载排期 CSV</a></div>{hasPermission(currentUser,'workspace.export')?<><h3>工作区备份</h3><p>包括成员基本资料、平台、内容、任务、内容版本、审核与留言、附件和素材元数据、文字资源及工作区设置。包含已归档记录，不包含私人消息、个人收藏、登录密钥或实际文件；系统不会生成下载签名。文件本身仍需另行备份。</p><a className="marketing-primary" href="/api/workspace-export?format=workspace-json" download>下载工作区资料 JSON</a></>:<p>完整工作区资料只有管理员可以导出。</p>}<p className="marketing-caption">导出不会删除或重置当前资料。</p></>;break;
-    default: body=<><h2>{currentUser.name}</h2><p>当前权限：{currentUser.role==='admin'?'管理员':'员工'}</p><p>姓名与头像使用 Slack 登录账号的资料，权限由管理员管理。</p><div className="marketing-settings-account"><span><b>登录账号</b><small>从头像菜单查看账号或退出登录</small></span><UserAccountMenu currentUser={currentUser}/></div><AccountManagement/></>;
+    default: body=<PersonalProfile/>;
   }
-  return <MarketingShell currentUser={currentUser} active="settings" title="Settings" description="管理个人资料、通知和工作区偏好。"><div className="marketing-settings-grid marketing-entry"><nav aria-label="设置分类" className="marketing-card">{Object.entries(sections).map(([key,label])=><Link key={key} href={`/marketing/settings/${key}`} aria-current={section===key?'page':undefined}>{label}</Link>)}</nav><section className="marketing-card marketing-settings-content">{body}</section></div></MarketingShell>;
+  return body;
 }

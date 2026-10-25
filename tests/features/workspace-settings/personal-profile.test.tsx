@@ -1,0 +1,31 @@
+import {render,screen,waitFor} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import {expect,it,vi} from 'vitest';
+const mocks=vi.hoisted(()=>({save:vi.fn(),load:vi.fn(),update:vi.fn()}));
+vi.mock('@/features/workspace-settings/profile-actions',()=>({savePersonalProfile:mocks.save,loadPersonalProfile:mocks.load}));
+vi.mock('@/features/workspace-settings/components/account-management',()=>({AccountManagement:()=> <button>管理登录账号</button>}));
+const initial={id:'ivy',name:'Ivy',title:'Editor',email:'ivy@example.test',photoUrl:null,avatarMode:'initials' as const,roleId:'editor',roleName:'编辑',roleColor:'#f2b740',permissions:['content.write' as const],revision:0};
+vi.mock('@/features/workspace-settings/components/settings-workspace',()=>({usePersonalProfile:()=>({profile:initial,update:mocks.update})}));
+vi.mock('@/features/workspace-settings/components/provider',()=>({useWorkspacePreferences:()=>({preferences:{name:'JUYU'}})}));
+import {PersonalProfile} from '@/features/workspace-settings/components/personal-profile';
+it('saves consecutive field changes in order, using the returned revision',async()=>{
+ const user=userEvent.setup();let finish!:(value:unknown)=>void;
+ mocks.save.mockReset().mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve;})).mockResolvedValueOnce({ok:true,data:{...initial,name:'Ivy Lin',title:'Writer',revision:2}});
+ render(<PersonalProfile/>);
+ const name=screen.getByRole('textbox',{name:/显示姓名/});await user.clear(name);await user.type(name,'Ivy Lin');await user.tab();
+ await waitFor(()=>expect(mocks.save).toHaveBeenCalledTimes(1));
+ const title=screen.getByRole('textbox',{name:/职务/});await user.clear(title);await user.type(title,'Writer');await user.tab();
+ expect(mocks.save).toHaveBeenCalledTimes(1);
+ finish({ok:true,data:{...initial,name:'Ivy Lin',revision:1}});
+ await waitFor(()=>expect(mocks.save).toHaveBeenCalledTimes(2));
+ expect(mocks.save.mock.calls[1][0]).toEqual({patch:{title:'Writer'},revision:1});
+});
+it('keeps verified email and permissions read-only and exposes failures',async()=>{
+ const user=userEvent.setup();mocks.save.mockReset().mockResolvedValue({ok:false,message:'资料已经被更新，请重新读取后再试。'});
+ render(<PersonalProfile/>);
+ expect(screen.getByRole('textbox',{name:/工作邮箱/})).toHaveAttribute('readonly');
+ expect(screen.getByRole('button',{name:'照片'})).toBeDisabled();
+ expect(screen.queryByRole('combobox',{name:'角色'})).not.toBeInTheDocument();
+ const title=screen.getByRole('textbox',{name:/职务/});await user.clear(title);await user.type(title,'Changed');await user.tab();
+ await waitFor(()=>expect(screen.getByRole('alert')).toHaveTextContent('资料已经被更新'));
+});

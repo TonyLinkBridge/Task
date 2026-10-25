@@ -23,7 +23,7 @@ export function MarketingFrame({currentUser,children}:{currentUser:VerifiedUser;
  useLayoutEffect(()=>{void loadMarketingMotion().catch(()=>{});},[]);
  useLayoutEffect(()=>{
   if(previous.current===pathname)return;
-  const internalTeam=previous.current.startsWith('/marketing/team')&&pathname.startsWith('/marketing/team');
+  const internalTeam=['/marketing/team','/marketing/settings'].some(prefix=>previous.current.startsWith(prefix)&&pathname.startsWith(prefix));
   previous.current=pathname;
   const snapshot=route?.takeSnapshot();
   if(internalTeam){snapshot?.dispose();return;}

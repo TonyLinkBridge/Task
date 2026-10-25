@@ -51,14 +51,15 @@ export function MarketingRouteTransition({ children }: { children: React.ReactNo
       event.preventDefault();
       setIntent(href);
       const targetPath=new URL(href,window.location.href).pathname;
-      if(targetPath!==window.location.pathname){
+      const internalWorkspace=['/marketing/team','/marketing/settings'].some(prefix=>window.location.pathname.startsWith(prefix)&&targetPath.startsWith(prefix));
+      if(targetPath!==window.location.pathname&&!internalWorkspace){
         snapshot.current?.dispose();
         const outgoing=captureRouteSnapshot(document.getElementById('marketing-main')!,targetPath);
         snapshot.current=outgoing;
         if(expiry.current)clearTimeout(expiry.current);
         expiry.current=setTimeout(()=>{if(snapshot.current===outgoing){outgoing.dispose();snapshot.current=null;}},5000);
       }
-      startTransition(() => {try{router.push(href);}catch{snapshot.current?.dispose();snapshot.current=null;setIntent(null);}});
+      startTransition(() => {try{if(internalWorkspace)router.push(href,{scroll:false});else router.push(href);}catch{snapshot.current?.dispose();snapshot.current=null;setIntent(null);}});
     };
     document.addEventListener('click', click, true);
     document.addEventListener('mouseover', prepare);
