@@ -1,3 +1,4 @@
+import { listAvailableMedia,useMediaInContent } from '@/features/media-library/actions';
 import { ReviewHistory } from '@/features/approval/components/review-history';
 import { MarketingEditorReview } from './editor-review';
 import { ContentRoom } from '@/features/content/components/content-room';
@@ -35,7 +36,7 @@ export function MarketingContentWorkspace({ detail }: { detail: MarketingContent
       <aside className="marketing-workspace-aside" aria-label="文件与审核记录">
         <Attachments key={`${content.id}:${content.currentVersion}:${content.status}`} contentId={content.id}
           attachments={detail.visibleAttachments} editable={detail.editable}
-          requestUploadAction={requestUpload} finishUploadAction={finishUpload} />
+          requestUploadAction={requestUpload} finishUploadAction={finishUpload} listMediaAction={listAvailableMedia} useMediaAction={useMediaInContent} />
         <ReviewHistory events={detail.history} />
       </aside>
     </div>

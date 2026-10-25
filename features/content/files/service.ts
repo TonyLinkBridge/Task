@@ -58,10 +58,11 @@ type Dependencies = {
   findContent: (
     contentId: string
   ) => Promise<{ id: string; status: ContentStatus } | null>;
-  createUploadUrl: (storagePath: string) => Promise<{ token: string }>;
+  createUploadUrl: (storagePath: string) => Promise<{ token: string; signedUrl?: string }>;
   inspectUpload: (
     storagePath: string
   ) => Promise<{ size: number; type: string } | null>;
+  findAttachmentByPath?: (path: string) => Promise<ContentAttachment | null>;
   saveAttachment: (input: {
     contentId: string;
     storagePath: string;
@@ -107,7 +108,7 @@ export function makeContentFileActions(dependencies: Dependencies) {
         const upload = await dependencies.createUploadUrl(storagePath);
         return {
           ok: true as const,
-          data: { storagePath, token: upload.token },
+          data: { storagePath, token: upload.token, ...(upload.signedUrl ? { signedUrl: upload.signedUrl } : {}) },
         };
       } catch {
         return { ok: false as const, message: "暂时无法上传，请稍后再试。" };
@@ -145,6 +146,13 @@ export function makeContentFileActions(dependencies: Dependencies) {
       }
 
       try {
+        const existing = await dependencies.findAttachmentByPath?.(storagePath);
+        if (existing) {
+          if (existing.contentId !== parsedId.data || existing.uploaderId !== user.id) {
+            return { ok: false as const, message: "文件资料不正确。" };
+          }
+          return { ok: true as const, data: existing };
+        }
         const actualFile = await dependencies.inspectUpload(storagePath);
         const actualValidation = fileSchema.safeParse({
           name: parsedFile.data.name,

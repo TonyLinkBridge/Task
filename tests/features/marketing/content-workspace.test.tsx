@@ -6,6 +6,7 @@ vi.mock('@/features/approval/actions',()=>({approveContent:vi.fn(),archiveConten
 vi.mock('@/features/content/actions/inline-threads',()=>({clearResolvedComments:vi.fn()}));
 vi.mock('@/features/content/actions/content',()=>({deleteScheduledContent:vi.fn(),updateScheduledContent:vi.fn()}));
 vi.mock('@/features/content/actions/comments',()=>({addContentComment:vi.fn(),refreshContentComments:vi.fn()}));
+vi.mock('@/features/media-library/actions',()=>({listAvailableMedia:vi.fn(),useMediaInContent:vi.fn()}));
 vi.mock('@/features/content/files/actions',()=>({requestUpload:vi.fn(),finishUpload:vi.fn()}));
 vi.mock('@/features/content/components/content-room',async()=>{const{useState}=await import('react');return{ContentRoom:({children}:{children:React.ReactNode})=>{const[session]=useState(()=>++roomSequence.next);return <div data-testid="actual-room-slot" data-session={session}>{children}</div>;}};});
 vi.mock('@/features/marketing/components/collaboration-guard',()=>({MarketingCollaborationGuard:({children}:{children:React.ReactNode})=><>{children}</>}));
@@ -40,13 +41,13 @@ describe('connected marketing content workspace',()=>{
   expect(screen.getByText('你已经批准，正在等待另一位管理员。')).toBeInTheDocument();
   expect(screen.queryByRole('button',{name:'批准内容'})).not.toBeInTheDocument();
   expect(screen.getByRole('link',{name:'下载 审核版本.png'})).toBeInTheDocument();
-  expect(screen.queryByLabelText('上传文件')).not.toBeInTheDocument();
+  expect(screen.queryByRole('region',{name:'文件上传'})).not.toBeInTheDocument();
  });
  it('gives the other admin the actual review controls and restores draft uploads after return',()=>{
   const {rerender}=render(<MarketingContentWorkspace detail={{...detail,currentUser:{...detail.currentUser,id:'admin-b'}} as never}/>);
   expect(screen.getByRole('button',{name:'批准内容'})).toBeInTheDocument();
   rerender(<MarketingContentWorkspace detail={{...detail,content:{...detail.content,status:'changes_requested'},editable:true,visibleAttachments:[]} as never}/>);
   expect(screen.getByTestId('inline-review')).toHaveAttribute('data-editable','true');
-  expect(screen.getByLabelText('上传文件')).toBeInTheDocument();
+  expect(screen.getByRole('region',{name:'文件上传'})).toBeInTheDocument();
  });
 });

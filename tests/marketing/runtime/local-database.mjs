@@ -1,6 +1,6 @@
 // Test-only adapter. Runs the application's unchanged SQL locally; never connects to Supabase.
 import { PGlite } from '@electric-sql/pglite';
-import { readFile, readdir, mkdir, writeFile, stat, rm } from 'node:fs/promises';
+import { readFile, readdir, mkdir, writeFile, stat, rm, copyFile } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 
@@ -53,6 +53,7 @@ export async function createMarketingTestClient({directory,sourceRoot=process.cw
   or(expression){this.orGroups.push(expression.split(',').map(term=>{const match=/^([a-z_][a-z_0-9]*)\.(ilike|eq)\.(.*)$/i.exec(term);if(!match)throw Error('TEST_UNSUPPORTED_OR_FILTER');return [match[1],match[2],match[3]];}));return this;}
   order(column,{ascending=true}={}){this.sort.push(identifier(column)+(ascending?' asc':' desc'));return this;}
   limit(value){this.count=Number(value);return this;}
+  range(from,to){this.offset=Number(from);this.count=Number(to)-this.offset+1;return this;}
   insert(value){this.mode='insert';this.values=value;return this;}
   upsert(value,{onConflict}={}){this.mode='upsert';this.values=value;this.conflict=onConflict;return this;}
   update(value){this.mode='update';this.values=value;return this;}
@@ -72,7 +73,7 @@ export async function createMarketingTestClient({directory,sourceRoot=process.cw
    for(const group of this.orGroups)clauses.push('('+group.map(([column,operator,value])=>identifier(column)+(operator==='eq'?' = ':' ilike ')+bind(value)).join(' or ')+')');
    const where=clauses.length?' where '+clauses.join(' and '):'';
    const table=identifier(this.table);let sql;
-   if(this.mode==='select')sql='select * from '+table+where+(this.sort.length?' order by '+this.sort.join(','):'')+(this.count?' limit '+this.count:'');
+   if(this.mode==='select')sql='select * from '+table+where+(this.sort.length?' order by '+this.sort.join(','):'')+(this.count?' limit '+this.count:'')+(this.offset?' offset '+this.offset:'');
    else if(this.mode==='insert'||this.mode==='upsert'){const columns=Object.keys(this.values);sql='insert into '+table+'('+columns.map(identifier).join(',')+') values('+columns.map(k=>bind(this.values[k])).join(',')+')';if(this.mode==='upsert'){if(!this.conflict)throw Error('TEST_UPSERT_CONFLICT_REQUIRED');const conflictColumns=this.conflict.split(',').map(k=>k.trim());const conflictSql=conflictColumns.map(identifier).join(',');const updatedColumns=columns.filter(k=>!conflictColumns.includes(k));sql+=' on conflict('+conflictSql+') '+(updatedColumns.length?'do update set '+updatedColumns.map(k=>identifier(k)+'=excluded.'+identifier(k)).join(','):'do nothing');}sql+=' returning *';}
    else if(this.mode==='update')sql='update '+table+' set '+Object.entries(this.values).map(([k,v])=>identifier(k)+'='+bind(v)).join(',')+where+' returning *';
    else sql='delete from '+table+where+' returning *';
@@ -82,7 +83,8 @@ export async function createMarketingTestClient({directory,sourceRoot=process.cw
   }catch(e){return {data:null,error:{message:e.message}};}}
  }
  const storage={from(bucket){if(!['content-files','task-files'].includes(bucket))throw Error('TEST_INVALID_BUCKET');return {
-  async createSignedUploadUrl(path){pathFor(path);const token=randomUUID();uploads.set(token,{path,expires:Date.now()+600000});return {data:{token,path},error:null};},
+  async createSignedUploadUrl(path){pathFor(path);const token=randomUUID();uploads.set(token,{path,expires:Date.now()+600000});return {data:{token,path,signedUrl:'/marketing-test/upload?token='+token},error:null};},
+  async copy(from,to){try{const meta=files.get(from);if(!meta)throw Error('NOT_FOUND');await mkdir(dirname(pathFor(to)),{recursive:true});await copyFile(pathFor(from),pathFor(to));files.set(to,{...meta});return {data:{path:to},error:null};}catch{return {data:null,error:{message:'TEST_COPY_FAILED'}};}},
   async info(path){try{const meta=files.get(path);const info=await stat(pathFor(path));if(!meta)throw Error('NOT_FOUND');return {data:{size:info.size,contentType:meta.contentType},error:null};}catch{return {data:null,error:{message:'NOT_FOUND'}};}},
   async createSignedUrl(path,seconds,options){if(!files.has(path))return {data:null,error:{message:'NOT_FOUND'}};const token=randomUUID();downloads.set(token,{path,expires:Date.now()+seconds*1000,download:options?.download});return {data:{signedUrl:'/marketing-test/file?token='+token},error:null};},
   async remove(paths){for(const path of paths){await rm(pathFor(path),{force:true});files.delete(path);}return {error:null};},

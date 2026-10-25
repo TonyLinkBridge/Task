@@ -10,7 +10,7 @@ import {
 } from "@dnd-kit/core";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { TaskForm } from "@/features/tasks/components/task-form";
 import { TaskColumn } from "@/features/tasks/components/task-column";
@@ -80,6 +80,7 @@ export function TaskBoard({
   createTaskAction?: SaveTaskAction;
   updateTaskAction?: UpdateTaskAction;
 }) {
+  const boardId = useId();
   const [tasks, setTasks] = useState(initialTasks);
   const [editingTask, setEditingTask] = useState<TaskRecord | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -155,6 +156,7 @@ export function TaskBoard({
         </p>
       ) : null}
       <DndContext
+        id={boardId}
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}

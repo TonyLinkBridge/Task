@@ -1,3 +1,4 @@
+import { renderToString } from "react-dom/server";
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
@@ -28,6 +29,14 @@ const task: TaskRecord = {
 };
 
 describe("TaskBoard", () => {
+  it('keeps the drag instructions identifier stable across server renders', () => {
+    const renderBoard = () => renderToString(<TaskBoard initialTasks={[task]} assignees={[]} />);
+    const first = /aria-describedby="([^"]+)"/.exec(renderBoard())?.[1];
+    const second = /aria-describedby="([^"]+)"/.exec(renderBoard())?.[1];
+    expect(first).toBeTruthy();
+    expect(second).toBe(first);
+  });
+
   it("renders the five workflow columns including drafts", () => {
     render(<TaskBoard initialTasks={[]} assignees={[]} />);
 

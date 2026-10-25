@@ -1,3 +1,5 @@
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { SlackLoginButton } from "@/components/auth/slack-login-button";
 import { safeRedirectPath } from "@/lib/auth/redirect";
 
@@ -11,9 +13,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     ? params.redirect[0]
     : params.redirect;
 
+  const destination = safeRedirectPath(requestedPath);
+  if ((await auth()).userId) redirect(destination);
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/30 px-6 py-12">
-      <SlackLoginButton redirectTo={safeRedirectPath(requestedPath)} />
+      <SlackLoginButton redirectTo={destination} />
     </main>
   );
 }

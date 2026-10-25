@@ -7,6 +7,6 @@ test("anonymous visitors are sent to the Slack login page", async ({ request }) 
 
   expect(response.status()).toBe(307);
   expect(response.headers().location).toBe(
-    "/login?redirect=%2Ftasks%3Fview%3Dboard"
+    "/login?redirect=%2Fmarketing%2Ftasks%3Fview%3Dboard"
   );
 });

@@ -1,3 +1,4 @@
+import { workspaceHref } from "@/lib/navigation/workspace-href";
 import type { ScheduledContent } from '@/features/schedule/types';
 export const marketingStatusLabels = { draft: '草稿', in_review: '等待审核', changes_requested: '需要修改', approved: '已经批准', due: '等待发布', published: '已经发布' };
 export function buildMarketingSummary(contents: ScheduledContent[]) {
@@ -8,9 +9,6 @@ export function buildMarketingSummary(contents: ScheduledContent[]) {
 }
 export function marketingHref(href: string) {
   if (!href.startsWith('/') || href.startsWith('//') || href.includes('\\')) return '/marketing/inbox';
-  if (/^\/content\/[A-Za-z0-9-]+(?:\?|$)/.test(href)) return '/marketing' + href;
-  if (/^\/content(?:\?|$)/.test(href)) return '/marketing/calendar?view=list' + (href.includes('?') ? '&' + href.slice(href.indexOf('?') + 1) : '');
-  if (/^\/tasks(?:\?|$)/.test(href)) return '/marketing' + href;
-  if (/^\/(?:tasks|help)(?:\/|\?|$)/.test(href)) return href;
+  if (href === '/' || /^\/(?:marketing|dashboard|content|tasks|help)(?:[/?#]|$)/.test(href)) return workspaceHref(href);
   return '/marketing/inbox';
 }

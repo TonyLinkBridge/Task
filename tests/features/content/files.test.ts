@@ -184,3 +184,10 @@ describe("content file actions", () => {
     expect(result).toEqual({ ok: false, message: "文件资料不正确。" });
   });
 });
+
+it('retries finalizing the same transferred file without creating a duplicate attachment',async()=>{
+ const existing={id:'existing',contentId:'22222222-2222-4222-8222-222222222222',storagePath:'22222222-2222-4222-8222-222222222222/x.png',fileName:'x.png',mimeType:'image/png',byteSize:12,uploaderId:'user_employee',createdAt:'2026-10-25T00:00:00Z'};
+ let saves=0;
+ const actions=makeContentFileActions({getVerifiedUser:async()=>({id:'user_employee',role:'employee',name:'Employee',imageUrl:null}),findContent:async()=>({id:existing.contentId,status:'draft'}),createUploadUrl:async()=>({token:'unused'}),inspectUpload:async()=>({size:12,type:'image/png'}),findAttachmentByPath:async()=>existing,saveAttachment:async()=>{saves++;return existing;},createId:()=>'',revalidatePath:()=>{}});
+ expect(await actions.finishUpload(existing.contentId,existing.storagePath,{name:'x.png',type:'image/png',size:12})).toEqual({ok:true,data:existing});expect(saves).toBe(0);
+});

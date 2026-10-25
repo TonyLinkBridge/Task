@@ -21,7 +21,7 @@ const fileActions = makeContentFileActions({
     if (error || !data) {
       throw new Error(`UPLOAD_LINK_FAILED:${error?.message ?? "NO_DATA"}`);
     }
-    return { token: data.token };
+    return { token: data.token, signedUrl: data.signedUrl };
   },
   async inspectUpload(storagePath) {
     const { data, error } = await getSupabaseAdmin()
@@ -29,6 +29,14 @@ const fileActions = makeContentFileActions({
       .info(storagePath);
     if (error || !data || !data.size || !data.contentType) return null;
     return { size: data.size, type: data.contentType };
+  },
+  async findAttachmentByPath(path) {
+    const { data, error } = await getSupabaseAdmin().from("content_attachments")
+      .select("*").eq("storage_path", path).is("archived_at", null).maybeSingle();
+    if (error) throw new Error("ATTACHMENT_LOOKUP_FAILED");
+    return data ? { id:data.id, contentId:data.content_id, storagePath:data.storage_path,
+      fileName:data.file_name, mimeType:data.mime_type, byteSize:Number(data.byte_size),
+      uploaderId:data.uploader_id, createdAt:data.created_at } : null;
   },
   async saveAttachment(input): Promise<ContentAttachment> {
     const { data, error } = await getSupabaseAdmin()

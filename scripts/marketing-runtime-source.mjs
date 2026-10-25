@@ -4,7 +4,7 @@ export {identities};
 const state=globalThis as typeof globalThis & {marketingTestRuntime?:ReturnType<typeof createMarketingTestClient>};
 async function attachUpdatedQueryAdapter(r:any){
  let needsUpgrade=true;
- try{needsUpgrade=r.client.from('profiles').supportsHistoryContent!==true;}catch{/* Recover a stale adapter while preserving its database and files. */}
+ try{needsUpgrade=r.client.from('profiles').supportsHistoryContent!==true||typeof r.client.from('profiles').range!=='function';}catch{/* Recover a stale adapter while preserving its database and files. */}
  if(needsUpgrade){
   const updated=await createMarketingTestClient({existingDatabase:r.db});
   r.client.from=updated.client.from;

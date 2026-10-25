@@ -1,0 +1,12 @@
+'use client';
+import {useState} from 'react';
+import {Button} from '@/components/ui/button';
+import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogDescription} from '@/components/ui/dialog';
+import type {ContentAttachment} from '@/features/content/types';
+import type {MediaAsset} from '../types';
+export function MediaPicker({contentId,listAction,attachAction,onAttached}:{contentId:string;listAction:()=>Promise<MediaAsset[]>;attachAction:(assetId:string,contentId:string)=>Promise<{ok:true;data:ContentAttachment}|{ok:false;message:string}>;onAttached:(file:ContentAttachment)=>void}){
+ const [open,setOpen]=useState(false),[assets,setAssets]=useState<MediaAsset[]>([]),[query,setQuery]=useState(''),[loading,setLoading]=useState(false),[busy,setBusy]=useState<string|null>(null),[error,setError]=useState<string|null>(null),[loadFailed,setLoadFailed]=useState(false);
+ async function show(){setOpen(true);setLoading(true);setError(null);setLoadFailed(false);try{setAssets(await listAction());}catch{setLoadFailed(true);setError('素材暂时读取不到，请重试。');}finally{setLoading(false);}}
+ async function choose(a:MediaAsset){setBusy(a.id);setError(null);try{const result=await attachAction(a.id,contentId);if(result.ok){onAttached(result.data);setOpen(false);}else setError(result.message);}catch{setError('未能加入内容，请重试。');}finally{setBusy(null);}}
+ return <><Button variant="outline" onClick={()=>void show()}>从素材库选用</Button><Dialog open={open} onOpenChange={setOpen}><DialogContent className="max-h-[85vh] overflow-auto"><DialogHeader><DialogTitle>从素材库选用</DialogTitle><DialogDescription>选用后会保存一份独立附件，不会因素材库移除而丢失。</DialogDescription></DialogHeader><label>搜索可用素材<input className="w-full rounded-lg border p-2" type="search" value={query} onChange={e=>setQuery(e.target.value)}/></label>{error?<p role="alert">{error}</p>:null}{loadFailed?<Button onClick={()=>void show()}>重新加载素材</Button>:null}{loading?<p role="status">正在读取素材…</p>:assets.filter(a=>!a.archivedAt&&a.fileName.toLocaleLowerCase().includes(query.toLocaleLowerCase())).map(a=><div key={a.id} className="flex min-w-0 items-center justify-between gap-3 rounded-lg border p-3"><span className="truncate">{a.fileName}</span><Button disabled={Boolean(busy)} aria-label={`选用 ${a.fileName}`} onClick={()=>void choose(a)}>{busy===a.id?'正在加入…':'选用'}</Button></div>)}{!loading&&!loadFailed&&!assets.length?<p>素材库还没有文件，请先到文件库上传。</p>:null}</DialogContent></Dialog></>;
+}

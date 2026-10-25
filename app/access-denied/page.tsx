@@ -15,7 +15,7 @@ const adminCopy = {
   title: "只有管理员可以进入",
   description: "你的账号是员工，仍然可以继续使用任务和内容排期。",
   linkLabel: "返回任务页面",
-  href: "/tasks",
+  href: "/marketing/tasks",
 };
 
 export default async function AccessDeniedPage({

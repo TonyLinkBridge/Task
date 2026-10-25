@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -13,14 +13,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  fileSchema,
   type ContentFileMeta,
 } from "@/features/content/files/service";
 import type { ContentAttachment } from "@/features/content/types";
-import { getSupabaseBrowser } from "@/lib/supabase/browser";
+import { MediaPicker } from '@/features/media-library/components/picker';
+import type { MediaAsset } from '@/features/media-library/types';
+import { MediaUpload, uploadSignedFile } from "@/features/media-library/components/upload";
 
 type RequestUploadResult =
-  | { ok: true; data: { storagePath: string; token: string } }
+  | { ok: true; data: { storagePath: string; token: string; signedUrl?: string } }
   | { ok: false; message: string };
 type FinishUploadResult =
   | { ok: true; data: ContentAttachment }
@@ -38,6 +39,7 @@ export function Attachments({
   finishUploadAction = unavailable,
   editable = true,
   presentation = "default",
+  listMediaAction, useMediaAction,
 }: {
   contentId: string;
   attachments: ContentAttachment[];
@@ -52,62 +54,15 @@ export function Attachments({
   ) => Promise<FinishUploadResult>;
   editable?: boolean;
   presentation?: "default" | "library";
+  listMediaAction?: () => Promise<MediaAsset[]>;
+  useMediaAction?: (assetId:string,contentId:string) => Promise<FinishUploadResult>;
 }) {
   const [attachments, setAttachments] = useState(initialAttachments);
   const [previewAttachment, setPreviewAttachment] =
     useState<ContentAttachment | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const tickets = useRef(new WeakMap<File, {storagePath:string;signedUrl:string;transferred?:boolean}>());
   const [message, setMessage] = useState<string | null>(null);
 
-  async function handleFile(file: File | undefined) {
-    if (!file) return;
-    const parsed = fileSchema.safeParse({
-      name: file.name,
-      type: file.type,
-      size: file.size,
-    });
-    if (!parsed.success) {
-      setMessage("只可上传图片、影片、音频、PDF 或 Office 文件，最大 100MB。");
-      return;
-    }
-
-    setIsUploading(true);
-    setMessage(null);
-    try {
-      const request = await requestUploadAction(contentId, parsed.data);
-      if (!request.ok) {
-        setMessage(request.message);
-        return;
-      }
-
-      const { error } = await getSupabaseBrowser()
-        .storage.from("content-files")
-        .uploadToSignedUrl(request.data.storagePath, request.data.token, file, {
-          contentType: file.type,
-        });
-      if (error) {
-        setMessage("上传失败，请再试一次。");
-        return;
-      }
-
-      const finish = await finishUploadAction(
-        contentId,
-        request.data.storagePath,
-        parsed.data
-      );
-      if (!finish.ok) {
-        setMessage(finish.message);
-        return;
-      }
-
-      setAttachments((current) => [...current, finish.data]);
-      setMessage("文件已经上传。");
-    } catch {
-      setMessage("服务器刚刚没有回应，请直接重试，不需要刷新页面。");
-    } finally {
-      setIsUploading(false);
-    }
-  }
 
   return (
     <section className={presentation === "library" ? "marketing-library-files" : "rounded-xl border bg-card p-5"}>
@@ -118,29 +73,34 @@ export function Attachments({
             图片、影片、音频、PDF 或 Office 文件，最大 100MB
           </p>
         </div>
-        {editable ? (
-          <label
-            className={buttonVariants({
-              className: isUploading ? "pointer-events-none opacity-50" : "cursor-pointer",
-            })}
-          >
-            {isUploading ? "正在上传…" : "上传文件"}
-            <input
-              aria-label="上传文件"
-              type="file"
-              className="sr-only"
-              accept="image/*,video/*,audio/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-              disabled={isUploading}
-              onChange={(event) => {
-                const file = event.currentTarget.files?.[0];
-                event.currentTarget.value = "";
-                void handleFile(file);
-              }}
-            />
-          </label>
-        ) : null}
+
       </div> : null}
 
+      {editable ? <div className="mt-4"><MediaUpload save={async(file,meta,options)=>{
+        setMessage(null);
+        try {
+          let ticket=tickets.current.get(file);
+          if(!ticket){
+            const result=await requestUploadAction(contentId,meta);
+            if(!result.ok)throw Error(result.message);
+            if(!result.data.signedUrl)throw Error('上传连接未准备好，请重试。');
+            ticket={storagePath:result.data.storagePath,signedUrl:result.data.signedUrl};
+            tickets.current.set(file,ticket);
+          }
+          if(options.signal.aborted)throw new DOMException('已取消','AbortError');
+          if(!ticket.transferred){try{await uploadSignedFile(ticket.signedUrl,file,options);ticket.transferred=true;}catch(e){tickets.current.delete(file);throw e;}}
+          if(options.signal.aborted)throw new DOMException('已取消','AbortError');
+          const result=await finishUploadAction(contentId,ticket.storagePath,meta);
+          if(!result.ok)throw Error(result.message);
+          setAttachments(all=>[...all.filter(a=>a.id!==result.data.id),result.data]);
+          setMessage('文件已经上传。');options.onProgress(100);
+        } catch(e) {
+          if(e instanceof Error && e.name==='AbortError')throw e;
+          throw Error(e instanceof Error && !e.message.includes('Server Components') ? e.message : '服务器刚刚没有回应，请直接重试，不需要刷新页面。');
+        }
+      }}/></div> : null}
+
+      {editable&&listMediaAction&&useMediaAction?<div className="mt-3"><MediaPicker contentId={contentId} listAction={listMediaAction} attachAction={useMediaAction} onAttached={file=>{setAttachments(all=>[...all.filter(a=>a.id!==file.id),file]);setMessage('素材已经加入内容。');}}/></div>:null}
       <div className="mt-4 space-y-2">
         {attachments.map((attachment) => {
           const canPreview = attachment.mimeType.startsWith("image/");

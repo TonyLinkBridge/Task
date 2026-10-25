@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { Attachments } from "@/features/content/components/attachments";
 
+const input=()=>document.querySelector('input[type="file"]') as HTMLInputElement;
 describe("Attachments", () => {
   it("opens the original preview from a library thumbnail without showing an upload form", async () => {
     render(<Attachments contentId="one" editable={false} presentation="library" attachments={[{id:"file-one",contentId:"one",storagePath:"one/photo.png",fileName:"photo.png",mimeType:"image/png",byteSize:2048,uploaderId:"employee",createdAt:"2026-10-25T00:00:00Z"}]} />);
@@ -27,14 +28,14 @@ describe("Attachments", () => {
     );
 
     await user.upload(
-      screen.getByLabelText("上传文件"),
+      input(),
       new File(["image"], "post.png", { type: "image/png" })
     );
 
     expect(
       await screen.findByText("服务器刚刚没有回应，请直接重试，不需要刷新页面。")
     ).toBeInTheDocument();
-    expect(screen.getByLabelText("上传文件")).toBeEnabled();
+    expect(input()).toBeEnabled();
     expect(screen.getByText("上传文件")).toBeInTheDocument();
   });
 
@@ -53,9 +54,9 @@ describe("Attachments", () => {
     );
     const file = new File(["image"], "post.png", { type: "image/png" });
 
-    await user.upload(screen.getByLabelText("上传文件"), file);
+    await user.upload(input(), file);
     await screen.findByText("上传失败，请再试一次。");
-    await user.upload(screen.getByLabelText("上传文件"), file);
+    await user.click(screen.getByRole("button",{name:"Retry post.png"}));
 
     expect(requestUploadAction).toHaveBeenCalledTimes(2);
   });
@@ -92,7 +93,7 @@ describe("Attachments", () => {
         "src",
         "/api/files/33333333-3333-4333-8333-333333333333?mode=preview"
       );
-    expect(screen.getByLabelText("上传文件")).toBeInTheDocument();
+    expect(input()).toBeInTheDocument();
   });
 
   it("offers only download for files the browser cannot preview safely", () => {

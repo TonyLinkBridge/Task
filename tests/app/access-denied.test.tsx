@@ -30,6 +30,6 @@ describe("access denied page", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "返回任务页面" })
-    ).toHaveAttribute("href", "/tasks");
+    ).toHaveAttribute("href", "/marketing/tasks");
   });
 });

@@ -196,3 +196,13 @@ body:has(.marketing-shell) [data-slot=dialog-content] :is(input:not([type=checkb
 
 .marketing-calendar-controls .marketing-filter-row{flex-wrap:wrap;align-items:end}.marketing-date-filter{display:grid;gap:6px;font-size:13px;color:var(--mk-muted);min-width:145px}.marketing-date-filter input{min-width:0;width:100%;height:44px;border:1px solid var(--line);border-radius:14px;padding:8px 12px;background:var(--glass-2);color:var(--text)}.marketing-clear-filters{min-height:44px;padding:8px 12px;border-radius:14px;border:1px solid var(--line);font-size:13px;cursor:pointer}.marketing-clear-filters:disabled{opacity:.45;cursor:default}.marketing-content-board{min-width:0;max-width:100%}.marketing-content-board>div>div{overscroll-behavior-x:contain}.marketing-content-board article{background:var(--glass);border-color:var(--line)}.marketing-content-board section{background:var(--glass-2);border-color:var(--line)}
 @media(width<=760px){.marketing-calendar-controls .marketing-filter-row>*{min-width:0;flex:1 1 130px}.marketing-content-board section{max-width:calc(100vw - 90px)}}
+
+.media-asset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(250px,100%),1fr));gap:16px;margin-top:16px}.media-asset-card{min-width:0;display:flex;flex-direction:column;gap:10px}.media-asset-card h3{font-weight:600;overflow-wrap:anywhere}.media-asset-preview{width:100%;aspect-ratio:16/10;border-radius:16px;overflow:hidden;background:var(--well);cursor:pointer}.media-asset-preview img{width:100%;height:100%;object-fit:contain}.media-asset-kind{display:grid;place-items:center;min-height:110px;background:var(--well);border-radius:16px}.media-asset-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+
+/* Library filters remain usable on narrow screens; keep search on its own mobile row. */
+.media-asset-filters .marketing-filter-row{display:grid;grid-template-columns:minmax(180px,1fr) repeat(2,minmax(150px,200px));align-items:end;width:100%;gap:12px}
+.media-asset-filters .marketing-filter-row>label,.media-asset-filters .marketing-filter-row>div{min-width:0;width:100%}
+.media-asset-filters .marketing-filter-row input{min-width:0;width:100%;box-sizing:border-box}
+@media(max-width:760px){.media-asset-filters .marketing-filter-row{grid-template-columns:repeat(2,minmax(0,1fr))}.media-asset-filters .marketing-filter-row>label{grid-column:1/-1}}
+
+.media-library{display:grid;gap:20px}.media-library>.marketing-toolbar{margin-bottom:0}
